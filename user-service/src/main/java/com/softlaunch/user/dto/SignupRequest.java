@@ -1,4 +1,14 @@
 package com.softlaunch.user.dto;
 
-public class SignupRequest {
+import jakarta.validation.constraints.*;
+
+import java.time.LocalDate;
+
+public record SignupRequest(
+        @NotBlank @Email String email,
+        @NotBlank @Size(min = 8, max = 72) String password,
+        @NotBlank @Size(max = 50) String displayName,
+        @NotNull @Past LocalDate dateOfBirth
+)
+ {
 }
