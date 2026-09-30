@@ -1,0 +1,15 @@
+services:
+  user-db:
+    image: postgres:17
+    container_name: softlaunch-user-db
+    environment:
+      POSTGRES_DB: user_db
+      POSTGRES_USER: softlaunch
+      POSTGRES_PASSWORD: softlaunch
+    ports:
+      - "5433:5432"
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+
+volumes:
+  user-db-data:
