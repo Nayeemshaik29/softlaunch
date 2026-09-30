@@ -1,0 +1,12 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/user_db
+    username: softlaunch
+    password: softlaunch
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
