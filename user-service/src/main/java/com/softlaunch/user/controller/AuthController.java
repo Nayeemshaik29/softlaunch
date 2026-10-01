@@ -1,5 +1,7 @@
 package com.softlaunch.user.controller;
 
+import com.softlaunch.user.dto.AuthResponse;
+import com.softlaunch.user.dto.LoginRequest;
 import com.softlaunch.user.dto.SignupRequest;
 import com.softlaunch.user.dto.UserResponse;
 import com.softlaunch.user.service.UserService;
@@ -21,5 +23,9 @@ public class AuthController {
     @ResponseStatus(HttpStatus.CREATED)
     public UserResponse signup(@Valid @RequestBody SignupRequest request) {
         return userService.signup(request);
+    }
+    @PostMapping("/login")
+    public AuthResponse login(@Valid @RequestBody LoginRequest request) {
+        return userService.login(request);
     }
 }

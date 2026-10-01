@@ -1,2 +1,7 @@
 softlaunch:
   welcome: "Hello from Config Server"
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
