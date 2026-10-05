@@ -11,5 +11,18 @@ services:
     volumes:
       - user-db-data:/var/lib/postgresql/data
 
+  match-db:
+    image: postgres:17
+    container_name: softlaunch-match-db
+    environment:
+      POSTGRES_DB: match_db
+      POSTGRES_USER: softlaunch
+      POSTGRES_PASSWORD: softlaunch
+    ports:
+      - "5434:5432"
+    volumes:
+      - match-db-data:/var/lib/postgresql/data
+
 volumes:
   user-db-data:
+  match-db-data:
