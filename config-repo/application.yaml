@@ -5,6 +5,6 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
-      softlaunch:
-        jwt:
-          secret: AqiH/i6xsQ9p4WXceT2MFqXhOwvfjX3pjK7cSUYjYF0=
+  instance:
+        hostname: localhost
+        instance-id: ${spring.application.name}:${server.port}

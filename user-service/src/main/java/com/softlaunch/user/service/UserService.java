@@ -5,6 +5,7 @@ import com.softlaunch.user.dto.LoginRequest;
 import com.softlaunch.user.dto.SignupRequest;
 import com.softlaunch.user.dto.UserResponse;
 import com.softlaunch.user.exception.InvalidCredentialsException;
+import com.softlaunch.user.exception.UserNotFoundException;
 import com.softlaunch.user.model.User;
 import com.softlaunch.user.repository.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -12,6 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -58,6 +61,12 @@ public class UserService {
 
         String token = jwtService.generateToken(user);
         return new AuthResponse(token, "Bearer", jwtService.getExpiration().toSeconds());
+    }
+    @Transactional(readOnly = true)
+    public UserResponse getById(UUID id) {
+        return userRepository.findById(id)
+                .map(UserResponse::from)
+                .orElseThrow(() -> new UserNotFoundException(id));
     }
 
 
