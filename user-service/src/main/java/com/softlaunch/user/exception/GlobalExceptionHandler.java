@@ -13,6 +13,11 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private static final org.slf4j.Logger log =
+            org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+
+
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
@@ -28,6 +33,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ProblemDetail handleUnreadable(HttpMessageNotReadableException ex) {
+        log.warn("Unreadable request body: {}", ex.getMostSpecificCause().getMessage());
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Malformed JSON request");
     }
 

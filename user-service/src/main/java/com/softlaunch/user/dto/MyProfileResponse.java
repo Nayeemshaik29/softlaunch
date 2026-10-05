@@ -1,6 +1,7 @@
 package com.softlaunch.user.dto;
 
 import com.softlaunch.user.model.*;
+import com.softlaunch.user.service.ProfileCompletion;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -13,6 +14,7 @@ public record MyProfileResponse(
         UUID userId,
         String displayName,
         Integer age,
+        int completionPercent,
         String bio,
         String pronouns,
         Gender gender,
@@ -36,14 +38,15 @@ public record MyProfileResponse(
         Integer ageMin,
         Integer ageMax,
         Integer maxDistanceKm,
-        Instant updatedAt
-) {
+        Instant updatedAt,
+        int percent) {
     public static MyProfileResponse from(Profile p) {
         User user = p.getUser();
         return new MyProfileResponse(
                 p.getUserId(),
                 user.getDisplayName(),
                 ageOf(user.getDateOfBirth()),
+                ProfileCompletion.percent(p),      // ← NEW
                 p.getBio(),
                 p.getPronouns(),
                 p.getGender(),
@@ -67,7 +70,8 @@ public record MyProfileResponse(
                 p.getAgeMin(),
                 p.getAgeMax(),
                 p.getMaxDistanceKm(),
-                p.getUpdatedAt()
+                p.getUpdatedAt(),
+                ProfileCompletion.percent(p)
         );
     }
 

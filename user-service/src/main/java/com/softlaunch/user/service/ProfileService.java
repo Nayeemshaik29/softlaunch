@@ -3,6 +3,7 @@ package com.softlaunch.user.service;
 import com.softlaunch.user.dto.MyProfileResponse;
 import com.softlaunch.user.dto.ProfileRequest;
 import com.softlaunch.user.dto.PromptDto;
+import com.softlaunch.user.dto.PublicProfileResponse;
 import com.softlaunch.user.exception.ProfileNotFoundException;
 import com.softlaunch.user.exception.UserNotFoundException;
 import com.softlaunch.user.model.Profile;
@@ -84,5 +85,11 @@ public class ProfileService {
         if (source != null) {
             target.addAll(source);
         }
+    }
+    @Transactional(readOnly = true)
+    public PublicProfileResponse getPublicProfile(UUID userId) {
+        return profileRepository.findById(userId)
+                .map(PublicProfileResponse::from)
+                .orElseThrow(() -> new ProfileNotFoundException(userId));
     }
 }
