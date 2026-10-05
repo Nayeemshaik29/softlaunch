@@ -121,4 +121,212 @@ public class Profile {
     public void touch() {
         this.updatedAt = Instant.now();
     }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public String getBio() {
+        return bio;
+    }
+
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+
+    public String getPronouns() {
+        return pronouns;
+    }
+
+    public void setPronouns(String pronouns) {
+        this.pronouns = pronouns;
+    }
+
+    public Gender getGender() {
+        return gender;
+    }
+
+    public void setGender(Gender gender) {
+        this.gender = gender;
+    }
+
+    public Set<Gender> getInterestedIn() {
+        return interestedIn;
+    }
+
+    public void setInterestedIn(Set<Gender> interestedIn) {
+        this.interestedIn = interestedIn;
+    }
+
+    public Integer getHeightCm() {
+        return heightCm;
+    }
+
+    public void setHeightCm(Integer heightCm) {
+        this.heightCm = heightCm;
+    }
+
+    public Set<RelationshipIntent> getLookingFor() {
+        return lookingFor;
+    }
+
+    public void setLookingFor(Set<RelationshipIntent> lookingFor) {
+        this.lookingFor = lookingFor;
+    }
+
+    public Set<Interest> getInterests() {
+        return interests;
+    }
+
+    public void setInterests(Set<Interest> interests) {
+        this.interests = interests;
+    }
+
+    public List<String> getHangoutPlaces() {
+        return hangoutPlaces;
+    }
+
+    public void setHangoutPlaces(List<String> hangoutPlaces) {
+        this.hangoutPlaces = hangoutPlaces;
+    }
+
+    public List<Prompt> getPrompts() {
+        return prompts;
+    }
+
+    public void setPrompts(List<Prompt> prompts) {
+        this.prompts = prompts;
+    }
+
+    public Habit getDrinking() {
+        return drinking;
+    }
+
+    public void setDrinking(Habit drinking) {
+        this.drinking = drinking;
+    }
+
+    public Habit getSmoking() {
+        return smoking;
+    }
+
+    public void setSmoking(Habit smoking) {
+        this.smoking = smoking;
+    }
+
+    public Habit getWorkout() {
+        return workout;
+    }
+
+    public void setWorkout(Habit workout) {
+        this.workout = workout;
+    }
+
+    public String getJobTitle() {
+        return jobTitle;
+    }
+
+    public void setJobTitle(String jobTitle) {
+        this.jobTitle = jobTitle;
+    }
+
+    public String getCompany() {
+        return company;
+    }
+
+    public void setCompany(String company) {
+        this.company = company;
+    }
+
+    public String getEducation() {
+        return education;
+    }
+
+    public void setEducation(String education) {
+        this.education = education;
+    }
+
+    public Set<String> getLanguages() {
+        return languages;
+    }
+
+    public void setLanguages(Set<String> languages) {
+        this.languages = languages;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public List<String> getPhotoUrls() {
+        return photoUrls;
+    }
+
+    public void setPhotoUrls(List<String> photoUrls) {
+        this.photoUrls = photoUrls;
+    }
+
+    public Integer getAgeMin() {
+        return ageMin;
+    }
+
+    public void setAgeMin(Integer ageMin) {
+        this.ageMin = ageMin;
+    }
+
+    public Integer getAgeMax() {
+        return ageMax;
+    }
+
+    public void setAgeMax(Integer ageMax) {
+        this.ageMax = ageMax;
+    }
+
+    public Integer getMaxDistanceKm() {
+        return maxDistanceKm;
+    }
+
+    public void setMaxDistanceKm(Integer maxDistanceKm) {
+        this.maxDistanceKm = maxDistanceKm;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

@@ -43,4 +43,8 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleUserNotFound(UserNotFoundException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
+    @ExceptionHandler(ProfileNotFoundException.class)
+    public ProblemDetail handleProfileNotFound(ProfileNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
 }
