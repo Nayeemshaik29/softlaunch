@@ -27,6 +27,10 @@ public class Match {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
+    public boolean involves(UUID userId) {
+        return userAId.equals(userId) || userBId.equals(userId);
+    }
+
     protected Match() {
     }
 

@@ -51,4 +51,12 @@ public class GlobalExceptionHandler {
         log.warn("Data integrity violation: {}", ex.getMostSpecificCause().getMessage());
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Duplicate or conflicting request");
     }
+    @ExceptionHandler(MatchNotFoundException.class)
+    public ProblemDetail handleMatchNotFound(MatchNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+    @ExceptionHandler(SwipeLimitExceededException.class)
+    public ProblemDetail handleSwipeLimit(SwipeLimitExceededException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+    }
 }

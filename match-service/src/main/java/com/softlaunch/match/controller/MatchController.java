@@ -1,12 +1,9 @@
 package com.softlaunch.match.controller;
 
 import com.softlaunch.match.dto.MatchResponse;
-import com.softlaunch.match.repository.MatchRepository;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.softlaunch.match.service.MatchService;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -15,18 +12,20 @@ import java.util.UUID;
 @RequestMapping("/api/matches")
 public class MatchController {
 
-    private final MatchRepository matchRepository;
+    private final MatchService matchService;
 
-    public MatchController(MatchRepository matchRepository) {
-        this.matchRepository = matchRepository;
+    public MatchController(MatchService matchService) {
+        this.matchService = matchService;
     }
 
     @GetMapping
-    @Transactional(readOnly = true)
     public List<MatchResponse> myMatches(@RequestHeader("X-User-Id") UUID me) {
-        return matchRepository.findByUserAIdOrUserBIdOrderByCreatedAtDesc(me, me)
-                .stream()
-                .map(match -> MatchResponse.from(match, me))
-                .toList();
+        return matchService.myMatches(me);
+    }
+
+    @DeleteMapping("/{matchId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unmatch(@RequestHeader("X-User-Id") UUID me, @PathVariable UUID matchId) {
+        matchService.unmatch(me, matchId);
     }
 }
