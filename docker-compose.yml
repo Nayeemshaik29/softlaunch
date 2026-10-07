@@ -1,4 +1,5 @@
 services:
+
   user-db:
     image: postgres:17
     container_name: softlaunch-user-db
@@ -23,6 +24,18 @@ services:
     volumes:
       - match-db-data:/var/lib/postgresql/data
 
+  notification-db:
+    image: postgres:17
+    container_name: softlaunch-notification-db
+    environment:
+      POSTGRES_DB: notification_db
+      POSTGRES_USER: softlaunch
+      POSTGRES_PASSWORD: softlaunch
+    ports:
+      - "5435:5432"
+    volumes:
+      - notification-db-data:/var/lib/postgresql/data
+
   redis:
     image: redis:7-alpine
     container_name: softlaunch-redis
@@ -37,4 +50,5 @@ services:
 volumes:
   user-db-data:
   match-db-data:
+  notification-db-data:
 
