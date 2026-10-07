@@ -11,4 +11,5 @@ public interface MatchRepository extends JpaRepository<Match, UUID> {
     boolean existsByUserAIdAndUserBId(UUID userAId, UUID userBId);
 
     List<Match> findByUserAIdOrUserBIdOrderByCreatedAtDesc(UUID userAId, UUID userBId);
+
 }

@@ -2,6 +2,7 @@ package com.softlaunch.notification.service;
 
 import com.softlaunch.notification.dto.NotificationResponse;
 import com.softlaunch.notification.event.MatchCreatedEvent;
+import com.softlaunch.notification.event.MatchRemovedEvent;
 import com.softlaunch.notification.model.Notification;
 import com.softlaunch.notification.model.NotificationType;
 import com.softlaunch.notification.repository.NotificationRepository;
@@ -56,5 +57,10 @@ public class NotificationService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Notification not found"));
         notification.markRead();
         return NotificationResponse.from(notification);
+    }
+    @Transactional
+    public void handleMatchRemoved(MatchRemovedEvent event) {
+        long deleted = repository.deleteByReferenceIdAndType(event.matchId(), NotificationType.MATCH_CREATED);
+        log.info("Match {} removed, deleted {} notification(s)", event.matchId(), deleted);
     }
 }

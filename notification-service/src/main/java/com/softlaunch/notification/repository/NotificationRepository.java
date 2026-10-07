@@ -1,6 +1,7 @@
 package com.softlaunch.notification.repository;
 
 import com.softlaunch.notification.model.Notification;
+import com.softlaunch.notification.model.NotificationType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -14,4 +15,6 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     List<Notification> findByRecipientIdOrderByCreatedAtDesc(UUID recipientId);
 
     Optional<Notification> findByIdAndRecipientId(UUID id, UUID recipientId);
+
+    long deleteByReferenceIdAndType(UUID referenceId, NotificationType type);
 }

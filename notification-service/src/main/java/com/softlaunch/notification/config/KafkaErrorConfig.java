@@ -1,5 +1,6 @@
 package com.softlaunch.notification.config;
 
+import com.softlaunch.notification.exception.InvalidEventException;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.context.annotation.Bean;
@@ -30,7 +31,14 @@ public class KafkaErrorConfig {
                 (record, ex) -> new TopicPartition(record.topic() + ".DLT", record.partition()));
 
         DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, new FixedBackOff(1000L, 2));
-        handler.addNotRetryableExceptions(JacksonException.class);
+        handler.addNotRetryableExceptions(JacksonException.class, InvalidEventException.class);
         return handler;
+    }
+    @Bean
+    public NewTopic matchRemovedDltTopic() {
+        return TopicBuilder.name("match.removed.DLT")
+                .partitions(3)
+                .replicas(1)
+                .build();
     }
 }

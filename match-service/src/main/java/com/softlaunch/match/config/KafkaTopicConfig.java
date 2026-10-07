@@ -17,4 +17,14 @@ public class KafkaTopicConfig {
                 .replicas(1)
                 .build();
     }
+
+    public static final String MATCH_REMOVED = "match.removed";
+
+    @Bean
+    public NewTopic matchRemovedTopic() {
+        return TopicBuilder.name(MATCH_REMOVED)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
 }

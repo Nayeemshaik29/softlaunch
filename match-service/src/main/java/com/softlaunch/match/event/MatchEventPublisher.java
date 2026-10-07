@@ -38,4 +38,17 @@ public class MatchEventPublisher {
                     }
                 });
     }
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onMatchRemoved(MatchRemovedEvent event) {
+        String payload = jsonMapper.writeValueAsString(event);
+        kafkaTemplate.send(KafkaTopicConfig.MATCH_REMOVED, event.matchId().toString(), payload)
+                .whenComplete((result, ex) -> {
+                    if (ex != null) {
+                        log.error("Failed to publish match.removed for {}", event.matchId(), ex);
+                    } else {
+                        log.info("Published match.removed {} to partition {}, offset {}", event.matchId(),
+                                result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
+                    }
+                });
+    }
 }
