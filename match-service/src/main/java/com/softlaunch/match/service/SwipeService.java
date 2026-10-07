@@ -24,13 +24,15 @@ public class SwipeService {
     private final SwipeRepository swipeRepository;
     private final MatchRepository matchRepository;
     private final SwipeQuotaService swipeQuotaService;
+    private final UserVerifier userVerifier;
 
     public SwipeService(SwipeRepository swipeRepository,
                         MatchRepository matchRepository,
-                        SwipeQuotaService swipeQuotaService) {
+                        SwipeQuotaService swipeQuotaService, UserVerifier userVerifier) {
         this.swipeRepository = swipeRepository;
         this.matchRepository = matchRepository;
         this.swipeQuotaService = swipeQuotaService;
+        this.userVerifier = userVerifier;
     }
 
     @Transactional
@@ -43,7 +45,7 @@ public class SwipeService {
         if (swipeRepository.existsBySwiperIdAndTargetId(swiperId, targetId)) {
             throw new AlreadySwipedException(targetId);
         }
-
+        userVerifier.requireExists(targetId);
         swipeQuotaService.consume(swiperId);
 
         Swipe saved = swipeRepository.save(new Swipe(swiperId, targetId, request.direction()));

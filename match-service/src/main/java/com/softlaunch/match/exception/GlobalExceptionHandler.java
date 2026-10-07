@@ -59,4 +59,14 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleSwipeLimit(SwipeLimitExceededException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
     }
+    @ExceptionHandler(TargetUserNotFoundException.class)
+    public ProblemDetail handleTargetUserNotFound(TargetUserNotFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(UserServiceUnavailableException.class)
+    public ProblemDetail handleUserServiceUnavailable(UserServiceUnavailableException ex) {
+        log.warn("User service call failed: {}", ex.getCause() == null ? "unknown" : ex.getCause().toString());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+    }
 }
