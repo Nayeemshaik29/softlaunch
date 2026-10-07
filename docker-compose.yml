@@ -28,7 +28,13 @@ services:
     container_name: softlaunch-redis
     ports:
       - "6379:6379"
+  kafka:
+    image: apache/kafka:4.0.0
+    container_name: softlaunch-kafka
+    ports:
+      - "9092:9092"
 
 volumes:
   user-db-data:
   match-db-data:
+

@@ -2,6 +2,7 @@ package com.softlaunch.match.service;
 
 import com.softlaunch.match.dto.SwipeRequest;
 import com.softlaunch.match.dto.SwipeResponse;
+import com.softlaunch.match.event.MatchCreatedEvent;
 import com.softlaunch.match.exception.AlreadySwipedException;
 import com.softlaunch.match.exception.CannotSwipeSelfException;
 import com.softlaunch.match.model.Match;
@@ -9,6 +10,7 @@ import com.softlaunch.match.model.Swipe;
 import com.softlaunch.match.model.SwipeDirection;
 import com.softlaunch.match.repository.MatchRepository;
 import com.softlaunch.match.repository.SwipeRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +20,7 @@ import java.util.UUID;
 
 @Service
 public class SwipeService {
-
+    private final ApplicationEventPublisher eventPublisher;
     private static final Set<SwipeDirection> POSITIVE = EnumSet.of(SwipeDirection.LIKE, SwipeDirection.SUPER_LIKE);
 
     private final SwipeRepository swipeRepository;
@@ -26,9 +28,10 @@ public class SwipeService {
     private final SwipeQuotaService swipeQuotaService;
     private final UserVerifier userVerifier;
 
-    public SwipeService(SwipeRepository swipeRepository,
+    public SwipeService(ApplicationEventPublisher eventPublisher, SwipeRepository swipeRepository,
                         MatchRepository matchRepository,
                         SwipeQuotaService swipeQuotaService, UserVerifier userVerifier) {
+        this.eventPublisher = eventPublisher;
         this.swipeRepository = swipeRepository;
         this.matchRepository = matchRepository;
         this.swipeQuotaService = swipeQuotaService;
@@ -67,6 +70,11 @@ public class SwipeService {
         if (matchRepository.existsByUserAIdAndUserBId(match.getUserAId(), match.getUserBId())) {
             return null;
         }
-        return matchRepository.save(match).getId();
+        Match saved = matchRepository.save(match);
+
+        eventPublisher.publishEvent(
+                MatchCreatedEvent.of(saved.getId(), saved.getUserAId(), saved.getUserBId()));
+
+        return saved.getId();
     }
 }
