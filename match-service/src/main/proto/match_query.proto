@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package softlaunch.match.v1;
+
+option java_multiple_files = true;
+option java_package = "com.softlaunch.grpc.match.v1";
+
+service MatchQueryService {
+  rpc GetSwipedUserIds (GetSwipedUserIdsRequest) returns (GetSwipedUserIdsResponse);
+}
+
+message GetSwipedUserIdsRequest {
+  string user_id = 1;
+}
+
+message GetSwipedUserIdsResponse {
+  repeated string user_ids = 1;
+}
