@@ -1,5 +1,6 @@
 package com.softlaunch.discovery.service;
 
+import com.softlaunch.discovery.client.SwipedUsersClient;
 import com.softlaunch.discovery.dto.LocationRequest;
 import com.softlaunch.discovery.dto.NearbyUserResponse;
 import org.springframework.data.geo.Distance;
@@ -14,18 +15,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 public class LocationService {
 
+    private static final int SEARCH_LIMIT = 200;
     private static final String GEO_KEY = "geo:users";
     private static final int MAX_RESULTS = 50;
 
     private final StringRedisTemplate redis;
+    private final SwipedUsersClient swipedUsersClient;
 
-    public LocationService(StringRedisTemplate redis) {
+    public LocationService(StringRedisTemplate redis, SwipedUsersClient swipedUsersClient) {
         this.redis = redis;
+        this.swipedUsersClient = swipedUsersClient;
     }
 
     public void updateLocation(UUID me, LocationRequest request) {
@@ -34,6 +39,7 @@ public class LocationService {
 
     public List<NearbyUserResponse> nearby(UUID me, int radiusKm) {
         requireLocation(me);
+        Set<String> alreadySwiped = swipedUsersClient.swipedBy(me);
 
         GeoResults<RedisGeoCommands.GeoLocation<String>> results = redis.opsForGeo().search(
                 GEO_KEY,
@@ -42,7 +48,7 @@ public class LocationService {
                 RedisGeoCommands.GeoSearchCommandArgs.newGeoSearchArgs()
                         .includeDistance()
                         .sortAscending()
-                        .limit(MAX_RESULTS + 1));
+                        .limit(SEARCH_LIMIT));
 
         if (results == null) {
             return List.of();
@@ -50,6 +56,7 @@ public class LocationService {
 
         return results.getContent().stream()
                 .filter(r -> !r.getContent().getName().equals(me.toString()))
+                .filter(r -> !alreadySwiped.contains(r.getContent().getName()))
                 .map(r -> new NearbyUserResponse(
                         UUID.fromString(r.getContent().getName()),
                         roundUpKm(r.getDistance().getValue())))

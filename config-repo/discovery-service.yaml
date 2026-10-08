@@ -1,2 +1,16 @@
 server:
   port: 8084
+
+spring:
+  grpc:
+    client:
+      channel:
+        match-service:
+          target: localhost:9091
+  cloud:
+    openfeign:
+      client:
+        config:
+          user-service:
+            connect-timeout: 1000
+            read-timeout: 2000

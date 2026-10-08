@@ -1,7 +1,9 @@
 package com.softlaunch.discovery.controller;
 
+import com.softlaunch.discovery.dto.FeedCard;
 import com.softlaunch.discovery.dto.LocationRequest;
 import com.softlaunch.discovery.dto.NearbyUserResponse;
+import com.softlaunch.discovery.service.FeedService;
 import com.softlaunch.discovery.service.LocationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -17,9 +19,11 @@ import java.util.UUID;
 public class DiscoveryController {
 
     private final LocationService locationService;
+    private final FeedService feedService;
 
-    public DiscoveryController(LocationService locationService) {
+    public DiscoveryController(LocationService locationService, FeedService feedService) {
         this.locationService = locationService;
+        this.feedService = feedService;
     }
 
     @PutMapping("/me/location")
@@ -33,5 +37,10 @@ public class DiscoveryController {
     public List<NearbyUserResponse> nearby(@RequestHeader("X-User-Id") UUID me,
                                            @RequestParam(defaultValue = "25") @Min(1) @Max(100) int radiusKm) {
         return locationService.nearby(me, radiusKm);
+    }
+    @GetMapping("/feed")
+    public List<FeedCard> feed(@RequestHeader("X-User-Id") UUID me,
+                               @RequestParam(defaultValue = "25") @Min(1) @Max(100) int radiusKm) {
+        return feedService.feed(me, radiusKm);
     }
 }
