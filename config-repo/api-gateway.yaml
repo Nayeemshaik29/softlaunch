@@ -16,6 +16,10 @@ spring:
               uri: lb://notification-service
               predicates:
                 - Path=/api/notifications/**
+            - id: discovery-service
+              uri: lb://discovery-service
+              predicates:
+                - Path=/api/discovery/**
 
 softlaunch:
   jwt:
