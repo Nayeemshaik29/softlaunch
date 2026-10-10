@@ -1,5 +1,5 @@
 package com.softlaunch.user.model;
 
 public enum Gender {
-    MAN, WOMAN, NON_BINARY, OTHER
+    MAN,FEMALE,WOMAN, NON_BINARY, OTHER
 }
