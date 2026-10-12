@@ -51,4 +51,17 @@ public class MatchEventPublisher {
                     }
                 });
     }
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onSwipeRecorded(SwipeRecordedEvent event) {
+        String payload = jsonMapper.writeValueAsString(event);
+        kafkaTemplate.send(KafkaTopicConfig.SWIPE_RECORDED, event.swiperId().toString(), payload)
+                .whenComplete((result, ex) -> {
+                    if (ex != null) {
+                        log.error("Failed to publish swipe.recorded for {}", event.swipeId(), ex);
+                    } else {
+                        log.info("Published swipe.recorded {} to partition {}, offset {}", event.swipeId(),
+                                result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
+                    }
+                });
+    }
 }

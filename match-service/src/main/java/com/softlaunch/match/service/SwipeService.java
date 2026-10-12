@@ -3,6 +3,7 @@ package com.softlaunch.match.service;
 import com.softlaunch.match.dto.SwipeRequest;
 import com.softlaunch.match.dto.SwipeResponse;
 import com.softlaunch.match.event.MatchCreatedEvent;
+import com.softlaunch.match.event.SwipeRecordedEvent; // 🆕
 import com.softlaunch.match.exception.AlreadySwipedException;
 import com.softlaunch.match.exception.CannotSwipeSelfException;
 import com.softlaunch.match.model.Match;
@@ -20,9 +21,10 @@ import java.util.UUID;
 
 @Service
 public class SwipeService {
-    private final ApplicationEventPublisher eventPublisher;
+
     private static final Set<SwipeDirection> POSITIVE = EnumSet.of(SwipeDirection.LIKE, SwipeDirection.SUPER_LIKE);
 
+    private final ApplicationEventPublisher eventPublisher;
     private final SwipeRepository swipeRepository;
     private final MatchRepository matchRepository;
     private final SwipeQuotaService swipeQuotaService;
@@ -52,6 +54,8 @@ public class SwipeService {
         swipeQuotaService.consume(swiperId);
 
         Swipe saved = swipeRepository.save(new Swipe(swiperId, targetId, request.direction()));
+        eventPublisher.publishEvent(
+                SwipeRecordedEvent.of(saved.getId(), swiperId, targetId, request.direction().name())); // 🆕
 
         UUID matchId = null;
         if (POSITIVE.contains(request.direction()) && likedBack(targetId, swiperId)) {

@@ -27,4 +27,13 @@ public class KafkaTopicConfig {
                 .replicas(1)
                 .build();
     }
+    public static final String SWIPE_RECORDED = "swipe.recorded";
+
+    @Bean
+    public NewTopic swipeRecordedTopic() {
+        return TopicBuilder.name(SWIPE_RECORDED)
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
 }
