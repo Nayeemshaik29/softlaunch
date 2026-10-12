@@ -27,16 +27,18 @@ public class LocationService {
 
     private final StringRedisTemplate redis;
     private final SwipedUsersClient swipedUsersClient;
+    private final FeedCache feedCache;
 
-    public LocationService(StringRedisTemplate redis, SwipedUsersClient swipedUsersClient) {
+    public LocationService(StringRedisTemplate redis, SwipedUsersClient swipedUsersClient, FeedCache feedCache) {
         this.redis = redis;
         this.swipedUsersClient = swipedUsersClient;
+        this.feedCache = feedCache;
     }
 
     public void updateLocation(UUID me, LocationRequest request) {
         redis.opsForGeo().add(GEO_KEY, new Point(request.longitude(), request.latitude()), me.toString());
+        feedCache.evict(me);
     }
-
     public List<NearbyUserResponse> nearby(UUID me, int radiusKm) {
         requireLocation(me);
         Set<String> alreadySwiped = swipedUsersClient.swipedBy(me);

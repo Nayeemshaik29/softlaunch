@@ -24,13 +24,23 @@ public class FeedService {
 
     private final LocationService locationService;
     private final UserProfileClient userProfileClient;
+    private final FeedCache feedCache;
 
-    public FeedService(LocationService locationService, UserProfileClient userProfileClient) {
+    public FeedService(LocationService locationService, UserProfileClient userProfileClient, FeedCache feedCache) {
         this.locationService = locationService;
         this.userProfileClient = userProfileClient;
+        this.feedCache = feedCache;
     }
 
     public List<FeedCard> feed(UUID me, int radiusKm) {
+        return feedCache.get(me, radiusKm).orElseGet(() -> {
+            List<FeedCard> fresh = buildFeed(me, radiusKm);
+            feedCache.put(me, radiusKm, fresh);
+            return fresh;
+        });
+    }
+
+    private List<FeedCard> buildFeed(UUID me, int radiusKm) {
         List<NearbyUserResponse> nearby = locationService.nearby(me, radiusKm);
         if (nearby.isEmpty()) {
             return List.of();
