@@ -58,6 +58,7 @@ public class FeedService {
 
         return nearby.stream()
                 .filter(n -> profiles.containsKey(n.userId()))
+                .filter(n -> isMutualFit(myProfile, profiles.get(n.userId())))   // 🆕
                 .map(n -> toCard(myProfile, profiles.get(n.userId()), n.distanceKm(), radiusKm))
                 .sorted(Comparator.comparingInt(FeedCard::score).reversed())
                 .toList();
@@ -105,5 +106,19 @@ public class FeedService {
 
         return new FeedCard(them.userId(), them.displayName(), them.age(), distanceKm, them.bio(), them.city(),
                 them.lookingFor(), shared, them.photoUrls(), reasons, score);
+    }
+    private boolean isMutualFit(FeedProfile me, FeedProfile them) {
+        return wants(me, them) && wants(them, me);
+    }
+
+    private boolean wants(FeedProfile seeker, FeedProfile candidate) {
+        boolean genderOk = seeker.interestedIn() == null || seeker.interestedIn().isEmpty()
+                || (candidate.gender() != null && seeker.interestedIn().contains(candidate.gender()));
+
+        boolean ageOk = candidate.age() == null
+                || ((seeker.ageMin() == null || candidate.age() >= seeker.ageMin())
+                && (seeker.ageMax() == null || candidate.age() <= seeker.ageMax()));
+
+        return genderOk && ageOk;
     }
 }

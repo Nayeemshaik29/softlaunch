@@ -1,5 +1,6 @@
 package com.softlaunch.user.controller;
 
+import com.softlaunch.user.dto.InternalProfileResponse;
 import com.softlaunch.user.dto.PublicProfileResponse;
 import com.softlaunch.user.dto.UserSummary;
 import com.softlaunch.user.exception.UserNotFoundException;
@@ -33,12 +34,12 @@ public class InternalUserController {
     }
     @PostMapping("/profiles")
     @Transactional(readOnly = true)
-    public List<PublicProfileResponse> getProfiles(@RequestBody List<UUID> userIds) {
+    public List<InternalProfileResponse> getProfiles(@RequestBody List<UUID> userIds) {
         if (userIds.size() > 100) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Max 100 ids per request");
         }
         return profileRepository.findAllById(userIds).stream()
-                .map(PublicProfileResponse::from)
+                .map(InternalProfileResponse::from)
                 .toList();
     }
 }

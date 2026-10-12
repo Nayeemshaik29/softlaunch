@@ -10,6 +10,10 @@ public record FeedProfile(
         Integer age,
         String bio,
         String city,
+        String gender,
+        Set<String> interestedIn,
+        Integer ageMin,
+        Integer ageMax,
         Set<String> lookingFor,
         Set<String> interests,
         List<String> photoUrls) {
