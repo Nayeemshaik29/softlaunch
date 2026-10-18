@@ -1,4 +1,4 @@
-package com.softlaunch.discovery.Event;
+package com.softlaunch.discovery.event;
 
 import java.util.UUID;
 

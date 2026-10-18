@@ -1,6 +1,6 @@
 package com.softlaunch.discovery.messaging;
 
-import com.softlaunch.discovery.Event.SwipeRecordedEvent;
+import com.softlaunch.discovery.event.SwipeRecordedEvent;
 import com.softlaunch.discovery.service.FeedCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
