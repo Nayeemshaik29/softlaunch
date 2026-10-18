@@ -1,0 +1,17 @@
+server:
+  port: 8085
+
+spring:
+  mongodb:
+    uri: mongodb://localhost:27017/chat_db
+  cloud:
+    openfeign:
+      client:
+        config:
+          match-service:
+            connect-timeout: 1000
+            read-timeout: 2000
+
+softlaunch:
+  chat:
+    message-ttl: 24h

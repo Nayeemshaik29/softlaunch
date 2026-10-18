@@ -46,9 +46,17 @@ services:
     container_name: softlaunch-kafka
     ports:
       - "9092:9092"
+  chat-db:
+    image: mongo:8
+    container_name: softlaunch-chat-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - chat-db-data:/data/db
 
 volumes:
   user-db-data:
   match-db-data:
+  chat-db-data:
   notification-db-data:
 
