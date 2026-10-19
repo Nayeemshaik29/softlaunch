@@ -14,4 +14,4 @@ spring:
 
 softlaunch:
   chat:
-    message-ttl: 24h
+    message-ttl: 1m
