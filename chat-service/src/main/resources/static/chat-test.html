@@ -12,8 +12,8 @@
     </style>
 </head>
 <body>
-<h2>💬 SoftLaunch chat test</h2>
-<label>My user id</label><input id="me">
+<h2>💬 SoftLaunch chat test (secure)</h2>
+<label>Access token (from Postman login)</label><input id="token">
 <label>Match id</label><input id="match">
 <button onclick="connect()">Connect</button>
 <span id="status">⚪ disconnected</span>
@@ -37,8 +37,13 @@
     }
 
     function connect() {
+        const token = document.getElementById('token').value.trim();
         const matchId = document.getElementById('match').value.trim();
-        client = new StompJs.Client({ brokerURL: 'ws://localhost:8085/ws/chat' });
+        client = new StompJs.Client({
+            brokerURL: 'ws://localhost:8080/ws/chat',
+            connectHeaders: { Authorization: 'Bearer ' + token },
+            reconnectDelay: 0
+        });
         client.onConnect = () => {
             document.getElementById('status').textContent = '🟢 connected';
             client.subscribe('/topic/chats/' + matchId, frame => {
@@ -46,20 +51,18 @@
                 log(m.senderId.substring(0, 8), m.text);
             });
         };
+        client.onStompError = frame => log('⛔ system', frame.headers['message'] || 'error');
         client.onWebSocketClose = () => document.getElementById('status').textContent = '🔴 disconnected';
         client.activate();
     }
 
-    async function send() {
-        const me = document.getElementById('me').value.trim();
+    function send() {
         const matchId = document.getElementById('match').value.trim();
         const input = document.getElementById('text');
-        const res = await fetch('/api/chats/' + matchId + '/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-User-Id': me },
+        client.publish({
+            destination: '/app/chats/' + matchId + '/send',
             body: JSON.stringify({ text: input.value })
         });
-        if (!res.ok) log('⚠️ system', 'send failed: ' + res.status);
         input.value = '';
     }
 </script>

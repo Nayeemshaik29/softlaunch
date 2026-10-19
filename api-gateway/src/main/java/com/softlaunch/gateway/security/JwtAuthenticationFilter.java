@@ -25,7 +25,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     public static final String USER_ID_HEADER = "X-User-Id";
 
     private static final List<String> PUBLIC_PATHS = List.of(
-            "/api/users/auth/"
+            "/api/users/auth/",
+            "/ws/"
     );
 
     private final SecretKey key;

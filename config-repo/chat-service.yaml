@@ -15,3 +15,5 @@ spring:
 softlaunch:
   chat:
     message-ttl: 1m
+  jwt:
+    secret: AqiH/i6xsQ9p4WXceT2MFqXhOwvfjX3pjK7cSUYjYF0=

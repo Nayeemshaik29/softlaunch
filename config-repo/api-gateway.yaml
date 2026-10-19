@@ -24,6 +24,10 @@ spring:
               uri: lb://chat-service
               predicates:
                 - Path=/api/chats/**
+            - id: chat-websocket
+              uri: lb:ws://chat-service
+              predicates:
+                - Path=/ws/**
 
 softlaunch:
   jwt:
