@@ -9,6 +9,7 @@ import com.softlaunch.chat.model.Message;
 import feign.FeignException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -25,12 +26,14 @@ public class ChatService {
     private final MessageRepository messageRepository;
     private final MatchClient matchClient;
     private final Duration messageTtl;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public ChatService(MessageRepository messageRepository, MatchClient matchClient,
-                       @Value("${softlaunch.chat.message-ttl}") Duration messageTtl) {
+                       @Value("${softlaunch.chat.message-ttl}") Duration messageTtl, SimpMessagingTemplate messagingTemplate) {
         this.messageRepository = messageRepository;
         this.matchClient = matchClient;
         this.messageTtl = messageTtl;
+        this.messagingTemplate = messagingTemplate;
     }
 
     public MessageResponse send(UUID me, UUID matchId, String text) {
@@ -38,7 +41,9 @@ public class ChatService {
         Instant now = Instant.now();
         Message saved = messageRepository.save(
                 new Message(matchId.toString(), me.toString(), text.strip(), now, now.plus(messageTtl)));
-        return MessageResponse.from(saved);
+        MessageResponse response = MessageResponse.from(saved);
+        messagingTemplate.convertAndSend("/topic/chats/" + matchId, response);
+        return response;
     }
 
     public List<MessageResponse> history(UUID me, UUID matchId) {
