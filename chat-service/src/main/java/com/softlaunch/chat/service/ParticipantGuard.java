@@ -18,7 +18,7 @@ public class ParticipantGuard {
         this.matchClient = matchClient;
     }
 
-    public void requireParticipant(UUID me, UUID matchId) {
+    public MatchSummary requireParticipant(UUID me, UUID matchId) {
         MatchSummary match;
         try {
             match = matchClient.getMatch(matchId);
@@ -30,5 +30,6 @@ public class ParticipantGuard {
         if (!match.involves(me)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat not found");
         }
+        return match;
     }
 }

@@ -7,22 +7,31 @@
     <style>
         body { font-family: sans-serif; max-width: 640px; margin: 24px auto; }
         input { width: 100%; padding: 6px; margin: 4px 0 10px; box-sizing: border-box; }
-        #log { border: 1px solid #ccc; height: 280px; overflow-y: auto; padding: 8px; background: #fafafa; }
+        #log { border: 1px solid #ccc; height: 260px; overflow-y: auto; padding: 8px; background: #fafafa; }
+        #presence { font-weight: bold; } #typing { color: #888; font-style: italic; min-height: 1.2em; }
         .msg { margin: 4px 0; }
     </style>
 </head>
 <body>
-<h2>💬 SoftLaunch chat test (secure)</h2>
+<h2>💬 SoftLaunch chat test (presence + typing)</h2>
 <label>Access token (from Postman login)</label><input id="token">
 <label>Match id</label><input id="match">
 <button onclick="connect()">Connect</button>
+<button onclick="disconnect()">Disconnect</button>
 <span id="status">⚪ disconnected</span>
+<p>Other person: <span id="presence">?</span></p>
 <div id="log"></div>
-<input id="text" placeholder="Type a message and press Send">
+<div id="typing"></div>
+<input id="text" placeholder="Type a message…" oninput="onTyping()">
 <button onclick="send()">Send</button>
 
 <script>
-    let client;
+    let client, me, matchId, pingTimer, typingTimer, lastTypingSent = 0;
+
+    function myIdFromToken(token) {
+        const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+        return JSON.parse(atob(payload)).sub;
+    }
 
     function log(sender, text) {
         const line = document.createElement('div');
@@ -36,34 +45,76 @@
         box.scrollTop = box.scrollHeight;
     }
 
+    function showPresence(p) {
+        const el = document.getElementById('presence');
+        if (p.online) {
+            el.textContent = '🟢 online';
+        } else if (p.lastSeen) {
+            el.textContent = '⚪ last seen ' + new Date(p.lastSeen).toLocaleTimeString();
+        } else {
+            el.textContent = '⚪ offline';
+        }
+    }
+
     function connect() {
         const token = document.getElementById('token').value.trim();
-        const matchId = document.getElementById('match').value.trim();
+        matchId = document.getElementById('match').value.trim();
+        me = myIdFromToken(token);
         client = new StompJs.Client({
             brokerURL: 'ws://localhost:8080/ws/chat',
             connectHeaders: { Authorization: 'Bearer ' + token },
             reconnectDelay: 0
         });
         client.onConnect = () => {
-            document.getElementById('status').textContent = '🟢 connected';
-            client.subscribe('/topic/chats/' + matchId, frame => {
-                const m = JSON.parse(frame.body);
+            document.getElementById('status').textContent = '🟢 connected as ' + me.substring(0, 8);
+            client.subscribe('/topic/chats/' + matchId + '/presence', f => {
+                const p = JSON.parse(f.body);
+                if (p.userId !== me) showPresence(p);
+            });
+            client.subscribe('/topic/chats/' + matchId + '/typing', f => {
+                const t = JSON.parse(f.body);
+                if (t.userId !== me) document.getElementById('typing').textContent = t.typing ? '✍️ typing…' : '';
+            });
+            client.subscribe('/topic/chats/' + matchId, f => {
+                const m = JSON.parse(f.body);
                 log(m.senderId.substring(0, 8), m.text);
             });
+            client.publish({ destination: '/app/chats/' + matchId + '/presence' });
+            pingTimer = setInterval(() => client.publish({ destination: '/app/presence/ping' }), 30000);
         };
         client.onStompError = frame => log('⛔ system', frame.headers['message'] || 'error');
-        client.onWebSocketClose = () => document.getElementById('status').textContent = '🔴 disconnected';
+        client.onWebSocketClose = () => {
+            clearInterval(pingTimer);
+            document.getElementById('status').textContent = '🔴 disconnected';
+        };
         client.activate();
     }
 
+    function disconnect() {
+        if (client) client.deactivate();
+    }
+
+    function publishTyping(typing) {
+        client.publish({ destination: '/app/chats/' + matchId + '/typing', body: JSON.stringify({ typing }) });
+    }
+
+    function onTyping() {
+        const now = Date.now();
+        if (now - lastTypingSent > 2000) {
+            publishTyping(true);
+            lastTypingSent = now;
+        }
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => { publishTyping(false); lastTypingSent = 0; }, 3000);
+    }
+
     function send() {
-        const matchId = document.getElementById('match').value.trim();
         const input = document.getElementById('text');
-        client.publish({
-            destination: '/app/chats/' + matchId + '/send',
-            body: JSON.stringify({ text: input.value })
-        });
+        client.publish({ destination: '/app/chats/' + matchId + '/send', body: JSON.stringify({ text: input.value }) });
         input.value = '';
+        clearTimeout(typingTimer);
+        publishTyping(false);
+        lastTypingSent = 0;
     }
 </script>
 </body>
