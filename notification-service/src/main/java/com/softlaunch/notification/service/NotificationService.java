@@ -3,6 +3,7 @@ package com.softlaunch.notification.service;
 import com.softlaunch.notification.dto.NotificationResponse;
 import com.softlaunch.notification.event.MatchCreatedEvent;
 import com.softlaunch.notification.event.MatchRemovedEvent;
+import com.softlaunch.notification.event.MessageSentEvent;
 import com.softlaunch.notification.model.Notification;
 import com.softlaunch.notification.model.NotificationType;
 import com.softlaunch.notification.repository.NotificationRepository;
@@ -21,6 +22,7 @@ public class NotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
     private static final String MATCH_MESSAGE = "You have a new match! 💘 Say hi before someone else does 😉";
+    private static final String NEW_MESSAGE_TEXT = "💬 You have a new message";
 
     private final NotificationRepository repository;
 
@@ -58,9 +60,31 @@ public class NotificationService {
         notification.markRead();
         return NotificationResponse.from(notification);
     }
+
     @Transactional
     public void handleMatchRemoved(MatchRemovedEvent event) {
-        long deleted = repository.deleteByReferenceIdAndType(event.matchId(), NotificationType.MATCH_CREATED);
+        long deleted = repository.deleteByReferenceIdAndType(event.matchId(), NotificationType.MATCH_CREATED)
+                + repository.deleteByReferenceIdAndType(event.matchId(), NotificationType.NEW_MESSAGE);
         log.info("Match {} removed, deleted {} notification(s)", event.matchId(), deleted);
+    }
+
+    @Transactional
+    public void handleMessageSent(MessageSentEvent event) {
+        if (event.recipientOnline()) {
+            log.info("Recipient {} is online, no notification needed", event.recipientId());
+            return;
+        }
+        if (repository.existsBySourceEventIdAndRecipientId(event.eventId(), event.recipientId())) {
+            log.info("Duplicate message.sent {}, skipping", event.eventId());
+            return;
+        }
+        if (repository.existsByRecipientIdAndReferenceIdAndTypeAndReadFalse(
+                event.recipientId(), event.matchId(), NotificationType.NEW_MESSAGE)) {
+            log.info("Unread message notification already exists for chat {}, collapsing", event.matchId());
+            return;
+        }
+        repository.save(new Notification(event.recipientId(), NotificationType.NEW_MESSAGE,
+                NEW_MESSAGE_TEXT, event.matchId(), event.eventId()));
+        log.info("Notified {} about a new message in chat {}", event.recipientId(), event.matchId());
     }
 }

@@ -34,6 +34,15 @@ public class KafkaErrorConfig {
         handler.addNotRetryableExceptions(JacksonException.class, InvalidEventException.class);
         return handler;
     }
+
+    @Bean
+    public NewTopic messageSentDltTopic() {
+        return TopicBuilder.name("message.sent.DLT")
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
     @Bean
     public NewTopic matchRemovedDltTopic() {
         return TopicBuilder.name("match.removed.DLT")

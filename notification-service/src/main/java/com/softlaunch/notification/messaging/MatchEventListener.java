@@ -2,6 +2,7 @@ package com.softlaunch.notification.messaging;
 
 import com.softlaunch.notification.event.MatchCreatedEvent;
 import com.softlaunch.notification.event.MatchRemovedEvent;
+import com.softlaunch.notification.event.MessageSentEvent;
 import com.softlaunch.notification.exception.InvalidEventException;
 import com.softlaunch.notification.service.NotificationService;
 import jakarta.validation.ConstraintViolation;
@@ -40,6 +41,12 @@ public class MatchEventListener {
     public void onMatchRemoved(String payload) {
         log.info("Received match.removed: {}", payload);
         notificationService.handleMatchRemoved(parseAndValidate(payload, MatchRemovedEvent.class));
+    }
+
+    @KafkaListener(topics = "message.sent")
+    public void onMessageSent(String payload) {
+        log.info("Received message.sent: {}", payload);
+        notificationService.handleMessageSent(parseAndValidate(payload, MessageSentEvent.class));
     }
 
     private <T> T parseAndValidate(String payload, Class<T> type) {

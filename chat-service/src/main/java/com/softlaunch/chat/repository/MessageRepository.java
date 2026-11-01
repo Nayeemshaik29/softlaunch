@@ -8,4 +8,6 @@ import java.util.List;
 public interface MessageRepository extends MongoRepository<Message, String> {
 
     List<Message> findTop50ByMatchIdOrderBySentAtDesc(String matchId);
+
+    long deleteByMatchId(String matchId);
 }

@@ -11,9 +11,14 @@ spring:
           match-service:
             connect-timeout: 1000
             read-timeout: 2000
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: chat-service
+      auto-offset-reset: earliest
 
 softlaunch:
   chat:
-    message-ttl: 1m
+    message-ttl: 24h
   jwt:
     secret: AqiH/i6xsQ9p4WXceT2MFqXhOwvfjX3pjK7cSUYjYF0=

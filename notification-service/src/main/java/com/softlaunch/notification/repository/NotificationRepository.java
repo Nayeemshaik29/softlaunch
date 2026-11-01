@@ -17,4 +17,7 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     Optional<Notification> findByIdAndRecipientId(UUID id, UUID recipientId);
 
     long deleteByReferenceIdAndType(UUID referenceId, NotificationType type);
+
+    boolean existsByRecipientIdAndReferenceIdAndTypeAndReadFalse(UUID recipientId, UUID referenceId,
+                                                                NotificationType type);
 }
