@@ -1,6 +1,7 @@
 package com.softlaunch.user.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -27,6 +28,13 @@ public class User {
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
+
+    // ---- Verification (set only by the user.verified event) ----
+    @ColumnDefault("false")
+    @Column(nullable = false)
+    private boolean verified;
+
+    private Instant verifiedAt;
 
     protected User() {
     }
@@ -60,5 +68,23 @@ public class User {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public boolean isVerified() {
+        return verified;
+    }
+
+    public Instant getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    /** @return false if already verified (duplicate event), so callers can skip side effects. */
+    public boolean markVerified(Instant at) {
+        if (verified) {
+            return false;
+        }
+        this.verified = true;
+        this.verifiedAt = at;
+        return true;
     }
 }

@@ -17,8 +17,24 @@ spring:
     redis:
       host: localhost
       port: 6379
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      properties:
+        max.block.ms: 5000          # if Kafka is down, fail in 5s instead of hanging 60s
+        request.timeout.ms: 3000
+        delivery.timeout.ms: 8000
+  cloud:
+    openfeign:
+      client:
+        config:
+          user-service:
+            connect-timeout: 1000
+            read-timeout: 2000
 
 softlaunch:
+  outbox:
+    poll-interval: 2s
   kyc:
     subject-pepper: dev-only-pepper-change-me
     digilocker:

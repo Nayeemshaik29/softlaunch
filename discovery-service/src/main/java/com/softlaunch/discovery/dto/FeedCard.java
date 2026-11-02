@@ -7,6 +7,7 @@ import java.util.UUID;
 public record FeedCard(
         UUID userId,
         String displayName,
+        boolean verified,
         Integer age,
         int distanceKm,
         String bio,

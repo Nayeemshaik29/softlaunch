@@ -38,6 +38,9 @@ public class Verification {
     @Column(name = "verified_dob")
     private LocalDate verifiedDob;
 
+    @Column(name = "name_matched")
+    private Boolean nameMatched;
+
     @Column(name = "failure_reason")
     private String failureReason;
 
@@ -56,11 +59,13 @@ public class Verification {
         return v;
     }
 
-    public static Verification verified(UUID userId, String subjectHash, String name, LocalDate dob) {
+    public static Verification verified(UUID userId, String subjectHash, String name, LocalDate dob,
+                                        boolean nameMatched) {
         Verification v = base(userId, VerificationStatus.VERIFIED);
         v.subjectHash = subjectHash;
         v.verifiedName = name;
         v.verifiedDob = dob;
+        v.nameMatched = nameMatched;
         return v;
     }
 

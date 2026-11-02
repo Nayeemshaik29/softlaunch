@@ -21,6 +21,7 @@ public class FeedService {
     private static final int MAX_SHARED_INTERESTS_COUNTED = 4;
     private static final int INTENT_MATCH_POINTS = 20;
     private static final int COMPLETE_PROFILE_POINTS = 4;
+    private static final int VERIFIED_POINTS = 10;      // trust boost, small enough not to beat a great match
 
     private final LocationService locationService;
     private final UserProfileClient userProfileClient;
@@ -102,9 +103,14 @@ public class FeedService {
             reasons.add("Nearby");
         }
 
-        int score = distancePoints + interestPoints + intentPoints + completenessPoints;
+        int verifiedPoints = them.verified() ? VERIFIED_POINTS : 0;
+        if (them.verified()) {
+            reasons.add("Verified ✅");
+        }
 
-        return new FeedCard(them.userId(), them.displayName(), them.age(), distanceKm, them.bio(), them.city(),
+        int score = distancePoints + interestPoints + intentPoints + completenessPoints + verifiedPoints;
+
+        return new FeedCard(them.userId(), them.displayName(), them.verified(), them.age(), distanceKm, them.bio(), them.city(),
                 them.lookingFor(), shared, them.photoUrls(), reasons, score);
     }
     private boolean isMutualFit(FeedProfile me, FeedProfile them) {

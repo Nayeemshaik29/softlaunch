@@ -7,6 +7,7 @@ import java.util.UUID;
 public record FeedProfile(
         UUID userId,
         String displayName,
+        boolean verified,
         Integer age,
         String bio,
         String city,

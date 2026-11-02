@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 public record InternalProfileResponse(
         UUID userId,
         String displayName,
+        boolean verified,
         Integer age,
         String bio,
         String city,
@@ -27,6 +28,7 @@ public record InternalProfileResponse(
         return new InternalProfileResponse(
                 p.getUserId(),
                 user.getDisplayName(),
+                user.isVerified(),
                 MyProfileResponse.ageOf(user.getDateOfBirth()),
                 p.getBio(),
                 p.getCity(),

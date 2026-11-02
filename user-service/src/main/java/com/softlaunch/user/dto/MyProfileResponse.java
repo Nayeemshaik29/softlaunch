@@ -13,6 +13,7 @@ import java.util.UUID;
 public record MyProfileResponse(
         UUID userId,
         String displayName,
+        boolean verified,
         Integer age,
         int completionPercent,
         String bio,
@@ -45,6 +46,7 @@ public record MyProfileResponse(
         return new MyProfileResponse(
                 p.getUserId(),
                 user.getDisplayName(),
+                user.isVerified(),
                 ageOf(user.getDateOfBirth()),
                 ProfileCompletion.percent(p),      // ← NEW
                 p.getBio(),

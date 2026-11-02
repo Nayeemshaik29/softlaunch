@@ -4,6 +4,7 @@ import com.softlaunch.user.dto.MyProfileResponse;
 import com.softlaunch.user.dto.ProfileRequest;
 import com.softlaunch.user.dto.PromptDto;
 import com.softlaunch.user.dto.PublicProfileResponse;
+import com.softlaunch.user.event.ProfileUpdatedEvent;
 import com.softlaunch.user.exception.ProfileNotFoundException;
 import com.softlaunch.user.exception.UserNotFoundException;
 import com.softlaunch.user.model.Profile;
@@ -49,7 +50,9 @@ public class ProfileService {
         apply(profile, request);
         profile.touch();
 
-        return MyProfileResponse.from(profileRepository.save(profile));
+        MyProfileResponse response = MyProfileResponse.from(profileRepository.save(profile));
+        eventPublisher.publishEvent(ProfileUpdatedEvent.of(userId));   // sent AFTER_COMMIT -> discovery evicts feed caches
+        return response;
     }
 
     private void apply(Profile p, ProfileRequest r) {

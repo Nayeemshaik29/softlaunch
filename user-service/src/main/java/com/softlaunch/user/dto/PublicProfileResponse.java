@@ -9,6 +9,7 @@ import java.util.UUID;
 public record PublicProfileResponse(
         UUID userId,
         String displayName,
+        boolean verified,
         Integer age,
         String bio,
         String pronouns,
@@ -33,6 +34,7 @@ public record PublicProfileResponse(
         return new PublicProfileResponse(
                 p.getUserId(),
                 user.getDisplayName(),
+                user.isVerified(),
                 MyProfileResponse.ageOf(user.getDateOfBirth()),
                 p.getBio(),
                 p.getPronouns(),

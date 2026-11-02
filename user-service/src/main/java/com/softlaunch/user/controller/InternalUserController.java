@@ -2,6 +2,7 @@ package com.softlaunch.user.controller;
 
 import com.softlaunch.user.dto.InternalProfileResponse;
 import com.softlaunch.user.dto.PublicProfileResponse;
+import com.softlaunch.user.dto.UserIdentity;
 import com.softlaunch.user.dto.UserSummary;
 import com.softlaunch.user.exception.UserNotFoundException;
 import com.softlaunch.user.repository.ProfileRepository;
@@ -32,6 +33,14 @@ public class InternalUserController {
                 .map(user -> new UserSummary(user.getId(), user.getDisplayName()))
                 .orElseThrow(() -> new UserNotFoundException(userId));
     }
+    /** Used by verification-service to compare DigiLocker details with what the user signed up with. */
+    @GetMapping("/{userId}/identity")
+    public UserIdentity getIdentity(@PathVariable UUID userId) {
+        return userRepository.findById(userId)
+                .map(user -> new UserIdentity(user.getId(), user.getDisplayName(), user.getDateOfBirth()))
+                .orElseThrow(() -> new UserNotFoundException(userId));
+    }
+
     @PostMapping("/profiles")
     @Transactional(readOnly = true)
     public List<InternalProfileResponse> getProfiles(@RequestBody List<UUID> userIds) {
