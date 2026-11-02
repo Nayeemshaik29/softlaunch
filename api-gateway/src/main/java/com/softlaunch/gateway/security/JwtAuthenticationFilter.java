@@ -26,7 +26,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private static final List<String> PUBLIC_PATHS = List.of(
             "/api/users/auth/",
-            "/ws/"
+            "/ws/",
+            "/api/verification/digilocker/callback"
     );
 
     private final SecretKey key;

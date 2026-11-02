@@ -36,6 +36,18 @@ services:
     volumes:
       - notification-db-data:/var/lib/postgresql/data
 
+  verification-db:
+    image: postgres:17
+    container_name: softlaunch-verification-db
+    environment:
+      POSTGRES_DB: verification_db
+      POSTGRES_USER: softlaunch
+      POSTGRES_PASSWORD: softlaunch
+    ports:
+      - "5436:5432"
+    volumes:
+      - verification-db-data:/var/lib/postgresql/data
+
   redis:
     image: redis:7-alpine
     container_name: softlaunch-redis
@@ -59,4 +71,4 @@ volumes:
   match-db-data:
   chat-db-data:
   notification-db-data:
-
+  verification-db-data:

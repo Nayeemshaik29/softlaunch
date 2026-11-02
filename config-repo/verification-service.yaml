@@ -1,0 +1,30 @@
+server:
+  port: 8086
+
+spring:
+  mvc:
+    problemdetails:
+      enabled: true           # error replies include the reason ("detail")
+  datasource:
+    url: jdbc:postgresql://localhost:5436/verification_db
+    username: softlaunch
+    password: softlaunch
+  jpa:
+    hibernate:
+      ddl-auto: validate      # Hibernate only CHECKS the tables; Flyway CREATES them
+    open-in-view: false       # production setting: no DB queries while writing the HTTP response
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+softlaunch:
+  kyc:
+    subject-pepper: dev-only-pepper-change-me
+    digilocker:
+      authorize-url: https://not-used-in-dev.invalid
+      token-url: https://not-used-in-dev.invalid
+      client-id: dev
+      client-secret: dev
+      redirect-uri: http://localhost:8080/api/verification/digilocker/callback
+      app-return-url: softlaunch://verification

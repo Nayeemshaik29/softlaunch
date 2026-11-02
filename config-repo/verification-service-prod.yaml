@@ -1,0 +1,12 @@
+# Loaded on top of verification-service.yaml only when SPRING_PROFILES_ACTIVE=prod.
+# Secrets come from environment variables on the server, never from git.
+softlaunch:
+  kyc:
+    subject-pepper: ${KYC_SUBJECT_PEPPER}
+    digilocker:
+      authorize-url: ${DIGILOCKER_AUTHORIZE_URL}
+      token-url: ${DIGILOCKER_TOKEN_URL}
+      client-id: ${DIGILOCKER_CLIENT_ID}
+      client-secret: ${DIGILOCKER_CLIENT_SECRET}
+      redirect-uri: ${DIGILOCKER_REDIRECT_URI}     # e.g. https://api.<your-domain>/api/verification/digilocker/callback
+      app-return-url: ${APP_RETURN_URL}            # e.g. https://<your-domain>/verification (Android App Link)
