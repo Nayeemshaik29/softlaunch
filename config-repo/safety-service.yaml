@@ -1,0 +1,28 @@
+server:
+  port: 8087
+
+spring:
+  mongodb:
+    uri: mongodb://localhost:27017/safety_db     # same Mongo server as chat, separate database
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  mvc:
+    problemdetails:
+      enabled: true
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            connect-timeout: 1000
+            read-timeout: 2000
+
+softlaunch:
+  safety:
+    daily-report-limit: 10
+    escalation-reporters: 3
+    escalation-window: 30d
+    evidence-messages: 20
+    retention: 365d

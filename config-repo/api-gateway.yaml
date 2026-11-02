@@ -28,6 +28,10 @@ spring:
               uri: lb://verification-service
               predicates:
                 - Path=/api/verification/**
+            - id: safety-service
+              uri: lb://safety-service
+              predicates:
+                - Path=/api/safety/**
             - id: chat-websocket
               uri: lb:ws://chat-service
               predicates:
