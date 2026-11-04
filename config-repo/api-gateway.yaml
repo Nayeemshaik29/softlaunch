@@ -1,4 +1,6 @@
 spring:
+  reactor:
+    context-propagation: auto
   cloud:
     gateway:
       server:

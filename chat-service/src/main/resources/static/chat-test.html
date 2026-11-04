@@ -13,7 +13,7 @@
     </style>
 </head>
 <body>
-<h2>💬 SoftLaunch chat test (presence + typing)</h2>
+<h2>💬 SoftLaunch chat test (presence + typing + screenshot alerts)</h2>
 <label>Access token (from Postman login)</label><input id="token">
 <label>Match id</label><input id="match">
 <button onclick="connect()">Connect</button>
@@ -24,6 +24,10 @@
 <div id="typing"></div>
 <input id="text" placeholder="Type a message…" oninput="onTyping()">
 <button onclick="send()">Send</button>
+<p>Simulate what the phone app detects:
+<button onclick="capture('SCREENSHOT')">📸 I took a screenshot</button>
+<button onclick="capture('SCREEN_RECORDING')">🎥 I started recording</button></p>
+<div id="alert" style="color:#b00020;font-weight:bold"></div>
 
 <script>
     let client, me, matchId, pingTimer, typingTimer, lastTypingSent = 0;
@@ -77,7 +81,17 @@
             });
             client.subscribe('/topic/chats/' + matchId, f => {
                 const m = JSON.parse(f.body);
-                log(m.senderId.substring(0, 8), m.text);
+                if (m.type === 'SYSTEM') {
+                    log('ℹ️ system', (m.senderId === me ? 'You ' : m.senderId.substring(0, 8) + ' ') + m.text);
+                } else {
+                    log(m.senderId.substring(0, 8), m.text);
+                }
+            });
+            client.subscribe('/topic/chats/' + matchId + '/alerts', f => {
+                const a = JSON.parse(f.body);
+                if (a.userId === me) return;   // don't alert myself
+                const what = a.kind === 'SCREEN_RECORDING' ? 'is recording the screen' : 'took a screenshot';
+                document.getElementById('alert').textContent = '⚠️ ' + a.userId.substring(0, 8) + ' ' + what + ' of this chat';
             });
             client.publish({ destination: '/app/chats/' + matchId + '/presence' });
             pingTimer = setInterval(() => client.publish({ destination: '/app/presence/ping' }), 30000);
@@ -106,6 +120,10 @@
         }
         clearTimeout(typingTimer);
         typingTimer = setTimeout(() => { publishTyping(false); lastTypingSent = 0; }, 3000);
+    }
+
+    function capture(kind) {
+        client.publish({ destination: '/app/chats/' + matchId + '/screenshot', body: JSON.stringify({ kind }) });
     }
 
     function send() {

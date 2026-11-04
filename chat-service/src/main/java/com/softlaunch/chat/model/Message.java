@@ -16,11 +16,17 @@ public class Message {
     private String text;
     private Instant sentAt;
     private Instant expiresAt;
+    private MessageType type;          // null on old messages = TEXT
 
     protected Message() {
     }
 
     public Message(String matchId, String senderId, String text, Instant sentAt, Instant expiresAt) {
+        this(matchId, senderId, text, sentAt, expiresAt, MessageType.TEXT);
+    }
+
+    public Message(String matchId, String senderId, String text, Instant sentAt, Instant expiresAt, MessageType type) {
+        this.type = type;
         this.matchId = matchId;
         this.senderId = senderId;
         this.text = text;
@@ -34,4 +40,5 @@ public class Message {
     public String getText() { return text; }
     public Instant getSentAt() { return sentAt; }
     public Instant getExpiresAt() { return expiresAt; }
+    public MessageType getType() { return type == null ? MessageType.TEXT : type; }
 }

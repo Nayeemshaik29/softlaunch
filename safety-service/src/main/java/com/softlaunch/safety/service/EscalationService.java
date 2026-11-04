@@ -4,7 +4,9 @@ import com.softlaunch.safety.config.SafetyProperties;
 import com.softlaunch.safety.model.Report;
 import com.softlaunch.safety.model.ReportPriority;
 import com.softlaunch.safety.model.ReportStatus;
+import com.softlaunch.safety.event.ReviewStatusEvent;
 import com.softlaunch.safety.model.UserSafetyStatus;
+import com.softlaunch.safety.outbox.PendingEvents;
 import com.softlaunch.safety.repository.ReportRepository;
 import com.softlaunch.safety.repository.UserSafetyStatusRepository;
 import org.slf4j.Logger;
@@ -31,18 +33,22 @@ public class EscalationService {
     private final ReportRepository reportRepository;
     private final UserSafetyStatusRepository statusRepository;
     private final SafetyProperties props;
+    private final PendingEvents pendingEvents;
 
     public EscalationService(MongoTemplate mongoTemplate, ReportRepository reportRepository,
-                             UserSafetyStatusRepository statusRepository, SafetyProperties props) {
+                             UserSafetyStatusRepository statusRepository, SafetyProperties props,
+                             PendingEvents pendingEvents) {
         this.mongoTemplate = mongoTemplate;
         this.reportRepository = reportRepository;
         this.statusRepository = statusRepository;
         this.props = props;
+        this.pendingEvents = pendingEvents;
     }
 
     public long distinctReporters(UUID userId) {
         Instant since = Instant.now().minus(props.escalationWindow());
-        Query query = Query.query(Criteria.where("reportedUserId").is(userId.toString()).and("createdAt").gte(since));
+        Query query = Query.query(Criteria.where("reportedUserId").is(userId.toString()).and("createdAt").gte(since)
+                .and("reporterId").ne(Report.SYSTEM_REPORTER.toString()));   // only real people count
         return mongoTemplate.findDistinct(query, "reporterId", Report.class, String.class).size();
     }
 
@@ -68,7 +74,7 @@ public class EscalationService {
                 : reporters + " different users reported this person";
         UserSafetyStatus status = statusRepository.findById(userId.toString())
                 .orElseGet(() -> UserSafetyStatus.clean(userId));
-        if (status.putUnderReview(reason)) {
+        if (status.putUnderReview(reason, pendingEvents.of(ReviewStatusEvent.of(userId, true)))) {
             statusRepository.save(status);
             log.warn("User {} is now UNDER REVIEW: {}", userId, reason);
         }

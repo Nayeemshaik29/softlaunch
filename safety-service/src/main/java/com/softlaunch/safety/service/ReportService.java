@@ -42,6 +42,9 @@ public class ReportService {
     }
 
     public ReportReceipt create(UUID reporterId, CreateReportRequest req) {
+        if (!req.reason().isUserSelectable()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This reason can't be chosen");
+        }
         if (reporterId.equals(req.reportedUserId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You can't report yourself");
         }

@@ -20,6 +20,20 @@ public class MessageEventPublisher {
         this.jsonMapper = jsonMapper;
     }
 
+    /** Key = takerId: all of one user's captures go to one partition, in order (safety counts them per user). */
+    public void publish(ScreenshotTakenEvent event) {
+        String payload = jsonMapper.writeValueAsString(event);
+        kafkaTemplate.send(KafkaTopicConfig.SCREENSHOT_TAKEN, event.takerId().toString(), payload)
+                .whenComplete((result, ex) -> {
+                    if (ex != null) {
+                        // the live alert already went out; only the safety log is affected
+                        log.error("Failed to publish screenshot.taken {}", event.eventId(), ex);
+                    } else {
+                        log.info("Published screenshot.taken {} ({} by {})", event.eventId(), event.kind(), event.takerId());
+                    }
+                });
+    }
+
     public void publish(MessageSentEvent event) {
         String payload = jsonMapper.writeValueAsString(event);
         kafkaTemplate.send(KafkaTopicConfig.MESSAGE_SENT, event.matchId().toString(), payload)

@@ -1,5 +1,8 @@
 package com.softlaunch.chat.controller;
 
+import com.softlaunch.chat.dto.ScreenshotRequest;
+import com.softlaunch.chat.service.ScreenshotService;
+
 import com.softlaunch.chat.client.MatchSummary;
 import com.softlaunch.chat.dto.SendMessageRequest;
 import com.softlaunch.chat.dto.TypingEvent;
@@ -26,9 +29,12 @@ public class ChatWebSocketController {
     private final PresenceService presenceService;
     private final ParticipantGuard participantGuard;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ScreenshotService screenshotService;
 
     public ChatWebSocketController(ChatService chatService, PresenceService presenceService,
-                                   ParticipantGuard participantGuard, SimpMessagingTemplate messagingTemplate) {
+                                   ParticipantGuard participantGuard, SimpMessagingTemplate messagingTemplate,
+                                   ScreenshotService screenshotService) {
+        this.screenshotService = screenshotService;
         this.chatService = chatService;
         this.presenceService = presenceService;
         this.participantGuard = participantGuard;
@@ -62,6 +68,15 @@ public class ChatWebSocketController {
         MatchSummary match = participantGuard.requireParticipant(me, matchId);
         messagingTemplate.convertAndSend("/topic/chats/" + matchId + "/presence",
                 presenceService.presenceOf(match.otherThan(me).toString()));
+    }
+
+    @MessageMapping("/chats/{matchId}/screenshot")
+    public void screenshot(@DestinationVariable UUID matchId, ScreenshotRequest request, Principal principal,
+                           SimpMessageHeaderAccessor accessor) {
+        if (!isAllowed(accessor, matchId) || request == null || request.kind() == null) {
+            return;
+        }
+        screenshotService.captured(UUID.fromString(principal.getName()), matchId, request.kind());
     }
 
     @MessageMapping("/presence/ping")

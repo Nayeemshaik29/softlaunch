@@ -19,9 +19,15 @@ spring:
             read-timeout: 2000
   kafka:
     bootstrap-servers: localhost:9092
+    consumer:
+      group-id: match-service
+      auto-offset-reset: earliest
   grpc:
     server:
       port: 9091
+      health:
+        schedule:
+          enabled: false   # we probe /actuator/health over HTTP; this 5s copy only created Redis noise in traces
 
 softlaunch:
   swipes:

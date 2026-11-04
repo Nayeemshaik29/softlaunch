@@ -13,6 +13,9 @@ spring:
             read-timeout: 2000
   kafka:
     bootstrap-servers: localhost:9092
+    producer:
+      properties:
+        max.block.ms: 3000          # never hang a user's request for 60s if Kafka is down
     consumer:
       group-id: chat-service
       auto-offset-reset: earliest

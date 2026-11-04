@@ -10,7 +10,11 @@ import java.time.Duration;
  * @param escalationWindow   how far back we count reporters
  * @param evidenceMessages   how many recent chat messages we copy into a report
  * @param retention          reports are deleted automatically after this (data-retention policy)
+ * @param screenshotPeople   capturing chats of this many DIFFERENT people in the window = system report
+ * @param screenshotWindow   how far back we look for the screenshot pattern
+ * @param screenshotRetention how long one capture record is kept
  */
 @ConfigurationProperties("softlaunch.safety")
 public record SafetyProperties(int dailyReportLimit, int escalationReporters, Duration escalationWindow,
-                               int evidenceMessages, Duration retention) { }
+                               int evidenceMessages, Duration retention,
+                               int screenshotPeople, Duration screenshotWindow, Duration screenshotRetention) { }

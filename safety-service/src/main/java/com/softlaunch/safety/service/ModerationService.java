@@ -5,7 +5,9 @@ import com.softlaunch.safety.dto.ReviewRequest;
 import com.softlaunch.safety.dto.UserSafetyResponse;
 import com.softlaunch.safety.model.Report;
 import com.softlaunch.safety.model.ReportStatus;
+import com.softlaunch.safety.event.ReviewStatusEvent;
 import com.softlaunch.safety.model.UserSafetyStatus;
+import com.softlaunch.safety.outbox.PendingEvents;
 import com.softlaunch.safety.repository.ReportRepository;
 import com.softlaunch.safety.repository.UserSafetyStatusRepository;
 import org.slf4j.Logger;
@@ -26,12 +28,14 @@ public class ModerationService {
     private final ReportRepository reportRepository;
     private final UserSafetyStatusRepository statusRepository;
     private final EscalationService escalationService;
+    private final PendingEvents pendingEvents;
 
     public ModerationService(ReportRepository reportRepository, UserSafetyStatusRepository statusRepository,
-                             EscalationService escalationService) {
+                             EscalationService escalationService, PendingEvents pendingEvents) {
         this.reportRepository = reportRepository;
         this.statusRepository = statusRepository;
         this.escalationService = escalationService;
+        this.pendingEvents = pendingEvents;
     }
 
     /** The moderator queue: URGENT first, then HIGH, then NORMAL; oldest first inside each. */
@@ -60,7 +64,7 @@ public class ModerationService {
         UUID userId = report.getReportedUserId();
         if (reportRepository.countByReportedUserIdAndStatus(userId.toString(), ReportStatus.OPEN) == 0) {
             statusRepository.findById(userId.toString()).filter(UserSafetyStatus::isUnderReview).ifPresent(s -> {
-                s.clearReview();
+                s.clearReview(pendingEvents.of(ReviewStatusEvent.of(userId, false)));
                 statusRepository.save(s);
                 log.info("User {} is no longer under review", userId);
             });

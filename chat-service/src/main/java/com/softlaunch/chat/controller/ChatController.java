@@ -1,5 +1,9 @@
 package com.softlaunch.chat.controller;
 
+import com.softlaunch.chat.dto.ScreenshotRequest;
+import com.softlaunch.chat.dto.ScreenshotResult;
+import com.softlaunch.chat.service.ScreenshotService;
+
 import com.softlaunch.chat.dto.MessageResponse;
 import com.softlaunch.chat.dto.SendMessageRequest;
 import com.softlaunch.chat.service.ChatService;
@@ -15,9 +19,19 @@ import java.util.UUID;
 public class ChatController {
 
     private final ChatService chatService;
+    private final ScreenshotService screenshotService;
 
-    public ChatController(ChatService chatService) {
+    public ChatController(ChatService chatService, ScreenshotService screenshotService) {
         this.chatService = chatService;
+        this.screenshotService = screenshotService;
+    }
+
+    /** REST fallback for when the app has no live WebSocket (e.g. screenshot right after opening). */
+    @PostMapping("/{matchId}/screenshot")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public ScreenshotResult screenshot(@RequestHeader("X-User-Id") UUID me, @PathVariable UUID matchId,
+                                       @Valid @RequestBody ScreenshotRequest request) {
+        return screenshotService.captured(me, matchId, request.kind());
     }
 
     @PostMapping("/{matchId}/messages")

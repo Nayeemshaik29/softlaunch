@@ -11,6 +11,9 @@ import java.util.UUID;
 @Document(collection = "reports")
 public class Report {
 
+    /** reporterId used for reports the system files on its own (e.g. screenshot pattern). */
+    public static final UUID SYSTEM_REPORTER = new UUID(0L, 0L);
+
     @Id
     private String id;
 

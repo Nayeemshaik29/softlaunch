@@ -9,3 +9,33 @@ eureka:
         hostname: localhost
         instance-id: ${spring.application.name}:${server.port}
 
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        spring.cloud.gateway.requests: true
+  tracing:
+    sampling:
+      probability: 1.0
+  observations:
+    enable:
+      "[tasks.scheduled]": false   # outbox pollers run every 2s; tracing each empty poll is noise
+
+spring:
+  kafka:
+    template:
+      observation-enabled: true
+    listener:
+      observation-enabled: true

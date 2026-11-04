@@ -11,6 +11,7 @@ import com.softlaunch.match.model.Swipe;
 import com.softlaunch.match.model.SwipeDirection;
 import com.softlaunch.match.repository.MatchRepository;
 import com.softlaunch.match.repository.SwipeRepository;
+import com.softlaunch.match.repository.UserBlockRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,10 +30,13 @@ public class SwipeService {
     private final MatchRepository matchRepository;
     private final SwipeQuotaService swipeQuotaService;
     private final UserVerifier userVerifier;
+    private final UserBlockRepository userBlockRepository;
 
     public SwipeService(ApplicationEventPublisher eventPublisher, SwipeRepository swipeRepository,
                         MatchRepository matchRepository,
-                        SwipeQuotaService swipeQuotaService, UserVerifier userVerifier) {
+                        SwipeQuotaService swipeQuotaService, UserVerifier userVerifier,
+                        UserBlockRepository userBlockRepository) {
+        this.userBlockRepository = userBlockRepository;
         this.eventPublisher = eventPublisher;
         this.swipeRepository = swipeRepository;
         this.matchRepository = matchRepository;
@@ -58,7 +62,9 @@ public class SwipeService {
                 SwipeRecordedEvent.of(saved.getId(), swiperId, targetId, request.direction().name())); // 🆕
 
         UUID matchId = null;
-        if (POSITIVE.contains(request.direction()) && likedBack(targetId, swiperId)) {
+        // Blocked pairs never match. We don't say why: the swipe just looks like "no match yet".
+        if (POSITIVE.contains(request.direction()) && likedBack(targetId, swiperId)
+                && !userBlockRepository.isBlocked(swiperId, targetId)) {
             matchId = createMatch(swiperId, targetId);
         }
 

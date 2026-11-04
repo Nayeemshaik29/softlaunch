@@ -22,7 +22,7 @@ public class StompAuthInterceptor implements ChannelInterceptor {
     public static final String SESSION_CHATS = "chats";
 
     private static final String CHAT_TOPIC_PREFIX = "/topic/chats/";
-    private static final Set<String> ALLOWED_SUFFIXES = Set.of("typing", "presence");
+    private static final Set<String> ALLOWED_SUFFIXES = Set.of("typing", "presence", "alerts");
 
     private final JwtVerifier jwtVerifier;
     private final ParticipantGuard participantGuard;

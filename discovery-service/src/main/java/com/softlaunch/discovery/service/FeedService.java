@@ -26,19 +26,28 @@ public class FeedService {
     private final LocationService locationService;
     private final UserProfileClient userProfileClient;
     private final FeedCache feedCache;
+    private final SafetyFilter safetyFilter;
 
-    public FeedService(LocationService locationService, UserProfileClient userProfileClient, FeedCache feedCache) {
+    public FeedService(LocationService locationService, UserProfileClient userProfileClient, FeedCache feedCache,
+                       SafetyFilter safetyFilter) {
         this.locationService = locationService;
         this.userProfileClient = userProfileClient;
         this.feedCache = feedCache;
+        this.safetyFilter = safetyFilter;
     }
 
     public List<FeedCard> feed(UUID me, int radiusKm) {
-        return feedCache.get(me, radiusKm).orElseGet(() -> {
+        List<FeedCard> feed = feedCache.get(me, radiusKm).orElseGet(() -> {
             List<FeedCard> fresh = buildFeed(me, radiusKm);
             feedCache.put(me, radiusKm, fresh);
             return fresh;
         });
+        // Applied on EVERY read, even cached feeds: a block or review must take effect immediately.
+        Set<String> hidden = safetyFilter.hiddenFrom(me);
+        if (hidden.isEmpty()) {
+            return feed;
+        }
+        return feed.stream().filter(card -> !hidden.contains(card.userId().toString())).toList();
     }
 
     private List<FeedCard> buildFeed(UUID me, int radiusKm) {
