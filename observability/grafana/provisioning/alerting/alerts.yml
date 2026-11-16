@@ -1,0 +1,173 @@
+# Grafana alerting "as code": loaded at startup, so rules live in git, not hand-clicked in the UI.
+# Flow: rule query (A) -> threshold (B) -> Pending for `for:` -> Firing -> policy -> contact point.
+# NOTE: unlike datasources.yml, alert-rule files do NOT expand $ENV vars, so write a single $ here (not $$).
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: softlaunch-webhook
+    receivers:
+      - uid: softlaunch-webhook
+        type: webhook
+        settings:
+          # local test receiver (see alert-webhook in docker-compose). In production swap for Telegram / email / Slack.
+          url: http://alert-webhook:8080/
+        disableResolveMessage: false
+
+policies:
+  - orgId: 1
+    receiver: softlaunch-webhook
+    group_by: [alertname, service]
+    group_wait: 10s        # wait a bit so alerts that fire together arrive as one message
+    group_interval: 1m
+    repeat_interval: 4h    # still broken after 4h? remind again
+
+groups:
+  - orgId: 1
+    name: softlaunch-alerts
+    folder: SoftLaunch
+    interval: 10s          # must be a multiple of 10s (Grafana's scheduler tick)
+    rules:
+
+      - uid: service-down
+        title: Service down
+        condition: B
+        for: 1m
+        noDataState: OK
+        execErrState: Error
+        labels: { severity: critical }
+        annotations:
+          summary: "{{ $labels.service }} is DOWN"
+          description: "Prometheus cannot reach {{ $labels.service }} ({{ $labels.instance }}) for over 1 minute."
+        data:
+          - refId: A
+            relativeTimeRange: { from: 60, to: 0 }
+            datasourceUid: prometheus
+            model: { refId: A, instant: true, expr: 'up{job="softlaunch"}' }
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions: [ { evaluator: { type: lt, params: [1] } } ]
+
+      - uid: high-error-rate
+        title: High error rate
+        condition: B
+        for: 2m
+        noDataState: OK          # no traffic = no data = nothing to complain about
+        execErrState: Error
+        labels: { severity: critical }
+        annotations:
+          summary: "{{ $labels.service }}: {{ humanizePercentage $values.A.Value }} of requests fail (5xx)"
+          description: "More than 5% of requests to {{ $labels.service }} returned 5xx for 2 minutes."
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              # share of 5xx; the `> 0.2` part ignores services with almost no traffic (1 error out of 2 calls is not an incident)
+              expr: |
+                label_replace(
+                  sum by (application) (rate(http_server_requests_seconds_count{status=~"5..", uri!~"/actuator.*"}[2m]))
+                  / sum by (application) (rate(http_server_requests_seconds_count{uri!~"/actuator.*"}[2m]))
+                  and sum by (application) (rate(http_server_requests_seconds_count{uri!~"/actuator.*"}[2m])) > 0.2,
+                "service", "$1", "application", "(.*)")
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions: [ { evaluator: { type: gt, params: [0.05] } } ]
+
+      - uid: slow-responses
+        title: Slow responses (p95)
+        condition: B
+        for: 5m
+        noDataState: OK
+        execErrState: Error
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.service }}: p95 response time is {{ humanizeDuration $values.A.Value }}"
+          description: "5% of requests to {{ $labels.service }} take longer than 1s, for 5 minutes."
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: |
+                label_replace(
+                  histogram_quantile(0.95, sum by (application, le) (rate(http_server_requests_seconds_bucket{uri!~"/actuator.*"}[5m]))),
+                "service", "$1", "application", "(.*)")
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions: [ { evaluator: { type: gt, params: [1] } } ]
+
+      - uid: kafka-consumer-lag
+        title: Kafka consumer lag
+        condition: B
+        for: 2m                  # a short backlog right after a restart is normal; 2 minutes of it is not
+        noDataState: OK
+        execErrState: Error
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.service }} is {{ $values.A.Value }} Kafka messages behind"
+          description: "A consumer in {{ $labels.service }} has been more than 100 messages behind for 2 minutes. Notifications / safety events are delayed."
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: |
+                label_replace(
+                  max by (application) (kafka_consumer_fetch_manager_records_lag_max),
+                "service", "$1", "application", "(.*)")
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions: [ { evaluator: { type: gt, params: [100] } } ]
+
+      - uid: circuit-breaker-open
+        title: Circuit breaker open
+        condition: B
+        for: 30s
+        noDataState: OK
+        execErrState: Error
+        labels: { severity: critical }
+        annotations:
+          summary: "{{ $labels.service }}: circuit breaker '{{ $labels.name }}' is OPEN"
+          description: "{{ $labels.service }} stopped calling {{ $labels.name }} because too many calls failed."
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              # max_over_time: the breaker flips open -> half-open every 10s; this keeps it "open" between scrapes
+              expr: |
+                label_replace(
+                  max by (application, name) (max_over_time(resilience4j_circuitbreaker_state{state=~"open|forced_open"}[1m])),
+                "service", "$1", "application", "(.*)")
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions: [ { evaluator: { type: gt, params: [0] } } ]

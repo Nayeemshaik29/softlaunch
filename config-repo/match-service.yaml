@@ -41,6 +41,7 @@ resilience4j:
         minimum-number-of-calls: 3
         failure-rate-threshold: 50
         wait-duration-in-open-state: 10s
+        automatic-transition-from-open-to-half-open-enabled: true   # don't stay OPEN forever when there is no traffic to test with
         permitted-number-of-calls-in-half-open-state: 2
   timelimiter:
     instances:

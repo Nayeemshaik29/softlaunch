@@ -104,6 +104,13 @@ services:
     depends_on:
       - prometheus
 
+  alert-webhook:
+    image: python:3.13-alpine
+    container_name: softlaunch-alert-webhook
+    command: ["python", "-u", "/app/receiver.py"]
+    volumes:
+      - ./observability/alert-webhook/receiver.py:/app/receiver.py:ro
+
 volumes:
   user-db-data:
   match-db-data:
