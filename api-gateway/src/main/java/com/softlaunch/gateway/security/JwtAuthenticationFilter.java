@@ -4,8 +4,6 @@ import com.softlaunch.gateway.config.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -33,7 +31,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     private final SecretKey key;
 
     public JwtAuthenticationFilter(JwtProperties properties) {
-        this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(properties.secret()));
+        this.key = JwtKeys.fromBase64(properties.secret());
     }
 
     @Override

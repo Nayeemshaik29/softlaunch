@@ -2,7 +2,9 @@ spring:
   application:
     name: api-gateway
   config:
-    import: "configserver:http://localhost:8888"
+    # ../.env = the project root when started from this module's folder (mvnw or IntelliJ).
+    # "optional:" so production (real env vars, no file) still starts. The file is git-ignored.
+    import: "optional:file:../.env[.properties], configserver:http://localhost:8888"
 
 server:
   port: 8080

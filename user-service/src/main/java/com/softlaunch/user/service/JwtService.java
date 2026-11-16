@@ -3,8 +3,6 @@ package com.softlaunch.user.service;
 import com.softlaunch.user.config.JwtProperties;
 import com.softlaunch.user.model.User;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -19,7 +17,7 @@ public class JwtService {
     private final Duration expiration;
 
     public JwtService(JwtProperties properties) {
-        this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(properties.secret()));
+        this.key = JwtKeys.fromBase64(properties.secret());
         this.expiration = properties.expiration();
     }
 

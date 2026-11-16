@@ -25,5 +25,5 @@ softlaunch:
     max-failures: 5      # wrong passwords for one email...
     lock-duration: 15m   # ...within this window => that email is locked for the rest of it
   jwt:
-    secret: AqiH/i6xsQ9p4WXceT2MFqXhOwvfjX3pjK7cSUYjYF0=
+    secret: ${JWT_SECRET}   # from the environment (.env locally). Never put the real value in git.
     expiration: 15m

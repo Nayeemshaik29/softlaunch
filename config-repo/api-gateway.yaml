@@ -88,4 +88,4 @@ softlaunch:
   rate-limit:
     trusted-proxies: 0   # set to 1 in the cloud (behind one load balancer), see RateLimitConfig
   jwt:
-    secret: AqiH/i6xsQ9p4WXceT2MFqXhOwvfjX3pjK7cSUYjYF0=
+    secret: ${JWT_SECRET}   # from the environment (.env locally). Never put the real value in git.
