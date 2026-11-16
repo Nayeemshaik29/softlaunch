@@ -798,6 +798,105 @@
         }
       ],
       "description": "Tokens in (prompt) and out (answer). With a paid API this would be your bill; with Ollama it's CPU/GPU time."
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "\ud83d\udea8 Scam screening: verdicts / min",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 52,
+        "w": 8,
+        "h": 8
+      },
+      "description": "Only suspicious messages get a verdict. scam_* = sent to moderators. scam_rules_override = message tried to fool the AI. skipped = AI down.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (verdict) (rate(softlaunch_scam_verdicts_total[5m])) * 60",
+          "legendFormat": "{{verdict}}"
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "\ud83d\udea8 Share of messages sent to the LLM",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 52,
+        "w": 8,
+        "h": 8
+      },
+      "description": "Rules let most messages through without an LLM call. If this climbs, the rules are too loose (cost + Kafka lag).",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(softlaunch_scam_verdicts_total[30m])) / sum(rate(softlaunch_scam_screened_total[30m]))",
+          "legendFormat": "LLM share"
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "type": "timeseries",
+      "title": "\ud83d\udea8 Rule signals / min",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 52,
+        "w": 8,
+        "h": 8
+      },
+      "description": "Which warning signs fire. Use it to tune the rules.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (signal) (rate(softlaunch_scam_signals_total[5m])) * 60",
+          "legendFormat": "{{signal}}"
+        }
+      ]
     }
   ]
 }

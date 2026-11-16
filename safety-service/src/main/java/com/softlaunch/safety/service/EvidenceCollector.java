@@ -51,7 +51,11 @@ public class EvidenceCollector {
             report.evidenceUnavailable();
             return;
         }
-        if (!match.isBetween(report.getReporterId(), report.getReportedUserId())) {
+        // a person may only attach their OWN chat; an automatic report only needs the reported user to be in it
+        boolean allowed = report.isSystemReport()
+                ? match.includes(report.getReportedUserId())
+                : match.isBetween(report.getReporterId(), report.getReportedUserId());
+        if (!allowed) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only attach your own chats");
         }
         try {

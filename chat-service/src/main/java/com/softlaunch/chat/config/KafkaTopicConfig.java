@@ -10,12 +10,23 @@ public class KafkaTopicConfig {
 
     public static final String MESSAGE_SENT = "message.sent";
     public static final String SCREENSHOT_TAKEN = "screenshot.taken";
+    public static final String MESSAGE_SCREENING = "message.screening";
 
     @Bean
     public NewTopic screenshotTakenTopic() {
         return TopicBuilder.name(SCREENSHOT_TAKEN)
                 .partitions(3)
                 .replicas(1)
+                .build();
+    }
+
+    /** Carries message TEXT: Kafka deletes it after 24h (same as the chat message), only ai-service reads it. */
+    @Bean
+    public NewTopic messageScreeningTopic() {
+        return TopicBuilder.name(MESSAGE_SCREENING)
+                .partitions(3)
+                .replicas(1)
+                .config("retention.ms", String.valueOf(java.time.Duration.ofHours(24).toMillis()))
                 .build();
     }
 

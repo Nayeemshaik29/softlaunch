@@ -6,6 +6,16 @@ spring:
     redis:
       host: localhost
       port: 6379
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      properties:
+        max.block.ms: 3000
+    consumer:
+      group-id: ai-service
+      auto-offset-reset: earliest
+    listener:
+      concurrency: 3           # one consumer thread per partition: 3 messages can be at the LLM at once
   cloud:
     openfeign:
       client:

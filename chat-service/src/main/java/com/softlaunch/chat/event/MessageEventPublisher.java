@@ -34,6 +34,18 @@ public class MessageEventPublisher {
                 });
     }
 
+    /** Key = senderId: one sender's messages stay in order (screening looks at who is sending). Never log the text. */
+    public void publish(MessageScreeningEvent event) {
+        String payload = jsonMapper.writeValueAsString(event);
+        kafkaTemplate.send(KafkaTopicConfig.MESSAGE_SCREENING, event.senderId().toString(), payload)
+                .whenComplete((result, ex) -> {
+                    if (ex != null) {
+                        // screening is best effort: the message was already delivered
+                        log.warn("Failed to publish message.screening for {}", event.messageId(), ex);
+                    }
+                });
+    }
+
     public void publish(MessageSentEvent event) {
         String payload = jsonMapper.writeValueAsString(event);
         kafkaTemplate.send(KafkaTopicConfig.MESSAGE_SENT, event.matchId().toString(), payload)

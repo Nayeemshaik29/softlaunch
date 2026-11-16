@@ -13,6 +13,10 @@ public interface MatchClient {
         public boolean isBetween(UUID one, UUID two) {
             return (one.equals(userAId) && two.equals(userBId)) || (one.equals(userBId) && two.equals(userAId));
         }
+
+        public boolean includes(UUID user) {
+            return user.equals(userAId) || user.equals(userBId);
+        }
     }
 
     @GetMapping("/internal/matches/{matchId}")

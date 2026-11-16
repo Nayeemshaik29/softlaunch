@@ -48,7 +48,7 @@ public class EscalationService {
     public long distinctReporters(UUID userId) {
         Instant since = Instant.now().minus(props.escalationWindow());
         Query query = Query.query(Criteria.where("reportedUserId").is(userId.toString()).and("createdAt").gte(since)
-                .and("reporterId").ne(Report.SYSTEM_REPORTER.toString()));   // only real people count
+                .and("reporterId").nin(Report.SYSTEM_REPORTER.toString(), Report.SCAM_DETECTOR.toString()));   // only real people count
         return mongoTemplate.findDistinct(query, "reporterId", Report.class, String.class).size();
     }
 

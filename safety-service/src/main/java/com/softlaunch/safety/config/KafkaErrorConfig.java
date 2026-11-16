@@ -27,6 +27,16 @@ public class KafkaErrorConfig {
     }
 
     @Bean
+    public NewTopic scamSuspectedTopic() {
+        return TopicBuilder.name("scam.suspected").partitions(3).replicas(1).build();
+    }
+
+    @Bean
+    public NewTopic scamSuspectedDltTopic() {
+        return TopicBuilder.name("scam.suspected.DLT").partitions(3).replicas(1).build();
+    }
+
+    @Bean
     public DefaultErrorHandler kafkaErrorHandler(KafkaTemplate<String, String> kafkaTemplate) {
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate,
                 (record, ex) -> new TopicPartition(record.topic() + ".DLT", record.partition()));

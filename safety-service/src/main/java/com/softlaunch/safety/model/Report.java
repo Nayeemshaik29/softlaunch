@@ -13,6 +13,8 @@ public class Report {
 
     /** reporterId used for reports the system files on its own (e.g. screenshot pattern). */
     public static final UUID SYSTEM_REPORTER = new UUID(0L, 0L);
+    /** Automatic scam check (ai-service). Separate id, so its open report doesn't collide with SYSTEM_REPORTER's. */
+    public static final UUID SCAM_DETECTOR = new UUID(0L, 2L);
 
     @Id
     private String id;
@@ -86,6 +88,10 @@ public class Report {
 
     public String getId() { return id; }
     public UUID getReporterId() { return UUID.fromString(reporterId); }
+    /** Filed automatically (screenshot pattern, scam check), not by a person. */
+    public boolean isSystemReport() {
+        return SYSTEM_REPORTER.toString().equals(reporterId) || SCAM_DETECTOR.toString().equals(reporterId);
+    }
     public UUID getReportedUserId() { return UUID.fromString(reportedUserId); }
     public ReportReason getReason() { return reason; }
     public String getDetails() { return details; }

@@ -3,6 +3,7 @@ package com.softlaunch.chat.service;
 import com.softlaunch.chat.client.MatchSummary;
 import com.softlaunch.chat.dto.MessageResponse;
 import com.softlaunch.chat.event.MessageEventPublisher;
+import com.softlaunch.chat.event.MessageScreeningEvent;
 import com.softlaunch.chat.event.MessageSentEvent;
 import com.softlaunch.chat.model.Message;
 import com.softlaunch.chat.observability.ChatMetrics;
@@ -55,6 +56,9 @@ public class ChatService {
         boolean recipientOnline = presenceService.presenceOf(recipient.toString()).online();
         messageEventPublisher.publish(
                 MessageSentEvent.of(saved.getId(), matchId, me, recipient, recipientOnline, now));
+        // scam screening runs AFTER delivery, in ai-service: chatting never waits for the AI
+        messageEventPublisher.publish(
+                MessageScreeningEvent.of(saved.getId(), matchId, me, recipient, saved.getText(), now));
         return response;
     }
 
