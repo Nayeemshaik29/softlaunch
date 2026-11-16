@@ -17,11 +17,13 @@ public class AuthMetrics {
     private final Counter signups;
     private final Counter loginSuccess;
     private final Counter loginFailed;
+    private final Counter loginLocked;
 
     public AuthMetrics(MeterRegistry registry) {
         signups = Counter.builder("softlaunch.signups").description("New accounts").register(registry);
         loginSuccess = Counter.builder("softlaunch.logins").tag("result", "success").register(registry);
         loginFailed = Counter.builder("softlaunch.logins").tag("result", "failed").register(registry);
+        loginLocked = Counter.builder("softlaunch.logins").tag("result", "locked").register(registry);
     }
 
     /** Counts the sign-up only once the DB transaction has really committed. */
@@ -44,5 +46,10 @@ public class AuthMetrics {
 
     public void loginFailed() {
         loginFailed.increment();
+    }
+
+    /** Refused because the email is temporarily locked after too many wrong passwords. */
+    public void loginLocked() {
+        loginLocked.increment();
     }
 }

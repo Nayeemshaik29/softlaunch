@@ -10,6 +10,10 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
@@ -17,6 +21,9 @@ spring:
       auto-offset-reset: earliest
 
 softlaunch:
+  login-lockout:
+    max-failures: 5      # wrong passwords for one email...
+    lock-duration: 15m   # ...within this window => that email is locked for the rest of it
   jwt:
     secret: AqiH/i6xsQ9p4WXceT2MFqXhOwvfjX3pjK7cSUYjYF0=
     expiration: 15m

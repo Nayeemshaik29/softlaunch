@@ -490,6 +490,21 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "locked"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
           }
         ]
       }
@@ -651,6 +666,39 @@
           ]
         }
       }
+    },
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "\ud83d\udd10 Blocked by rate limit / min (429, by route)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 24,
+        "h": 8
+      },
+      "description": "Requests the gateway refused with 429. user-auth = login/signup per IP (also includes account lockouts); other routes = per-user limit. A steady line here = someone is hammering us.",
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (routeId) (rate(spring_cloud_gateway_requests_seconds_count{httpStatusCode=\"429\"}[5m])) * 60",
+          "legendFormat": "{{routeId}}"
+        }
+      ]
     }
   ]
 }

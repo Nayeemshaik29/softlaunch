@@ -1,44 +1,91 @@
 spring:
   reactor:
     context-propagation: auto
+  data:
+    redis:
+      host: localhost
+      port: 6379
   cloud:
     gateway:
       server:
         webflux:
           routes:
+            # Must come BEFORE the user-service route: the first matching route wins.
+            # Login/signup per IP: each request costs 12 tokens, 1 token comes back per second
+            # => 1 request per 12s = 5 per minute; a full bucket (120 tokens) allows a burst of 10.
+            - id: user-auth
+              uri: lb://user-service
+              predicates:
+                - Path=/api/users/auth/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@authKeyResolver}"
+                    redis-rate-limiter.replenishRate: 1
+                    redis-rate-limiter.burstCapacity: 120
+                    redis-rate-limiter.requestedTokens: 12
             - id: user-service
               uri: lb://user-service
               predicates:
                 - Path=/api/users/**
+              filters:
+                # Token bucket per user (or per IP when not logged in), shared by all gateway copies via Redis.
+                # 20 requests/s, bursts up to 40. Normal app use never gets close; scrapers and spam bots do.
+                # Not a default-filter on purpose: limiter settings are stored per route, so a default filter
+                # plus the strict login filter on the same route would overwrite each other.
+                # &user-limit names this block; *user-limit below reuses it (YAML anchor).
+                - &user-limit
+                  name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@userKeyResolver}"
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 40
+                    redis-rate-limiter.requestedTokens: 1
             - id: match-service
               uri: lb://match-service
               predicates:
                 - Path=/api/matches/**
+              filters:
+                - *user-limit
             - id: notification-service
               uri: lb://notification-service
               predicates:
                 - Path=/api/notifications/**
+              filters:
+                - *user-limit
             - id: discovery-service
               uri: lb://discovery-service
               predicates:
                 - Path=/api/discovery/**
+              filters:
+                - *user-limit
             - id: chat-service
               uri: lb://chat-service
               predicates:
                 - Path=/api/chats/**
+              filters:
+                - *user-limit
             - id: verification-service
               uri: lb://verification-service
               predicates:
                 - Path=/api/verification/**
+              filters:
+                - *user-limit
             - id: safety-service
               uri: lb://safety-service
               predicates:
                 - Path=/api/safety/**
+              filters:
+                - *user-limit
             - id: chat-websocket
               uri: lb:ws://chat-service
               predicates:
                 - Path=/ws/**
+              filters:
+                - *user-limit
 
 softlaunch:
+  rate-limit:
+    trusted-proxies: 0   # set to 1 in the cloud (behind one load balancer), see RateLimitConfig
   jwt:
     secret: AqiH/i6xsQ9p4WXceT2MFqXhOwvfjX3pjK7cSUYjYF0=
