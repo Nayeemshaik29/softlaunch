@@ -77,6 +77,18 @@ spring:
                 - Path=/api/safety/**
               filters:
                 - *user-limit
+            # AI: 1 token/s back, 10 per request => 6 requests/min per user, burst of 3 (bucket of 30)
+            - id: ai-service
+              uri: lb://ai-service
+              predicates:
+                - Path=/api/ai/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@aiKeyResolver}"
+                    redis-rate-limiter.replenishRate: 1
+                    redis-rate-limiter.burstCapacity: 30
+                    redis-rate-limiter.requestedTokens: 10
             - id: chat-websocket
               uri: lb:ws://chat-service
               predicates:

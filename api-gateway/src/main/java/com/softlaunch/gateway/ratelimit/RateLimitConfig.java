@@ -50,6 +50,15 @@ class RateLimitConfig {
         };
     }
 
+    /** AI routes: per user, with its own "ai:" bucket (LLM calls are slow and expensive). */
+    @Bean
+    KeyResolver aiKeyResolver() {
+        return exchange -> {
+            String userId = exchange.getRequest().getHeaders().getFirst(JwtAuthenticationFilter.USER_ID_HEADER);
+            return Mono.just("ai:" + (userId != null ? userId : clientIp(exchange)));
+        };
+    }
+
     private String clientIp(ServerWebExchange exchange) {
         InetSocketAddress address = addressResolver.resolve(exchange);
         return address == null || address.getAddress() == null ? "unknown" : address.getAddress().getHostAddress();

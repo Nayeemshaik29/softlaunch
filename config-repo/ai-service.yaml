@@ -1,0 +1,35 @@
+server:
+  port: 8088
+
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            connect-timeout: 1000
+            read-timeout: 2000
+  ai:
+    retry:
+      max-attempts: 1          # default retries up to 10x with backoff; we have our own fallback, so fail fast
+    model:
+      embedding: none          # Step 1 only chats; embeddings come in Step 3
+    ollama:
+      base-url: http://localhost:11434
+      init:
+        pull-model-strategy: never   # never download models at startup; we pull them on purpose (ollama pull)
+      chat:
+        model: llama3.2:3b     # small + fast; llama3 (8B) writes a bit better but is ~2-3x slower
+        temperature: 0.8       # some creativity, so "show me different ones" gives different openers
+        num-predict: 300       # hard cap on answer length (tokens): stops runaway answers
+        keep-alive: 30m        # keep the model in RAM between requests (loading it takes seconds)
+
+softlaunch:
+  ai:
+    openers:
+      timeout: 8s              # after this the user gets template openers instead of waiting
+      cache-ttl: 30m

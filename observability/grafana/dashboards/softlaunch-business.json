@@ -699,6 +699,105 @@
           "legendFormat": "{{routeId}}"
         }
       ]
+    },
+    {
+      "id": 18,
+      "type": "timeseries",
+      "title": "\ud83e\udd16 AI openers / min by source",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 44,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (source, reason) (rate(softlaunch_ai_openers_total[5m])) * 60",
+          "legendFormat": "{{source}} {{reason}}"
+        }
+      ],
+      "description": "ai = written by the LLM, cache = reused, fallback = templates (AI slow/down/unsafe). Lots of fallback = check Ollama."
+    },
+    {
+      "id": 19,
+      "type": "timeseries",
+      "title": "\ud83e\udd16 LLM average response time",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 44,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(rate(gen_ai_client_operation_seconds_sum[5m])) / sum(rate(gen_ai_client_operation_seconds_count[5m]))",
+          "legendFormat": "avg"
+        }
+      ],
+      "description": "Time the local model takes per call. Users wait for this (max 8s, then templates)."
+    },
+    {
+      "id": 20,
+      "type": "timeseries",
+      "title": "\ud83e\udd16 LLM tokens / min",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 44,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (gen_ai_token_type) (rate(gen_ai_client_token_usage_total[5m])) * 60",
+          "legendFormat": "{{gen_ai_token_type}}"
+        }
+      ],
+      "description": "Tokens in (prompt) and out (answer). With a paid API this would be your bill; with Ollama it's CPU/GPU time."
     }
   ]
 }

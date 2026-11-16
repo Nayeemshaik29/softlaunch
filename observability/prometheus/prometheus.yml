@@ -27,3 +27,5 @@ scrape_configs:
         labels: {service: verification-service}
       - targets: [host.docker.internal:8087]
         labels: {service: safety-service}
+      - targets: [host.docker.internal:8088]
+        labels: {service: ai-service}

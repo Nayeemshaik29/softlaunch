@@ -1,0 +1,35 @@
+<configuration>
+    <!-- keep Spring Boot's normal coloured console output -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <springProperty name="appName" source="spring.application.name"/>
+
+    <!-- Ships every log line to Loki. If Loki is down, lines are buffered then dropped; the app never blocks. -->
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <http>
+            <url>http://localhost:3100/loki/api/v1/push</url>
+        </http>
+        <batch>
+            <timeoutMs>2000</timeoutMs> <!-- send at least every 2s (default 60s) -->
+        </batch>
+        <!-- labels = indexed: keep them FEW and low-variety (never a traceId or userId here) -->
+        <labels>
+            app = ${appName}
+        </labels>
+        <!-- structured metadata = stored per line, searchable, not indexed -->
+        <structuredMetadata>
+            level = %level
+            traceId = %mdc{traceId:-none}
+            spanId = %mdc{spanId:-none}
+        </structuredMetadata>
+        <message>
+            <pattern>%-5level [%thread] %logger{36} - %msg%n%ex</pattern>
+        </message>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="LOKI"/>
+    </root>
+</configuration>
