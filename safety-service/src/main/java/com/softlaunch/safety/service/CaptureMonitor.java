@@ -6,6 +6,7 @@ import com.softlaunch.safety.model.CaptureRecord;
 import com.softlaunch.safety.model.Report;
 import com.softlaunch.safety.model.ReportPriority;
 import com.softlaunch.safety.model.ReportReason;
+import com.softlaunch.safety.observability.SafetyMetrics;
 import com.softlaunch.safety.repository.ReportRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,8 +31,11 @@ public class CaptureMonitor {
     private final MongoTemplate mongoTemplate;
     private final ReportRepository reportRepository;
     private final SafetyProperties props;
+    private final SafetyMetrics metrics;
 
-    public CaptureMonitor(MongoTemplate mongoTemplate, ReportRepository reportRepository, SafetyProperties props) {
+    public CaptureMonitor(MongoTemplate mongoTemplate, ReportRepository reportRepository, SafetyProperties props,
+                          SafetyMetrics metrics) {
+        this.metrics = metrics;
         this.mongoTemplate = mongoTemplate;
         this.reportRepository = reportRepository;
         this.props = props;
@@ -67,6 +71,7 @@ public class CaptureMonitor {
         report.escalateTo(ReportPriority.HIGH);
         try {
             reportRepository.save(report);
+            metrics.reportFiled(ReportReason.SCREENSHOT_PATTERN, ReportPriority.HIGH);
             log.warn("System report filed: user {} captured chats of {} different people", takerId, people);
         } catch (DuplicateKeyException dup) {
             // an open system report already exists for this user: one is enough

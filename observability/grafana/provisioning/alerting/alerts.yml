@@ -171,3 +171,58 @@ groups:
               type: threshold
               expression: A
               conditions: [ { evaluator: { type: gt, params: [0] } } ]
+
+  # ---- business alerts (Phase 9 Step 5): problems no error-rate alert can see ----
+  - orgId: 1
+    name: softlaunch-business
+    folder: SoftLaunch
+    interval: 30s
+    rules:
+
+      - uid: failed-login-spike
+        title: Failed-login spike
+        condition: B
+        for: 1m
+        noDataState: OK
+        execErrState: Error
+        labels: { severity: critical, service: user-service }
+        annotations:
+          summary: "{{ humanize $values.A.Value }} failed logins in 5 minutes: possible password guessing"
+          description: "Someone may be trying stolen email/password lists (credential stuffing). Check the gateway rate limiter and the IPs in the logs."
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            # increase() estimates between scrapes (30 failures can show as 36.8), so round it
+            model: { refId: A, instant: true, expr: 'round(sum(increase(softlaunch_logins_total{result="failed"}[5m])))' }
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              # local value; in production base it on normal traffic (e.g. 3x the usual failed logins)
+              conditions: [ { evaluator: { type: gt, params: [20] } } ]
+
+      - uid: report-spike
+        title: Report spike
+        condition: B
+        for: 5m
+        noDataState: OK
+        execErrState: Error
+        labels: { severity: warning, service: safety-service }
+        annotations:
+          summary: "{{ humanize $values.A.Value }} reports in the last hour: possible scam / spam wave"
+          description: "Users are reporting far more than usual. Open the moderator queue and check the 'Reports by reason' panel."
+        data:
+          - refId: A
+            relativeTimeRange: { from: 3600, to: 0 }
+            datasourceUid: prometheus
+            model: { refId: A, instant: true, expr: 'round(sum(increase(softlaunch_reports_total[1h])))' }
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: threshold
+              expression: A
+              conditions: [ { evaluator: { type: gt, params: [20] } } ]

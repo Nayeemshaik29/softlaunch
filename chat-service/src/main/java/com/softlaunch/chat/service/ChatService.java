@@ -5,6 +5,7 @@ import com.softlaunch.chat.dto.MessageResponse;
 import com.softlaunch.chat.event.MessageEventPublisher;
 import com.softlaunch.chat.event.MessageSentEvent;
 import com.softlaunch.chat.model.Message;
+import com.softlaunch.chat.observability.ChatMetrics;
 import com.softlaunch.chat.repository.MessageRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -26,11 +27,13 @@ public class ChatService {
     private final PresenceService presenceService;
     private final MessageEventPublisher messageEventPublisher;
     private final Duration messageTtl;
+    private final ChatMetrics chatMetrics;
 
     public ChatService(MessageRepository messageRepository, ParticipantGuard participantGuard,
                        SimpMessagingTemplate messagingTemplate, PresenceService presenceService,
                        MessageEventPublisher messageEventPublisher,
-                       @Value("${softlaunch.chat.message-ttl}") Duration messageTtl) {
+                       @Value("${softlaunch.chat.message-ttl}") Duration messageTtl, ChatMetrics chatMetrics) {
+        this.chatMetrics = chatMetrics;
         this.messageRepository = messageRepository;
         this.participantGuard = participantGuard;
         this.messagingTemplate = messagingTemplate;
@@ -45,6 +48,7 @@ public class ChatService {
         Message saved = messageRepository.save(
                 new Message(matchId.toString(), me.toString(), text.strip(), now, now.plus(messageTtl)));
         MessageResponse response = MessageResponse.from(saved);
+        chatMetrics.messageSent();
         messagingTemplate.convertAndSend("/topic/chats/" + matchId, response);
 
         UUID recipient = match.otherThan(me);

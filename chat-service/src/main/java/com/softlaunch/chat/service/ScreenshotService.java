@@ -9,6 +9,7 @@ import com.softlaunch.chat.event.ScreenshotTakenEvent;
 import com.softlaunch.chat.model.CaptureKind;
 import com.softlaunch.chat.model.Message;
 import com.softlaunch.chat.model.MessageType;
+import com.softlaunch.chat.observability.ChatMetrics;
 import com.softlaunch.chat.repository.MessageRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,10 +38,13 @@ public class ScreenshotService {
     private final MessageEventPublisher eventPublisher;
     private final StringRedisTemplate redis;
     private final Duration messageTtl;
+    private final ChatMetrics chatMetrics;
 
     public ScreenshotService(ParticipantGuard participantGuard, MessageRepository messageRepository,
                              SimpMessagingTemplate messagingTemplate, MessageEventPublisher eventPublisher,
-                             StringRedisTemplate redis, @Value("${softlaunch.chat.message-ttl}") Duration messageTtl) {
+                             StringRedisTemplate redis, @Value("${softlaunch.chat.message-ttl}") Duration messageTtl,
+                             ChatMetrics chatMetrics) {
+        this.chatMetrics = chatMetrics;
         this.participantGuard = participantGuard;
         this.messageRepository = messageRepository;
         this.messagingTemplate = messagingTemplate;
@@ -55,6 +59,7 @@ public class ScreenshotService {
         // Debounce: SET key NX EX 10 -> only the first capture in 10s gets through
         Boolean first = redis.opsForValue().setIfAbsent("capture:" + me + ":" + matchId, kind.name(), DEBOUNCE);
         if (!Boolean.TRUE.equals(first)) {
+            chatMetrics.captureDebounced(kind);
             return ScreenshotResult.DEBOUNCED;
         }
 
@@ -72,6 +77,7 @@ public class ScreenshotService {
         // 3) tell safety-service
         eventPublisher.publish(ScreenshotTakenEvent.of(matchId, me, match.otherThan(me), kind, now));
         log.info("{} in match {} by {}: other person alerted", kind, matchId, me);
+        chatMetrics.captureAlerted(kind);
         return ScreenshotResult.ALERTED;
     }
 }

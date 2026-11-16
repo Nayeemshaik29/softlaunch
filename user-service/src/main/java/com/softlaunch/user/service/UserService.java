@@ -7,6 +7,7 @@ import com.softlaunch.user.dto.UserResponse;
 import com.softlaunch.user.exception.InvalidCredentialsException;
 import com.softlaunch.user.exception.UserNotFoundException;
 import com.softlaunch.user.model.User;
+import com.softlaunch.user.observability.AuthMetrics;
 import com.softlaunch.user.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,8 +24,11 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final String dummyHash;
+    private final AuthMetrics authMetrics;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService,
+                       AuthMetrics authMetrics) {
+        this.authMetrics = authMetrics;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
@@ -46,7 +50,9 @@ public class UserService {
                 request.dateOfBirth()
         );
 
-        return UserResponse.from(userRepository.save(user));
+        UserResponse saved = UserResponse.from(userRepository.save(user));
+        authMetrics.signupCommitted();
+        return saved;
     }
     public AuthResponse login(LoginRequest request) {
         String email = request.email().trim().toLowerCase();
@@ -56,10 +62,12 @@ public class UserService {
         boolean passwordMatches = passwordEncoder.matches(request.password(), hashToCheck);
 
         if (user == null || !passwordMatches) {
+            authMetrics.loginFailed();
             throw new InvalidCredentialsException();
         }
 
         String token = jwtService.generateToken(user);
+        authMetrics.loginSucceeded();
         return new AuthResponse(token, "Bearer", jwtService.getExpiration().toSeconds());
     }
     @Transactional(readOnly = true)

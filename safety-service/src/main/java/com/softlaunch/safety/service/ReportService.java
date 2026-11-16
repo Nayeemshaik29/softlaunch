@@ -6,6 +6,7 @@ import com.softlaunch.safety.dto.CreateReportRequest;
 import com.softlaunch.safety.dto.MyReportResponse;
 import com.softlaunch.safety.dto.ReportReceipt;
 import com.softlaunch.safety.model.Report;
+import com.softlaunch.safety.observability.SafetyMetrics;
 import com.softlaunch.safety.repository.ReportRepository;
 import feign.FeignException;
 import org.slf4j.Logger;
@@ -30,9 +31,12 @@ public class ReportService {
     private final EscalationService escalationService;
     private final ReportRateLimiter rateLimiter;
     private final SafetyProperties props;
+    private final SafetyMetrics metrics;
 
     public ReportService(ReportRepository reportRepository, UserClient userClient, EvidenceCollector evidenceCollector,
-                         EscalationService escalationService, ReportRateLimiter rateLimiter, SafetyProperties props) {
+                         EscalationService escalationService, ReportRateLimiter rateLimiter, SafetyProperties props,
+                         SafetyMetrics metrics) {
+        this.metrics = metrics;
         this.reportRepository = reportRepository;
         this.userClient = userClient;
         this.evidenceCollector = evidenceCollector;
@@ -64,6 +68,7 @@ public class ReportService {
         log.info("Report {} created: {} reported {} for {} (priority {}, evidence {} / {} msgs)", report.getId(),
                 reporterId, req.reportedUserId(), req.reason(), report.getPriority(), report.getEvidenceStatus(),
                 report.getEvidence().size());
+        metrics.reportFiled(report.getReason(), report.getPriority());
 
         escalationService.evaluate(report);
         return ReportReceipt.received(report.getId());

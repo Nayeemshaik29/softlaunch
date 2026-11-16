@@ -6,6 +6,7 @@ import com.softlaunch.safety.dto.BlockResponse;
 import com.softlaunch.safety.dto.CreateReportRequest;
 import com.softlaunch.safety.event.BlockChangedEvent;
 import com.softlaunch.safety.model.Block;
+import com.softlaunch.safety.observability.SafetyMetrics;
 import com.softlaunch.safety.outbox.PendingEvents;
 import com.softlaunch.safety.repository.BlockRepository;
 import feign.FeignException;
@@ -28,9 +29,11 @@ public class BlockService {
     private final ReportService reportService;
     private final UserClient userClient;
     private final PendingEvents pendingEvents;
+    private final SafetyMetrics metrics;
 
     public BlockService(BlockRepository blockRepository, ReportService reportService, UserClient userClient,
-                        PendingEvents pendingEvents) {
+                        PendingEvents pendingEvents, SafetyMetrics metrics) {
+        this.metrics = metrics;
         this.blockRepository = blockRepository;
         this.reportService = reportService;
         this.userClient = userClient;
@@ -64,6 +67,7 @@ public class BlockService {
         } catch (DuplicateKeyException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "You've already blocked this person");
         }
+        metrics.blocked();
         log.info("User {} blocked {} (report filed: {})", me, target, reportFiled);
         return BlockResponse.from(block, reportFiled);
     }
@@ -74,6 +78,7 @@ public class BlockService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "You haven't blocked this person"));
         block.deactivate(pendingEvents.of(BlockChangedEvent.of(me, target, false)));
         blockRepository.save(block);
+        metrics.unblocked();
         log.info("User {} unblocked {}", me, target);
     }
 

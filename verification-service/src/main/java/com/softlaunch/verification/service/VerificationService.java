@@ -11,6 +11,7 @@ import com.softlaunch.verification.kyc.Pkce;
 import com.softlaunch.verification.kyc.VerifiedIdentity;
 import com.softlaunch.verification.model.Verification;
 import com.softlaunch.verification.model.VerificationStatus;
+import com.softlaunch.verification.observability.KycMetrics;
 import com.softlaunch.verification.repository.VerificationRepository;
 import feign.FeignException;
 import org.slf4j.Logger;
@@ -36,16 +37,19 @@ public class VerificationService {
     private final SubjectHasher hasher;
     private final UserIdentityClient userIdentityClient;
     private final VerificationWriter writer;
+    private final KycMetrics metrics;
 
     public VerificationService(VerificationRepository repository, KycProvider kycProvider,
                                KycStateStore stateStore, SubjectHasher hasher,
-                               UserIdentityClient userIdentityClient, VerificationWriter writer) {
+                               UserIdentityClient userIdentityClient, VerificationWriter writer,
+                               KycMetrics metrics) {
         this.repository = repository;
         this.kycProvider = kycProvider;
         this.stateStore = stateStore;
         this.hasher = hasher;
         this.userIdentityClient = userIdentityClient;
         this.writer = writer;
+        this.metrics = metrics;
     }
 
     public StartResponse start(UUID userId) {
@@ -63,9 +67,10 @@ public class VerificationService {
         KycStateStore.PendingKyc pending = stateStore.consume(state)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired state"));
         UUID userId = pending.userId();   // comes from OUR Redis, never from the request
+        long started = System.nanoTime();
 
         if (error != null || code == null) {
-            return fail(userId, "DigiLocker consent was cancelled");
+            return fail(userId, started, KycMetrics.CANCELLED, "DigiLocker consent was cancelled");
         }
 
         VerifiedIdentity identity;
@@ -73,16 +78,16 @@ public class VerificationService {
             identity = kycProvider.exchange(code, pending.codeVerifier());
         } catch (KycException e) {
             log.warn("KYC exchange failed for user {}: {}", userId, e.getMessage());
-            return fail(userId, "DigiLocker verification failed, please try again");
+            return fail(userId, started, KycMetrics.PROVIDER_ERROR, "DigiLocker verification failed, please try again");
         }
 
         if (Period.between(identity.dateOfBirth(), LocalDate.now()).getYears() < MIN_AGE) {
-            return fail(userId, "You must be 18 or older to use SoftLaunch");
+            return fail(userId, started, KycMetrics.UNDERAGE, "You must be 18 or older to use SoftLaunch");
         }
 
         String subjectHash = hasher.hash(identity.subjectId());
         if (repository.existsBySubjectHashAndStatus(subjectHash, VerificationStatus.VERIFIED)) {
-            return fail(userId, "This identity is already linked to another account");
+            return fail(userId, started, KycMetrics.DUPLICATE_IDENTITY, "This identity is already linked to another account");
         }
 
         // Compare with what the user signed up with
@@ -91,10 +96,10 @@ public class VerificationService {
             profile = userIdentityClient.identity(userId);
         } catch (FeignException e) {
             log.warn("Could not load identity of user {} from user-service: {}", userId, e.status());
-            return fail(userId, "We couldn't check your profile right now, please try again");
+            return fail(userId, started, KycMetrics.PROFILE_UNAVAILABLE, "We couldn't check your profile right now, please try again");
         }
         if (!identity.dateOfBirth().equals(profile.dateOfBirth())) {
-            return fail(userId, "Your date of birth doesn't match your profile. Contact support if this is wrong");
+            return fail(userId, started, KycMetrics.DOB_MISMATCH, "Your date of birth doesn't match your profile. Contact support if this is wrong");
         }
         boolean nameMatched = NameMatcher.matches(profile.displayName(), identity.fullName());
 
@@ -104,14 +109,16 @@ public class VerificationService {
             writer.saveVerified(verification, UserVerifiedEvent.of(userId));   // verification + outbox, one transaction
         } catch (DataIntegrityViolationException e) {
             // two callbacks raced: the partial unique index in the DB caught it
-            return fail(userId, "This identity is already linked to another account");
+            return fail(userId, started, KycMetrics.DUPLICATE_IDENTITY, "This identity is already linked to another account");
         }
         log.info("User {} verified via DigiLocker (name matched: {})", userId, nameMatched);   // never log name/DOB/token
+        metrics.record(KycMetrics.VERIFIED, started);
         return VerificationStatus.VERIFIED;
     }
 
-    private VerificationStatus fail(UUID userId, String reason) {
+    private VerificationStatus fail(UUID userId, long started, String outcome, String reason) {
         repository.save(Verification.failed(userId, reason));
+        metrics.record(outcome, started);
         log.info("User {} verification FAILED: {}", userId, reason);
         return VerificationStatus.FAILED;
     }
