@@ -48,6 +48,19 @@ services:
     volumes:
       - verification-db-data:/var/lib/postgresql/data
 
+  ai-db:
+    # Postgres 17 + the pgvector extension (stores embeddings, finds the closest ones fast)
+    image: pgvector/pgvector:pg17
+    container_name: softlaunch-ai-db
+    environment:
+      POSTGRES_DB: ai_db
+      POSTGRES_USER: softlaunch
+      POSTGRES_PASSWORD: softlaunch
+    ports:
+      - "5437:5432"
+    volumes:
+      - ai-db-data:/var/lib/postgresql/data
+
   redis:
     image: redis:7-alpine
     container_name: softlaunch-redis
@@ -112,6 +125,7 @@ services:
       - ./observability/alert-webhook/receiver.py:/app/receiver.py:ro
 
 volumes:
+  ai-db-data:
   user-db-data:
   match-db-data:
   chat-db-data:

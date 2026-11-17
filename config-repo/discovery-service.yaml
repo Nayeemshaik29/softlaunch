@@ -14,6 +14,9 @@ spring:
           user-service:
             connect-timeout: 1000
             read-timeout: 2000
+          ai-service:
+            connect-timeout: 200
+            read-timeout: 300     # the feed never waits long for the optional vibe scores
   mvc:
     problemdetails:
       enabled: true

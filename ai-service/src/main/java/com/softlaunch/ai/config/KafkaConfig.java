@@ -36,6 +36,11 @@ class KafkaConfig {
     }
 
     @Bean
+    NewTopic profileUpdatedDltTopic() {
+        return TopicBuilder.name("profile.updated.DLT").partitions(3).replicas(1).build();
+    }
+
+    @Bean
     DefaultErrorHandler kafkaErrorHandler(KafkaTemplate<String, String> kafkaTemplate) {
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate,
                 (record, ex) -> new TopicPartition(record.topic() + ".DLT", record.partition()));

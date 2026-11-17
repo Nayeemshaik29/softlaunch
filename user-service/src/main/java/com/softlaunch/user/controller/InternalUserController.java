@@ -27,6 +27,12 @@ public class InternalUserController {
         this.userRepository = userRepository;
     }
 
+    /** Ids of all users with a profile, in pages (ai-service backfill). Ids only, no personal data. */
+    @GetMapping("/profile-ids")
+    public List<UUID> profileIds(@RequestParam int page, @RequestParam(defaultValue = "100") int size) {
+        return profileRepository.findAllUserIds(org.springframework.data.domain.PageRequest.of(page, Math.min(size, 500)));
+    }
+
     @GetMapping("/{userId}")
     public UserSummary getUser(@PathVariable UUID userId) {
         return userRepository.findById(userId)

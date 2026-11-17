@@ -22,14 +22,23 @@ public class FeedService {
     private static final int INTENT_MATCH_POINTS = 20;
     private static final int COMPLETE_PROFILE_POINTS = 4;
     private static final int VERIFIED_POINTS = 10;      // trust boost, small enough not to beat a great match
+    // "Similar vibe" from profile embeddings (ai-service). MEASURED with nomic-embed-text on sample profiles:
+    // unrelated people score ~0.73-0.80 (all profile texts share the same layout), two trekkers with no
+    // words in common ~0.90. So points scale from VIBE_FLOOR (0) to VIBE_TOP (max). Re-measure if the model changes.
+    private static final int MAX_VIBE_POINTS = 15;
+    private static final double VIBE_FLOOR = 0.78;
+    private static final double VIBE_TOP = 0.92;
+    private static final double SIMILAR_VIBE_LABEL = 0.90;   // the label must feel earned: only clearly alike profiles
 
     private final LocationService locationService;
     private final UserProfileClient userProfileClient;
     private final FeedCache feedCache;
     private final SafetyFilter safetyFilter;
+    private final VibeScores vibeScores;
 
     public FeedService(LocationService locationService, UserProfileClient userProfileClient, FeedCache feedCache,
-                       SafetyFilter safetyFilter) {
+                       SafetyFilter safetyFilter, VibeScores vibeScores) {
+        this.vibeScores = vibeScores;
         this.locationService = locationService;
         this.userProfileClient = userProfileClient;
         this.feedCache = feedCache;
@@ -66,10 +75,15 @@ public class FeedService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Complete your profile first");
         }
 
-        return nearby.stream()
+        List<NearbyUserResponse> candidates = nearby.stream()
                 .filter(n -> profiles.containsKey(n.userId()))
-                .filter(n -> isMutualFit(myProfile, profiles.get(n.userId())))   // 🆕
-                .map(n -> toCard(myProfile, profiles.get(n.userId()), n.distanceKm(), radiusKm))
+                .filter(n -> isMutualFit(myProfile, profiles.get(n.userId())))
+                .toList();
+        // location + preferences decide WHO is in the feed; the AI only helps ORDER them
+        Map<UUID, Double> vibe = vibeScores.forCandidates(me, candidates.stream().map(NearbyUserResponse::userId).toList());
+
+        return candidates.stream()
+                .map(n -> toCard(myProfile, profiles.get(n.userId()), n.distanceKm(), radiusKm, vibe.get(n.userId())))
                 .sorted(Comparator.comparingInt(FeedCard::score).reversed())
                 .toList();
     }
@@ -83,7 +97,7 @@ public class FeedService {
         }
     }
 
-    private FeedCard toCard(FeedProfile me, FeedProfile them, int distanceKm, int radiusKm) {
+    private FeedCard toCard(FeedProfile me, FeedProfile them, int distanceKm, int radiusKm, Double vibeSimilarity) {
         List<String> reasons = new ArrayList<>();
 
         int distancePoints = (int) Math.round(
@@ -117,11 +131,22 @@ public class FeedService {
             reasons.add("Verified ✅");
         }
 
-        int score = distancePoints + interestPoints + intentPoints + completenessPoints + verifiedPoints;
+        int vibePoints = vibePoints(vibeSimilarity);
+        if (vibeSimilarity != null && vibeSimilarity >= SIMILAR_VIBE_LABEL) {
+            reasons.add("Similar vibe ✨");
+        }
+
+        int score = distancePoints + interestPoints + intentPoints + completenessPoints + verifiedPoints + vibePoints;
 
         return new FeedCard(them.userId(), them.displayName(), them.verified(), them.age(), distanceKm, them.bio(), them.city(),
                 them.lookingFor(), shared, them.photoUrls(), reasons, score);
     }
+    static int vibePoints(Double similarity) {
+        if (similarity == null) return 0;   // no embedding yet, or ai-service unavailable
+        double scaled = (similarity - VIBE_FLOOR) / (VIBE_TOP - VIBE_FLOOR);
+        return (int) Math.round(MAX_VIBE_POINTS * Math.max(0, Math.min(1, scaled)));
+    }
+
     private boolean isMutualFit(FeedProfile me, FeedProfile them) {
         return wants(me, them) && wants(them, me);
     }

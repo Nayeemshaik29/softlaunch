@@ -21,7 +21,13 @@ public record InternalProfileResponse(
         Integer ageMax,
         Set<String> lookingFor,
         Set<String> interests,
-        List<String> photoUrls) {
+        List<String> photoUrls,
+        List<String> hangoutPlaces,
+        List<PromptAnswer> prompts) {
+
+    /** Free-text answers ("My ideal Sunday: ..."): the richest signal for the AI's "similar vibe" matching. */
+    public record PromptAnswer(String question, String answer) {
+    }
 
     public static InternalProfileResponse from(Profile p) {
         User user = p.getUser();
@@ -38,6 +44,8 @@ public record InternalProfileResponse(
                 p.getAgeMax(),
                 p.getLookingFor().stream().map(Enum::name).collect(Collectors.toSet()),
                 p.getInterests().stream().map(Enum::name).collect(Collectors.toSet()),
-                List.copyOf(p.getPhotoUrls()));
+                List.copyOf(p.getPhotoUrls()),
+                List.copyOf(p.getHangoutPlaces()),
+                p.getPrompts().stream().map(q -> new PromptAnswer(q.getQuestion(), q.getAnswer())).toList());
     }
 }

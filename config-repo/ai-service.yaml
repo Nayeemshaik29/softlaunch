@@ -2,6 +2,10 @@ server:
   port: 8088
 
 spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5437/ai_db
+    username: softlaunch
+    password: softlaunch
   data:
     redis:
       host: localhost
@@ -27,7 +31,7 @@ spring:
     retry:
       max-attempts: 1          # default retries up to 10x with backoff; we have our own fallback, so fail fast
     model:
-      embedding: none          # Step 1 only chats; embeddings come in Step 3
+      embedding: ollama
     ollama:
       base-url: http://localhost:11434
       init:
@@ -37,6 +41,8 @@ spring:
         temperature: 0.8       # some creativity, so "show me different ones" gives different openers
         num-predict: 300       # hard cap on answer length (tokens): stops runaway answers
         keep-alive: 30m        # keep the model in RAM between requests (loading it takes seconds)
+      embedding:
+        model: nomic-embed-text   # 768 numbers per text, ~270 MB, fast on CPU
 
 softlaunch:
   ai:
