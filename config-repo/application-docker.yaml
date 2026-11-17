@@ -1,0 +1,21 @@
+# Loaded on top of everything else when a service runs with SPRING_PROFILES_ACTIVE=docker.
+# Inside a container "localhost" is the container itself, so every address becomes a compose service name.
+eureka:
+  client:
+    service-url:
+      defaultZone: http://registry-service:8761/eureka/
+  instance:
+    prefer-ip-address: true      # register the container's IP (other containers can reach it), not "localhost"
+
+spring:
+  kafka:
+    bootstrap-servers: kafka:19092   # the broker's INTERNAL listener (your Mac uses localhost:9092)
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+management:
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans

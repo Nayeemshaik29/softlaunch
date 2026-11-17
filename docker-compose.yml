@@ -1,3 +1,37 @@
+# Infrastructure (no profile): always starts.  Java services: pick a profile:
+#   docker compose --profile core up -d     registry, config, gateway, user, match, discovery
+#   docker compose --profile chat up -d     core + chat + notification
+#   docker compose --profile safety up -d   core + chat + notification + safety + verification
+#   docker compose --profile ai up -d       core + chat + notification + ai
+#   docker compose --profile all up -d      everything
+# Build the images first: ./docker/build-images.sh
+
+x-java-service: &java-service
+  env_file: .env                 # JWT_SECRET (git-ignored)
+  restart: unless-stopped
+  mem_limit: 512m                # hard cap; the JVM uses 60% of it for heap (see docker/Dockerfile)
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  volumes:
+    - ./docker/healthcheck.sh:/healthcheck.sh:ro
+
+x-java-env: &java-env
+  SPRING_PROFILES_ACTIVE: docker
+  CONFIG_SERVER_URL: http://config-server:8888
+  LOKI_URL: http://loki:3100/loki/api/v1/push
+  MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
+
+x-health: &health
+  interval: 10s
+  timeout: 3s
+  retries: 30
+  start_period: 40s
+
+x-after-config: &after-config
+  config-server: { condition: service_healthy }
+  kafka: { condition: service_started }
+  redis: { condition: service_started }
+
 services:
 
   user-db:
@@ -71,6 +105,27 @@ services:
     container_name: softlaunch-kafka
     ports:
       - "9092:9092"
+    environment:
+      # TWO listeners, because "localhost" means something different on each side:
+      #   INTERNAL kafka:19092  -> used by containers on the compose network
+      #   EXTERNAL localhost:9092 -> used by apps running on your Mac (./mvnw, IntelliJ)
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://:19092,EXTERNAL://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:19092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_HEAP_OPTS: -Xms384m -Xmx384m   # was using 1.1 GB with defaults
+    volumes:
+      - kafka-data:/var/lib/kafka/data    # topics + consumer offsets now survive a container restart
   chat-db:
     image: mongo:8
     container_name: softlaunch-chat-db
@@ -124,7 +179,207 @@ services:
     volumes:
       - ./observability/alert-webhook/receiver.py:/app/receiver.py:ro
 
+  # ---------------- Java services (Phase 11) ----------------
+  registry-service:
+    <<: *java-service
+    build: { context: ./registry-service, dockerfile: ../docker/Dockerfile }
+    image: softlaunch/registry-service:dev
+    container_name: softlaunch-registry-service
+    profiles: [core, chat, safety, ai, all]
+    ports:
+      - "8761:8761"
+    environment:
+      <<: *java-env
+
+    healthcheck:
+      <<: *health
+      test: ["CMD", "bash", "/healthcheck.sh", "8761"]
+
+  config-server:
+    <<: *java-service
+    build: { context: ./config-server, dockerfile: ../docker/Dockerfile }
+    image: softlaunch/config-server:dev
+    container_name: softlaunch-config-server
+    profiles: [core, chat, safety, ai, all]
+    ports:
+      - "8888:8888"
+    environment:
+      <<: *java-env
+      SPRING_PROFILES_ACTIVE: native   # config-server's own profile, not "docker"
+      CONFIG_REPO: file:/config-repo
+      EUREKA_URL: http://registry-service:8761/eureka/
+      EUREKA_INSTANCE_PREFERIPADDRESS: "true"
+    healthcheck:
+      <<: *health
+      test: ["CMD", "bash", "/healthcheck.sh", "8888"]
+    volumes:
+      - ./docker/healthcheck.sh:/healthcheck.sh:ro
+      - ./config-repo:/config-repo:ro
+    depends_on:
+      registry-service: { condition: service_healthy }
+
+  api-gateway:
+    <<: *java-service
+    build: { context: ./api-gateway, dockerfile: ../docker/Dockerfile }
+    image: softlaunch/api-gateway:dev
+    container_name: softlaunch-api-gateway
+    profiles: [core, chat, safety, ai, all]
+    ports:
+      - "8080:8080"
+    environment:
+      <<: *java-env
+
+    healthcheck:
+      <<: *health
+      test: ["CMD", "bash", "/healthcheck.sh", "8080"]
+    depends_on:
+      <<: *after-config
+
+  user-service:
+    <<: *java-service
+    build: { context: ./user-service, dockerfile: ../docker/Dockerfile }
+    image: softlaunch/user-service:dev
+    container_name: softlaunch-user-service
+    profiles: [core, chat, safety, ai, all]
+    ports:
+      - "8081:8081"
+    environment:
+      <<: *java-env
+
+    healthcheck:
+      <<: *health
+      test: ["CMD", "bash", "/healthcheck.sh", "8081"]
+    depends_on:
+      <<: *after-config
+      user-db: { condition: service_started }
+
+  match-service:
+    <<: *java-service
+    build: { context: ./match-service, dockerfile: ../docker/Dockerfile }
+    image: softlaunch/match-service:dev
+    container_name: softlaunch-match-service
+    profiles: [core, chat, safety, ai, all]
+    ports:
+      - "8082:8082"
+    environment:
+      <<: *java-env
+
+    healthcheck:
+      <<: *health
+      test: ["CMD", "bash", "/healthcheck.sh", "8082"]
+    depends_on:
+      <<: *after-config
+      match-db: { condition: service_started }
+
+  discovery-service:
+    <<: *java-service
+    build: { context: ./discovery-service, dockerfile: ../docker/Dockerfile }
+    image: softlaunch/discovery-service:dev
+    container_name: softlaunch-discovery-service
+    profiles: [core, chat, safety, ai, all]
+    ports:
+      - "8084:8084"
+    environment:
+      <<: *java-env
+
+    healthcheck:
+      <<: *health
+      test: ["CMD", "bash", "/healthcheck.sh", "8084"]
+    depends_on:
+      <<: *after-config
+
+  chat-service:
+    <<: *java-service
+    build: { context: ./chat-service, dockerfile: ../docker/Dockerfile }
+    image: softlaunch/chat-service:dev
+    container_name: softlaunch-chat-service
+    profiles: [chat, safety, ai, all]
+    ports:
+      - "8085:8085"
+    environment:
+      <<: *java-env
+
+    healthcheck:
+      <<: *health
+      test: ["CMD", "bash", "/healthcheck.sh", "8085"]
+    depends_on:
+      <<: *after-config
+      chat-db: { condition: service_started }
+
+  notification-service:
+    <<: *java-service
+    build: { context: ./notification-service, dockerfile: ../docker/Dockerfile }
+    image: softlaunch/notification-service:dev
+    container_name: softlaunch-notification-service
+    profiles: [chat, safety, ai, all]
+    ports:
+      - "8083:8083"
+    environment:
+      <<: *java-env
+
+    healthcheck:
+      <<: *health
+      test: ["CMD", "bash", "/healthcheck.sh", "8083"]
+    depends_on:
+      <<: *after-config
+      notification-db: { condition: service_started }
+
+  safety-service:
+    <<: *java-service
+    build: { context: ./safety-service, dockerfile: ../docker/Dockerfile }
+    image: softlaunch/safety-service:dev
+    container_name: softlaunch-safety-service
+    profiles: [safety, all]
+    ports:
+      - "8087:8087"
+    environment:
+      <<: *java-env
+
+    healthcheck:
+      <<: *health
+      test: ["CMD", "bash", "/healthcheck.sh", "8087"]
+    depends_on:
+      <<: *after-config
+      chat-db: { condition: service_started }
+
+  verification-service:
+    <<: *java-service
+    build: { context: ./verification-service, dockerfile: ../docker/Dockerfile }
+    image: softlaunch/verification-service:dev
+    container_name: softlaunch-verification-service
+    profiles: [safety, all]
+    ports:
+      - "8086:8086"
+    environment:
+      <<: *java-env
+
+    healthcheck:
+      <<: *health
+      test: ["CMD", "bash", "/healthcheck.sh", "8086"]
+    depends_on:
+      <<: *after-config
+      verification-db: { condition: service_started }
+
+  ai-service:
+    <<: *java-service
+    build: { context: ./ai-service, dockerfile: ../docker/Dockerfile }
+    image: softlaunch/ai-service:dev
+    container_name: softlaunch-ai-service
+    profiles: [ai, all]
+    ports:
+      - "8088:8088"
+    environment:
+      <<: *java-env
+
+    healthcheck:
+      <<: *health
+      test: ["CMD", "bash", "/healthcheck.sh", "8088"]
+    depends_on:
+      <<: *after-config
+      ai-db: { condition: service_started }
+
 volumes:
+  kafka-data:
   ai-db-data:
   user-db-data:
   match-db-data:

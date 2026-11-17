@@ -1,0 +1,6 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://ai-db:5432/ai_db
+  ai:
+    ollama:
+      base-url: http://host.docker.internal:11434   # Ollama runs on the Mac itself (Docker on Mac can't use the Apple GPU)

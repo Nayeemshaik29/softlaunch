@@ -1,0 +1,3 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://verification-db:5432/verification_db

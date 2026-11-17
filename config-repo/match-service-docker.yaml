@@ -1,0 +1,3 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://match-db:5432/match_db

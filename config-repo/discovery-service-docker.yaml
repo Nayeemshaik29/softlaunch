@@ -1,0 +1,6 @@
+spring:
+  grpc:
+    client:
+      channel:
+        match-service:
+          target: match-service:9091   # gRPC isn't load-balanced via Eureka here: talk to the container directly
