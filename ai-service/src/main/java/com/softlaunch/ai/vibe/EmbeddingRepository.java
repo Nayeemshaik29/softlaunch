@@ -44,7 +44,8 @@ class EmbeddingRepository {
     }
 
     /**
-     * Cosine similarity (1 = same meaning) between me and each candidate that has an embedding.
+     * Cosine similarity (1 = same meaning) between me and each candidate that has an embedding
+     * made by the SAME model (after a model switch, rows are skipped until the backfill re-embeds them).
      * "<=>" is pgvector's cosine DISTANCE, so similarity = 1 - distance. Computed inside Postgres:
      * the vectors never leave the database.
      */
@@ -55,6 +56,7 @@ class EmbeddingRepository {
                 SELECT c.user_id, 1 - (c.embedding <=> m.embedding) AS similarity
                   FROM profile_embeddings m
                   JOIN profile_embeddings c ON c.user_id IN (:candidates)
+                                           AND c.model = m.model   -- numbers from different models mean nothing to each other
                  WHERE m.user_id = :me
                 """)
                 .param("me", me).param("candidates", candidates)

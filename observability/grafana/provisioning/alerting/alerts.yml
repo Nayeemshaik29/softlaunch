@@ -226,3 +226,112 @@ groups:
               type: threshold
               expression: A
               conditions: [ { evaluator: { type: gt, params: [20] } } ]
+
+  # ---- AI alerts (Phase 10 Step 4): AI fails QUIETLY (fallbacks hide it), so we watch AI-specific signals ----
+  - orgId: 1
+    name: softlaunch-ai
+    folder: SoftLaunch
+    interval: 30s
+    rules:
+
+      - uid: ai-scam-checks-skipped
+        title: Scam checks skipped
+        condition: B
+        for: 0s                  # every skipped check is a message nobody looked at: tell us right away
+        noDataState: OK
+        execErrState: Error
+        labels: { severity: critical, service: ai-service }
+        annotations:
+          summary: "{{ humanize $values.A.Value }} suspicious messages were NOT scam-checked in 10 min (AI unavailable)"
+          description: "Rules flagged these messages but the LLM was down and the rules alone were not sure enough. Fix Ollama; scams may be getting through."
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model: { refId: A, instant: true, expr: 'round(sum(increase(softlaunch_scam_verdicts_total{verdict="skipped_ai_unavailable"}[10m])))' }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: threshold, expression: A, conditions: [ { evaluator: { type: gt, params: [0] } } ] }
+
+      - uid: ai-ollama-unreachable
+        title: Ollama unreachable
+        condition: B
+        for: 2m
+        noDataState: OK          # ai-service itself down is covered by "Service down"
+        execErrState: Error
+        labels: { severity: warning, service: ai-service }
+        annotations:
+          summary: "ai-service cannot use Ollama (down or a required model is missing): all AI features are on fallbacks"
+          description: "Check http://localhost:8088/actuator/health for the reason, then 'ollama list'."
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model: { refId: A, instant: true, expr: 'min(softlaunch_ai_ollama_up)' }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: threshold, expression: A, conditions: [ { evaluator: { type: lt, params: [1] } } ] }
+
+      - uid: ai-openers-fallback
+        title: AI openers mostly fallbacks
+        condition: B
+        for: 5m
+        noDataState: OK
+        execErrState: Error
+        labels: { severity: warning, service: ai-service }
+        annotations:
+          summary: "{{ humanizePercentage $values.A.Value }} of opener requests got templates instead of AI"
+          description: "The LLM is slow, down or giving unsafe answers. See the AI row on the SoftLaunch Business dashboard."
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              # cache hits don't count (no LLM involved); ignore tiny traffic (2 of 3 requests failing is not a trend)
+              expr: |
+                sum(rate(softlaunch_ai_openers_total{source="fallback"}[10m]))
+                / sum(rate(softlaunch_ai_openers_total{source!="cache"}[10m]))
+                and sum(increase(softlaunch_ai_openers_total{source!="cache"}[10m])) >= 5
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: threshold, expression: A, conditions: [ { evaluator: { type: gt, params: [0.5] } } ] }
+
+      - uid: ai-llm-slow
+        title: LLM slow
+        condition: B
+        for: 5m
+        noDataState: OK
+        execErrState: Error
+        labels: { severity: warning, service: ai-service }
+        annotations:
+          summary: "LLM calls take {{ humanizeDuration $values.A.Value }} on average (openers time out at 8s)"
+          description: "The machine running Ollama is overloaded, or the model is too big for it."
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model: { refId: A, instant: true, expr: 'sum(rate(gen_ai_client_operation_seconds_sum{gen_ai_operation_name="chat"}[5m])) / sum(rate(gen_ai_client_operation_seconds_count{gen_ai_operation_name="chat"}[5m]))' }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: threshold, expression: A, conditions: [ { evaluator: { type: gt, params: [5] } } ] }
+
+      - uid: ai-embedding-failures
+        title: Embedding failures
+        condition: B
+        for: 0s
+        noDataState: OK
+        execErrState: Error
+        labels: { severity: warning, service: ai-service }
+        annotations:
+          summary: "{{ humanize $values.A.Value }} failed embedding attempts in 15 min (each profile is tried 3 times)"
+          description: "Those profiles get no vibe bonus until fixed. After fixing Ollama: POST http://localhost:8088/internal/ai/embeddings/backfill"
+        data:
+          - refId: A
+            relativeTimeRange: { from: 1200, to: 0 }
+            datasourceUid: prometheus
+            model: { refId: A, instant: true, expr: 'round(sum(increase(softlaunch_ai_embeddings_total{result="failed"}[15m])))' }
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: threshold, expression: A, conditions: [ { evaluator: { type: gt, params: [0] } } ] }

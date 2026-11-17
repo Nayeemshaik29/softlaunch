@@ -37,7 +37,7 @@ public class EmbeddingService {
         this.repository = repository;
         this.registry = registry;
         this.modelName = modelName;
-        for (String r : List.of("embedded", "unchanged", "empty", "no_profile")) count(r, 0);
+        for (String r : List.of("embedded", "unchanged", "empty", "no_profile", "failed")) count(r, 0);
     }
 
     /** Called on profile.updated and by the backfill. Skips the model call when the text hasn't changed. */
@@ -56,7 +56,13 @@ public class EmbeddingService {
         if (repository.contentHash(userId).filter(hash::equals).isPresent()) {
             return count("unchanged", 1);   // e.g. only a photo changed: no model call
         }
-        float[] vector = embeddingModel.embed(ProfileText.TASK_PREFIX + text);
+        float[] vector;
+        try {
+            vector = embeddingModel.embed(ProfileText.TASK_PREFIX + text);
+        } catch (RuntimeException e) {
+            count("failed", 1);   // alert: "embedding failures" (Ollama down or model missing)
+            throw e;              // Kafka retries, then DLT; the backfill repairs it later
+        }
         repository.upsert(userId, vector, hash, modelName);
         log.info("Embedded profile of {} ({} dimensions)", userId, vector.length);
         return count("embedded", 1);
@@ -67,6 +73,12 @@ public class EmbeddingService {
     }
 
     /** One-time job for users who signed up before this feature existed. Safe to run again (unchanged = skipped). */
+    /** Account deleted: the embedding is personal data, so it goes too. */
+    public void forget(UUID userId) {
+        repository.delete(userId);
+        log.info("Deleted embedding of {}", userId);
+    }
+
     public Map<String, Integer> backfill() {
         Map<String, Integer> totals = new java.util.TreeMap<>();
         for (int page = 0; ; page++) {

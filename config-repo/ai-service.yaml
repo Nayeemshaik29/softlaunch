@@ -44,6 +44,16 @@ spring:
       embedding:
         model: nomic-embed-text   # 768 numbers per text, ~270 MB, fast on CPU
 
+management:
+  endpoint:
+    health:
+      show-details: always     # local dev; in production show details only to authorized callers
+      status:
+        # DEGRADED sits between DOWN and UP, and still answers HTTP 200 (the service works, with fallbacks)
+        order: down, out-of-service, degraded, up, unknown
+        http-mapping:
+          degraded: 200
+
 softlaunch:
   ai:
     openers:

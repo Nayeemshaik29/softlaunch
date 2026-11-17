@@ -35,6 +35,12 @@ class KafkaConfig {
         return TopicBuilder.name("scam.suspected").partitions(3).replicas(1).build();
     }
 
+    /** Published by user-service when an account is deleted (endpoint comes with the Play Store work). */
+    @Bean
+    NewTopic userDeletedTopic() {
+        return TopicBuilder.name("user.deleted").partitions(3).replicas(1).build();
+    }
+
     @Bean
     NewTopic profileUpdatedDltTopic() {
         return TopicBuilder.name("profile.updated.DLT").partitions(3).replicas(1).build();

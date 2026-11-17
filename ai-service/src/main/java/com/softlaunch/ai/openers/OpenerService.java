@@ -127,6 +127,28 @@ public class OpenerService {
         }
     }
 
+    /** Cached openers quote the other person's profile: remove them when a match or account goes away. */
+    public long evictMatch(UUID matchId) {
+        return evict("ai:openers:" + matchId + ":*");
+    }
+
+    public long evictUser(UUID userId) {
+        return evict("ai:openers:*:" + userId);
+    }
+
+    private long evict(String pattern) {
+        try {
+            List<String> keys = new ArrayList<>();
+            try (var cursor = redis.scan(org.springframework.data.redis.core.ScanOptions.scanOptions().match(pattern).count(500).build())) {
+                cursor.forEachRemaining(keys::add);
+            }
+            return keys.isEmpty() ? 0 : redis.delete(keys);
+        } catch (DataAccessException e) {
+            log.warn("Could not evict cached openers: {}", e.getMessage());
+            return 0;   // they expire within cache-ttl anyway
+        }
+    }
+
     private MatchSummary requireMyMatch(UUID me, UUID matchId) {
         try {
             MatchSummary match = matchClient.getMatch(matchId);
