@@ -196,10 +196,13 @@ services:
     image: mongo:8
     container_name: softlaunch-chat-db
     command: ["--auth"]   # login required (user 'softlaunch' with readWrite on chat_db + safety_db)
+    environment:
+      MONGO_APP_PASSWORD: ${DB_PASSWORD}   # read by mongo-init.js (only on a brand-new volume)
     ports:
       - "27017:27017"
     volumes:
       - chat-db-data:/data/db
+      - ./docker/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
 
   prometheus:
     image: prom/prometheus:v3.5.0
