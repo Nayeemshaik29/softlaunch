@@ -9,6 +9,8 @@ import { API_URL_PUBLIC as API_URL } from "./public-env";
 //    the browser sends it only to /api/users/auth/*. We use it to get new access tokens.
 const KEY = "softlaunch.session";
 const REFRESH_EARLY_MS = 60_000; // renew 1 minute before the access token expires
+// Not a secret: just "this browser signed in before", so logged-out visitors don't make a pointless refresh call.
+const SIGNED_IN = "softlaunch.signedIn";
 
 export interface Session {
   token: string;
@@ -31,8 +33,13 @@ function emit() {
 function set(next: Session | null) {
   state = next;
   try {
-    if (next) sessionStorage.setItem(KEY, JSON.stringify(next));
-    else sessionStorage.removeItem(KEY);
+    if (next) {
+      sessionStorage.setItem(KEY, JSON.stringify(next));
+      localStorage.setItem(SIGNED_IN, "1");
+    } else {
+      sessionStorage.removeItem(KEY);
+      localStorage.removeItem(SIGNED_IN);
+    }
   } catch {
     /* private mode: memory only */
   }
@@ -112,8 +119,16 @@ function boot() {
   } catch {
     saved = null;
   }
+  let signedInBefore = false;
+  try {
+    signedInBefore = localStorage.getItem(SIGNED_IN) === "1";
+  } catch {
+    signedInBefore = true; // storage blocked: just try
+  }
   if (saved && saved.expiresAt - Date.now() > REFRESH_EARLY_MS) {
     set(saved);
+  } else if (!signedInBefore) {
+    queueMicrotask(() => set(null)); // never signed in here: nothing to restore
   } else {
     void refreshSession().then((s) => {
       if (state === undefined) set(s);

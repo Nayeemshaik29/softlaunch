@@ -24,6 +24,15 @@ updates:
     directory: /
     schedule: { interval: weekly, day: monday }
 
+  - package-ecosystem: npm             # the web app (Next.js, React, three.js, ...)
+    directory: /web
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      web:
+        patterns: ["*"]
+    open-pull-requests-limit: 5
   - package-ecosystem: github-actions  # keeps the pinned action SHAs current
     directory: /
     schedule: { interval: weekly, day: monday }

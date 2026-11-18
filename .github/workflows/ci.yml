@@ -2,6 +2,7 @@
 #   1. unit-tests   each service in parallel: compile + unit tests + jar
 #   2. e2e          the WHOLE system in docker compose on GitHub's machine + ci/smoke_test.py
 #   3. scan         known security holes in the libraries we ship (report only)
+#   web             the Next.js app: lint, types, npm audit, production build, Lighthouse ≥ 90 on public pages
 #   4. publish      images to ghcr.io (OFF until the repo variable PUBLISH_IMAGES is set to true)
 #
 # Third-party actions are pinned to a commit SHA (a tag can be moved by whoever controls the repo);
@@ -106,6 +107,50 @@ jobs:
       - name: Stop
         if: always()
         run: docker compose --profile all down -v
+
+  web:
+    name: web app
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: web
+    env:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+      NEXT_PUBLIC_MEDIA_ORIGIN: http://localhost:9000
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install (exact versions from package-lock.json)
+        run: npm ci --no-audit --no-fund
+      - name: Lint
+        run: npm run lint
+      - name: Types
+        run: npm run typecheck
+      # Unlike the Java scan this one blocks: a high/critical hole in code we send to every browser must be fixed first
+      - name: Security audit (production dependencies)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Production build
+        run: npm run build
+      - name: Lighthouse (mobile, median of 3 runs, every category ≥ 90)
+        run: |
+          npm install -g lighthouse@13.6.0 --no-audit --no-fund
+          npx next start -p 3031 > /tmp/next.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:3031/ > /dev/null && break; sleep 1; done
+          python3 ../ci/lighthouse_check.py http://localhost:3031 / /login /signup
+      - name: Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lighthouse-reports
+          path: web/lighthouse/
+          retention-days: 14
+          if-no-files-found: ignore
 
   scan:
     name: dependency scan
