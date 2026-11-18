@@ -9,6 +9,7 @@ import com.softlaunch.user.exception.ProfileNotFoundException;
 import com.softlaunch.user.exception.UserNotFoundException;
 import com.softlaunch.user.model.Profile;
 import com.softlaunch.user.model.User;
+import com.softlaunch.user.photo.PhotoLinks;
 import com.softlaunch.user.repository.ProfileRepository;
 import com.softlaunch.user.repository.UserRepository;
 import org.springframework.context.ApplicationEventPublisher;
@@ -24,8 +25,11 @@ public class ProfileService {
     private final ProfileRepository profileRepository;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final PhotoLinks photoLinks;
 
-    public ProfileService(ProfileRepository profileRepository, UserRepository userRepository, ApplicationEventPublisher eventPublisher) {
+    public ProfileService(ProfileRepository profileRepository, UserRepository userRepository, ApplicationEventPublisher eventPublisher,
+                          PhotoLinks photoLinks) {
+        this.photoLinks = photoLinks;
         this.profileRepository = profileRepository;
         this.userRepository = userRepository;
         this.eventPublisher = eventPublisher;
@@ -34,7 +38,7 @@ public class ProfileService {
     @Transactional(readOnly = true)
     public MyProfileResponse getMyProfile(UUID userId) {
         return profileRepository.findById(userId)
-                .map(MyProfileResponse::from)
+                .map(p -> MyProfileResponse.from(p, photoLinks))
                 .orElseThrow(() -> new ProfileNotFoundException(userId));
     }
 
@@ -50,7 +54,7 @@ public class ProfileService {
         apply(profile, request);
         profile.touch();
 
-        MyProfileResponse response = MyProfileResponse.from(profileRepository.save(profile));
+        MyProfileResponse response = MyProfileResponse.from(profileRepository.save(profile), photoLinks);
         eventPublisher.publishEvent(ProfileUpdatedEvent.of(userId));   // sent AFTER_COMMIT -> discovery evicts feed caches
         return response;
     }
@@ -78,7 +82,6 @@ public class ProfileService {
         replace(p.getInterests(), r.interests());
         replace(p.getHangoutPlaces(), r.hangoutPlaces());
         replace(p.getLanguages(), r.languages());
-        replace(p.getPhotoUrls(), r.photoUrls());
 
         p.getPrompts().clear();
         if (r.prompts() != null) {
@@ -95,7 +98,7 @@ public class ProfileService {
     @Transactional(readOnly = true)
     public PublicProfileResponse getPublicProfile(UUID userId) {
         return profileRepository.findById(userId)
-                .map(PublicProfileResponse::from)
+                .map(p -> PublicProfileResponse.from(p, photoLinks))
                 .orElseThrow(() -> new ProfileNotFoundException(userId));
     }
 }

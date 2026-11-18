@@ -16,7 +16,7 @@ public final class ProfileCompletion {
                 p.getInterests().size() >= 3,
                 !p.getHangoutPlaces().isEmpty(),
                 !p.getPrompts().isEmpty(),
-                !p.getPhotoUrls().isEmpty(),
+                !p.getPhotoKeys().isEmpty(),
                 hasText(p.getJobTitle()) || hasText(p.getEducation()),
                 hasText(p.getCity()),
                 p.getDrinking() != null || p.getSmoking() != null || p.getWorkout() != null

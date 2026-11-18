@@ -37,7 +37,7 @@ public record ProfileRequest(
         @DecimalMin("-90.0") @DecimalMax("90.0") Double latitude,
         @DecimalMin("-180.0") @DecimalMax("180.0") Double longitude,
 
-        @Size(max = ProfileLimits.MAX_PHOTOS) List<@NotBlank @Size(max = 500) String> photoUrls,
+        // no photoUrls here any more: photos are uploaded via /api/users/me/photos (checked + processed)
 
         @Min(18) @Max(100) Integer ageMin,
         @Min(18) @Max(100) Integer ageMax,

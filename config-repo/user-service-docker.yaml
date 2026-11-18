@@ -1,3 +1,7 @@
 spring:
   datasource:
     url: jdbc:postgresql://user-db:5432/user_db
+softlaunch:
+  photos:
+    endpoint: http://rustfs:9000             # user-service -> storage, inside the Docker network
+    # public-endpoint stays http://localhost:9000: links are opened by your browser/phone, not by containers

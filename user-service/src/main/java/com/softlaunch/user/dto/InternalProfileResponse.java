@@ -1,6 +1,7 @@
 package com.softlaunch.user.dto;
 
 import com.softlaunch.user.model.Profile;
+import com.softlaunch.user.photo.PhotoLinks;
 import com.softlaunch.user.model.User;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public record InternalProfileResponse(
     public record PromptAnswer(String question, String answer) {
     }
 
-    public static InternalProfileResponse from(Profile p) {
+    public static InternalProfileResponse from(Profile p, PhotoLinks photoLinks) {
         User user = p.getUser();
         return new InternalProfileResponse(
                 p.getUserId(),
@@ -44,7 +45,7 @@ public record InternalProfileResponse(
                 p.getAgeMax(),
                 p.getLookingFor().stream().map(Enum::name).collect(Collectors.toSet()),
                 p.getInterests().stream().map(Enum::name).collect(Collectors.toSet()),
-                List.copyOf(p.getPhotoUrls()),
+                photoLinks.of(p.getPhotoKeys()),
                 List.copyOf(p.getHangoutPlaces()),
                 p.getPrompts().stream().map(q -> new PromptAnswer(q.getQuestion(), q.getAnswer())).toList());
     }

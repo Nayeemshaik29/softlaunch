@@ -1,5 +1,7 @@
 package com.softlaunch.user.dto;
 
+import com.softlaunch.user.photo.PhotoLinks;
+
 import com.softlaunch.user.model.*;
 
 import java.util.List;
@@ -29,7 +31,7 @@ public record PublicProfileResponse(
         String city,
         List<String> photoUrls
 ) {
-    public static PublicProfileResponse from(Profile p) {
+    public static PublicProfileResponse from(Profile p, PhotoLinks photoLinks) {
         User user = p.getUser();
         return new PublicProfileResponse(
                 p.getUserId(),
@@ -52,7 +54,7 @@ public record PublicProfileResponse(
                 p.getEducation(),
                 Set.copyOf(p.getLanguages()),
                 p.getCity(),
-                List.copyOf(p.getPhotoUrls())
+                photoLinks.of(p.getPhotoKeys())
         );
     }
 }

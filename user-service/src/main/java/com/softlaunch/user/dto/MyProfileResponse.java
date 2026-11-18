@@ -1,5 +1,7 @@
 package com.softlaunch.user.dto;
 
+import com.softlaunch.user.photo.PhotoLinks;
+
 import com.softlaunch.user.model.*;
 import com.softlaunch.user.service.ProfileCompletion;
 
@@ -41,7 +43,7 @@ public record MyProfileResponse(
         Integer maxDistanceKm,
         Instant updatedAt,
         int percent) {
-    public static MyProfileResponse from(Profile p) {
+    public static MyProfileResponse from(Profile p, PhotoLinks photoLinks) {
         User user = p.getUser();
         return new MyProfileResponse(
                 p.getUserId(),
@@ -68,7 +70,7 @@ public record MyProfileResponse(
                 p.getCity(),
                 p.getLatitude(),
                 p.getLongitude(),
-                List.copyOf(p.getPhotoUrls()),
+                photoLinks.of(p.getPhotoKeys()),
                 p.getAgeMin(),
                 p.getAgeMax(),
                 p.getMaxDistanceKm(),

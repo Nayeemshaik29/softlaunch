@@ -97,10 +97,13 @@ public class Profile {
     private Double longitude;
 
     // ---- Photos ----
+    // Storage KEYS of processed photos (e.g. photos/<user>/<id>.jpg), in display order. Never URLs typed by
+    // the user: links are created on the way out (signed, expiring). Uploads go through PhotoService only.
     @ElementCollection
-    @CollectionTable(name = "profile_photos", joinColumns = @JoinColumn(name = "user_id"))
-    @Column(name = "url", length = 500)
-    private List<String> photoUrls = new ArrayList<>();
+    @CollectionTable(name = "profile_photo_keys", joinColumns = @JoinColumn(name = "user_id"))
+    @OrderColumn(name = "position")
+    @Column(name = "object_key", length = 200)
+    private List<String> photoKeys = new ArrayList<>();
 
     // ---- Discovery preferences (PRIVATE) ----
     private Integer ageMin;
@@ -290,13 +293,10 @@ public class Profile {
         this.longitude = longitude;
     }
 
-    public List<String> getPhotoUrls() {
-        return photoUrls;
+    public List<String> getPhotoKeys() {
+        return photoKeys;
     }
 
-    public void setPhotoUrls(List<String> photoUrls) {
-        this.photoUrls = photoUrls;
-    }
 
     public Integer getAgeMin() {
         return ageMin;

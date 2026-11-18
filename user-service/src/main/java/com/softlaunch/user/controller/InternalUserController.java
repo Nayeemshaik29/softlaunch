@@ -7,6 +7,7 @@ import com.softlaunch.user.dto.UserSummary;
 import com.softlaunch.user.exception.UserNotFoundException;
 import com.softlaunch.user.repository.ProfileRepository;
 import com.softlaunch.user.repository.UserRepository;
+import com.softlaunch.user.photo.PhotoLinks;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -21,8 +22,10 @@ public class InternalUserController {
 
     private final ProfileRepository profileRepository;
     private final UserRepository userRepository;
+    private final PhotoLinks photoLinks;
 
-    public InternalUserController(ProfileRepository profileRepository, UserRepository userRepository) {
+    public InternalUserController(ProfileRepository profileRepository, UserRepository userRepository, PhotoLinks photoLinks) {
+        this.photoLinks = photoLinks;
         this.profileRepository = profileRepository;
         this.userRepository = userRepository;
     }
@@ -54,7 +57,7 @@ public class InternalUserController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Max 100 ids per request");
         }
         return profileRepository.findAllById(userIds).stream()
-                .map(InternalProfileResponse::from)
+                .map(p -> InternalProfileResponse.from(p, photoLinks))
                 .toList();
     }
 }
