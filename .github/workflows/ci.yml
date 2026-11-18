@@ -1,0 +1,161 @@
+# CI: on every push and pull request
+#   1. unit-tests   each service in parallel: compile + unit tests + jar
+#   2. e2e          the WHOLE system in docker compose on GitHub's machine + ci/smoke_test.py
+#   3. scan         known security holes in the libraries we ship (report only)
+#   4. publish      images to ghcr.io (OFF until the repo variable PUBLISH_IMAGES is set to true)
+#
+# Third-party actions are pinned to a commit SHA (a tag can be moved by whoever controls the repo);
+# Dependabot keeps the SHAs up to date.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:                       # a newer push cancels the older, still-running check
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read                   # least privilege; jobs that need more ask for it
+
+jobs:
+  unit-tests:
+    name: test ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false             # one broken service shouldn't hide the results of the other 10
+      matrix:
+        service: [registry-service, config-server, api-gateway, user-service, match-service,
+                  notification-service, discovery-service, chat-service, verification-service,
+                  safety-service, ai-service]
+    defaults:
+      run:
+        working-directory: ${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: ${{ matrix.service }}/pom.xml
+      # *ApplicationTests start the whole Spring context (config-server, DBs, Kafka...): they are
+      # covered by the e2e job instead, against the real thing.
+      - name: Unit tests + jar
+        run: ./mvnw -B -ntp package '-Dtest=!*ApplicationTests' -Dsurefire.failIfNoSpecifiedTests=false
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: jar-${{ matrix.service }}
+          path: ${{ matrix.service }}/target/*.jar
+          retention-days: 3
+          if-no-files-found: error
+      - name: Test report
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: test-report-${{ matrix.service }}
+          path: ${{ matrix.service }}/target/surefire-reports/
+          retention-days: 7
+
+  e2e:
+    name: end-to-end (docker compose)
+    needs: unit-tests
+    runs-on: ubuntu-latest         # 4 CPUs / 16 GB: enough for 11 services (512 MB each) + infrastructure
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: jar-*
+          path: jars
+      - name: Put jars where the Dockerfile expects them
+        run: |
+          for dir in jars/jar-*; do
+            svc=${dir#jars/jar-}
+            mkdir -p "$svc/target" && mv "$dir"/*.jar "$svc/target/"
+          done
+      - name: Throwaway secrets for this run
+        run: bash ci/make-env.sh > .env
+      - name: Build images
+        run: docker compose --profile all build
+      - name: Start everything
+        run: docker compose --profile all up -d
+      - name: Wait until all 11 services are healthy
+        run: |
+          for i in $(seq 1 90); do
+            states=$(docker ps --filter "label=com.docker.compose.service" --format '{{.Names}} {{.Status}}' | grep -E 'service|gateway|config-server')
+            total=$(echo "$states" | wc -l); healthy=$(echo "$states" | grep -c '(healthy)' || true)
+            echo "[$i] $healthy/$total healthy"
+            if [ "$total" -ge 11 ] && [ "$healthy" -eq "$total" ]; then exit 0; fi
+            sleep 10
+          done
+          echo "::error::services did not become healthy in 15 minutes"; echo "$states"; exit 1
+      - name: Smoke test
+        run: python3 ci/smoke_test.py
+      - name: Logs (only when something failed)
+        if: failure()
+        run: |
+          docker compose --profile all ps -a
+          for s in $(docker compose --profile all config --services); do
+            echo "::group::$s"; docker compose --profile all logs --no-color --tail 150 "$s"; echo "::endgroup::"
+          done
+      - name: Stop
+        if: always()
+        run: docker compose --profile all down -v
+
+  scan:
+    name: dependency scan
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: jar-*
+          path: jars
+      # Report only: a new CVE in a library shouldn't block every push. Read the table, then let
+      # Dependabot's pull request (or a version bump) fix it.
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: rootfs
+          scan-ref: jars
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          format: table
+          exit-code: '0'
+
+  publish:
+    name: publish images
+    needs: [e2e, scan]
+    # off until you set the repository variable PUBLISH_IMAGES=true (Settings → Secrets and variables → Actions → Variables)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.PUBLISH_IMAGES == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write              # only this job may push images
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: jar-*
+          path: jars
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}   # temporary token GitHub creates for this run, nothing to store
+      - name: Build and push
+        run: |
+          owner=${GITHUB_REPOSITORY_OWNER,,}       # registry names must be lowercase
+          for dir in jars/jar-*; do
+            svc=${dir#jars/jar-}
+            mkdir -p "$svc/target" && mv "$dir"/*.jar "$svc/target/"
+            image=ghcr.io/$owner/softlaunch-$svc
+            docker build -f docker/Dockerfile -t "$image:$GITHUB_SHA" -t "$image:latest" "$svc"
+            docker push --all-tags "$image"
+          done

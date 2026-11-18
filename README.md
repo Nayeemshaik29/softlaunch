@@ -2,6 +2,7 @@
 
 > A dating platform built as a **cloud-native microservice system** with Java 25, Spring Boot 4, Spring Cloud, Kafka, PostgreSQL and Redis.
 
+[![CI](https://github.com/Nayeemshaik29/softlaunch/actions/workflows/ci.yml/badge.svg)](https://github.com/Nayeemshaik29/softlaunch/actions/workflows/ci.yml)
 ![Java](https://img.shields.io/badge/Java-25-orange?logo=openjdk)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1-6DB33F?logo=springboot)
 ![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2025-6DB33F?logo=spring)
@@ -287,7 +288,11 @@ docker exec -it softlaunch-kafka /opt/kafka/bin/kafka-consumer-groups.sh \
 
 ```
 softlaunch/
-├── docker-compose.yml        # Postgres ×3, Redis, Kafka
+├── .github/workflows/ci.yml  # CI: unit tests, full-system smoke test, dependency scan
+├── ci/                       # smoke_test.py + throwaway-secret generator used by CI
+├── docs/                     # DEPLOY.md (going live), AI_DATA.md (what the AI sees)
+├── docker/                   # one Dockerfile for all services + build script
+├── docker-compose.yml        # the whole system: infrastructure + 11 services (profiles)
 ├── config-repo/              # Centralised config served by Config Server
 │   ├── application.yaml      #   shared (Eureka, instance id)
 │   ├── api-gateway.yaml      #   routes + JWT

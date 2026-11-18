@@ -1,0 +1,29 @@
+# Dependabot opens pull requests when something we use has an update, especially security fixes.
+# Each PR runs the full CI, so you only merge updates that pass.
+version: 2
+updates:
+  - package-ecosystem: maven
+    directories: ["/registry-service", "/config-server", "/api-gateway", "/user-service", "/match-service",
+                  "/notification-service", "/discovery-service", "/chat-service", "/verification-service",
+                  "/safety-service", "/ai-service"]
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 10
+    groups:
+      # Spring Boot / Cloud / AI versions must move together in all 11 services: one PR, not 11
+      spring:
+        patterns: ["org.springframework*", "io.micrometer*"]
+      other-libraries:
+        patterns: ["*"]
+        exclude-patterns: ["org.springframework*", "io.micrometer*"]
+
+  - package-ecosystem: docker          # eclipse-temurin base image (OS security fixes)
+    directory: /docker
+    schedule: { interval: weekly, day: monday }
+
+  - package-ecosystem: docker-compose  # postgres, kafka, redis, grafana... in docker-compose.yml
+    directory: /
+    schedule: { interval: weekly, day: monday }
+
+  - package-ecosystem: github-actions  # keeps the pinned action SHAs current
+    directory: /
+    schedule: { interval: weekly, day: monday }
