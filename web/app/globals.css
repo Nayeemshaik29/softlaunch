@@ -1,0 +1,205 @@
+@import "tailwindcss";
+
+/* Design tokens: see .claude/skills/frontend-design/SKILL.md. Dark first. */
+:root {
+  --bg: #0e0c10;
+  --surface: #17141a;
+  --surface-2: #211d25;
+  --line: #2f2934;
+  --text: #f4eee8;
+  --muted: #a69da8;
+  --accent: #ff8a6b;
+  --accent-2: #b79bff;
+  --on-accent: #160f14;
+  --like: #4fd69c;
+  --pass: #9a93a0;
+  --super: #6cb8ff;
+  --danger: #ff6b7a;
+  --focus: #b79bff;
+  --grad-a: #ff8a6b;
+  --grad-b: #f66f9a;
+  --grad-c: #b79bff;
+  --grad-warm: linear-gradient(120deg, var(--grad-a) 0%, var(--grad-b) 45%, var(--grad-c) 100%);
+  --shadow-card: 0 24px 48px -24px rgb(0 0 0 / 0.55);
+  --scrim: linear-gradient(to top, rgb(0 0 0 / 0.78) 0%, rgb(0 0 0 / 0.35) 32%, transparent 58%);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #fbf7f3;
+    --surface: #ffffff;
+    --surface-2: #f3ece6;
+    --line: #e6ddd5;
+    --text: #1c1720;
+    --muted: #675e6c;
+    --accent: #b03e29;
+    --accent-2: #5e42c4;
+    --like: #17744b;
+    --pass: #6e6774;
+    --super: #1a60aa;
+    --danger: #c22f45;
+    --focus: #5e42c4;
+    --shadow-card: 0 24px 48px -28px rgb(60 40 30 / 0.35);
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #fbf7f3;
+  --surface: #ffffff;
+  --surface-2: #f3ece6;
+  --line: #e6ddd5;
+  --text: #1c1720;
+  --muted: #675e6c;
+  --accent: #b03e29;
+  --accent-2: #5e42c4;
+  --like: #17744b;
+  --pass: #6e6774;
+  --super: #1a60aa;
+  --danger: #c22f45;
+  --focus: #5e42c4;
+  --shadow-card: 0 24px 48px -28px rgb(60 40 30 / 0.35);
+  color-scheme: light;
+}
+
+/* "After dark": sensual night mood inside the app (never on the landing page / store listing).
+   Dark only, whatever the system setting. See the design skill, section 9. */
+:root[data-mood="after-dark"] {
+  --bg: #0b0608;
+  --surface: #160b10;
+  --surface-2: #22121a;
+  --line: #3d2230;
+  --text: #f7e9ec;
+  --muted: #c0a0ab;
+  --accent: #ff8296;
+  --accent-2: #e59be8;
+  --on-accent: #1a0a10;
+  --like: #5fdda5;
+  --pass: #a8949d;
+  --super: #7cc0ff;
+  --danger: #ff7a86;
+  --focus: #e59be8;
+  --grad-a: #ffb07a;
+  --grad-b: #ff6f91;
+  --grad-c: #d77be0;
+  --shadow-card: 0 28px 56px -24px rgb(0 0 0 / 0.75), 0 0 48px -24px rgb(255 111 145 / 0.25);
+  --scrim: linear-gradient(to top, rgb(11 6 8 / 0.85) 0%, rgb(11 6 8 / 0.4) 34%, transparent 60%);
+  color-scheme: dark;
+}
+/* candle-light vignette behind app screens */
+:root[data-mood="after-dark"] body {
+  background:
+    radial-gradient(120% 70% at 50% -10%, rgb(255 111 145 / 0.10), transparent 60%),
+    radial-gradient(80% 50% at 100% 100%, rgb(215 123 224 / 0.08), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-on-accent: var(--on-accent);
+  --color-like: var(--like);
+  --color-pass: var(--pass);
+  --color-super: var(--super);
+  --color-danger: var(--danger);
+  --color-focus: var(--focus);
+
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-sans: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
+
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.5rem;
+  --text-xl--line-height: 2rem;
+  --text-2xl: 2rem;
+  --text-2xl--line-height: 2.5rem;
+  --text-3xl: 2.5rem;
+  --text-3xl--line-height: 3rem;
+  --text-4xl: 3.5rem;
+  --text-4xl--line-height: 4rem;
+  --text-display: clamp(2.75rem, 7vw, 6rem);
+  --text-display--line-height: 1;
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --shadow-card: var(--shadow-card);
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+    color: var(--text);
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3 {
+    text-wrap: balance;
+    letter-spacing: -0.02em;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--accent-2) 40%, transparent);
+  }
+}
+
+@utility bg-grad-warm {
+  background: var(--grad-warm);
+}
+@utility text-grad-warm {
+  background: var(--grad-warm);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@utility bg-scrim {
+  background: var(--scrim);
+}
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Skeleton shimmer (static under reduced motion) */
+@keyframes shimmer {
+  from { background-position: 150% 0; }
+  to { background-position: -50% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 0%, color-mix(in srgb, var(--surface-2) 70%, var(--text) 8%) 50%, var(--surface-2) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+  *, *::before, *::after { scroll-behavior: auto !important; }
+}
+
+.sr-only-focusable:not(:focus):not(:focus-within) {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}

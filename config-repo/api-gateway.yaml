@@ -9,6 +9,20 @@ spring:
     gateway:
       server:
         webflux:
+          # A service that is down must fail FAST (the app then rolls back), not hang ~30s on the network.
+          httpclient:
+            connect-timeout: 2000     # ms
+            response-timeout: 10s
+          # The web app (Next.js) runs on its own address and calls this gateway from the browser.
+          # Browsers only allow that for origins listed here. Production: WEB_ORIGINS=https://yourdomain.com
+          # Never "*": it would let any website call the API with a user's token.
+          globalcors:
+            cors-configurations:
+              '[/api/**]':
+                allowed-origins: "${WEB_ORIGINS:http://localhost:3030}"
+                allowed-methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
+                allowed-headers: [Authorization, Content-Type]
+                max-age: 3600
           routes:
             # Web account deletion (the /delete-account page). Same strictness as login, but its OWN bucket
             # ("deletion:<ip>"), so asking for a deletion email never uses up someone's login attempts.

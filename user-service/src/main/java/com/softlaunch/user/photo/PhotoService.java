@@ -154,6 +154,24 @@ public class PhotoService implements PhotoLinks {
         storage.delete(key);
     }
 
+    /** New order of the user's photos (first = main photo). Must list exactly the photos they have. */
+    public void reorder(UUID userId, List<UUID> photoIds) {
+        List<String> wanted = photoIds.stream().map(id -> PhotoKeys.of(userId, id)).toList();
+        boolean ok = Boolean.TRUE.equals(tx.execute(status -> profiles.findById(userId).map(profile -> {
+            List<String> current = profile.getPhotoKeys();
+            if (wanted.size() != current.size() || !new java.util.HashSet<>(wanted).equals(new java.util.HashSet<>(current))) {
+                return false;
+            }
+            current.clear();
+            current.addAll(wanted);
+            events.publishEvent(ProfileUpdatedEvent.of(userId));
+            return true;
+        }).orElse(false)));
+        if (!ok) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "List each of your photos exactly once");
+        }
+    }
+
     /** For account deletion: every stored file of this user. */
     public int deleteAllOf(UUID userId) {
         return storage.deleteAllOf(userId.toString());

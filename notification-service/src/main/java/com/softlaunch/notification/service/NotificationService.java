@@ -53,6 +53,12 @@ public class NotificationService {
                 .toList();
     }
 
+    /** Swipe-to-dismiss in the app. Only your own notifications; deleting one that's already gone is fine. */
+    @Transactional
+    public void dismiss(UUID me, UUID notificationId) {
+        repository.findByIdAndRecipientId(notificationId, me).ifPresent(repository::delete);
+    }
+
     @Transactional
     public NotificationResponse markRead(UUID me, UUID notificationId) {
         Notification notification = repository.findByIdAndRecipientId(notificationId, me)

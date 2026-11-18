@@ -43,6 +43,7 @@ class BucketInitializer implements ApplicationRunner {
             s3.createBucket(r -> r.bucket(props.bucket()));
             log.info("Created bucket {}", props.bucket());
         }
+        allowWebApp();
         // Belt and braces next to our own cleanup job: the storage itself deletes raw uploads after 1 day.
         try {
             s3.putBucketLifecycleConfiguration(r -> r.bucket(props.bucket()).lifecycleConfiguration(c -> c.rules(
@@ -51,6 +52,29 @@ class BucketInitializer implements ApplicationRunner {
                             .expiration(x -> x.days(1)).build())));
         } catch (S3Exception e) {
             log.warn("Storage doesn't support lifecycle rules ({}); the cleanup job still removes abandoned uploads",
+                    e.awsErrorDetails() == null ? e.getMessage() : e.awsErrorDetails().errorCode());
+        }
+    }
+
+    /**
+     * The web app uploads photos straight to storage (signed PUT) and draws them in 3D scenes (WebGL textures).
+     * Browsers only allow both if the bucket lists the web app's address (CORS). Signed links stay the access control.
+     */
+    private void allowWebApp() {
+        if (props.corsOrigins() == null || props.corsOrigins().isEmpty()) {
+            return;
+        }
+        try {
+            s3.putBucketCors(r -> r.bucket(props.bucket()).corsConfiguration(c -> c.corsRules(
+                    software.amazon.awssdk.services.s3.model.CORSRule.builder()
+                            .allowedOrigins(props.corsOrigins())
+                            .allowedMethods("GET", "PUT")
+                            .allowedHeaders("content-type")
+                            .exposeHeaders("etag")
+                            .maxAgeSeconds(3600).build())));
+            log.info("Bucket CORS allows {}", props.corsOrigins());
+        } catch (S3Exception e) {
+            log.warn("Could not set bucket CORS ({}); the web app can't upload photos until it is set",
                     e.awsErrorDetails() == null ? e.getMessage() : e.awsErrorDetails().errorCode());
         }
     }

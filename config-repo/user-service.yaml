@@ -49,6 +49,7 @@ softlaunch:
     upload-link-ttl: 5m
     view-link-ttl: 1h
     pending-ttl: 24h
+    cors-origins: ${WEB_ORIGINS:http://localhost:3030}   # web app may PUT/GET photos with signed links (bucket CORS)
   account-deletion:
     # The web page for people who no longer have the app (Play Store rule). Served by the gateway.
     page-url: http://localhost:8080/delete-account   # production: https://api.yourdomain.com/delete-account

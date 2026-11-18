@@ -36,6 +36,16 @@ public class PhotoController {
     }
 
     /** Step 3: "done uploading" -> checked, cleaned, resized, added to the profile. */
+    public record OrderRequest(@jakarta.validation.constraints.NotEmpty
+                               @jakarta.validation.constraints.Size(max = 12) java.util.List<@jakarta.validation.constraints.NotNull UUID> photoIds) {
+    }
+
+    @org.springframework.web.bind.annotation.PutMapping("/order")
+    @org.springframework.web.bind.annotation.ResponseStatus(org.springframework.http.HttpStatus.NO_CONTENT)
+    public void reorder(@RequestHeader("X-User-Id") UUID me, @Valid @RequestBody OrderRequest request) {
+        photoService.reorder(me, request.photoIds());
+    }
+
     @PostMapping("/{photoId}/confirm")
     public PhotoService.PhotoView confirm(@RequestHeader("X-User-Id") UUID me, @PathVariable UUID photoId) {
         return photoService.confirm(me, photoId);

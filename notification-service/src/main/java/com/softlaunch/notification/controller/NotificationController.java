@@ -27,4 +27,10 @@ public class NotificationController {
                                          @PathVariable UUID notificationId) {
         return notificationService.markRead(me, notificationId);
     }
+
+    @DeleteMapping("/{notificationId}")
+    @ResponseStatus(org.springframework.http.HttpStatus.NO_CONTENT)
+    public void dismiss(@RequestHeader("X-User-Id") UUID me, @PathVariable UUID notificationId) {
+        notificationService.dismiss(me, notificationId);
+    }
 }

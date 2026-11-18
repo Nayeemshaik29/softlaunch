@@ -14,5 +14,6 @@ import java.time.Duration;
 public record PhotoProperties(String bucket, String region, String endpoint, String publicEndpoint,
                               String accessKey, String secretKey, boolean createBucket,
                               long maxUploadBytes, long maxPixels, int maxDimension,
-                              Duration uploadLinkTtl, Duration viewLinkTtl, Duration pendingTtl) {
+                              Duration uploadLinkTtl, Duration viewLinkTtl, Duration pendingTtl,
+                              java.util.List<String> corsOrigins) {
 }

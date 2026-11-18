@@ -57,7 +57,11 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(SwipeLimitExceededException.class)
     public ProblemDetail handleSwipeLimit(SwipeLimitExceededException ex) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+        // "code" lets the app tell this calm, expected 429 apart from the gateway's anti-spam 429 (empty body)
+        problem.setProperty("code", "SWIPE_QUOTA");
+        problem.setProperty("resetsAt", ex.getResetsAt().toString());
+        return problem;
     }
     @ExceptionHandler(TargetUserNotFoundException.class)
     public ProblemDetail handleTargetUserNotFound(TargetUserNotFoundException ex) {
