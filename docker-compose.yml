@@ -40,7 +40,7 @@ x-after-config: &after-config
 services:
 
   user-db:
-    image: postgres:17
+    image: postgres:18
     container_name: softlaunch-user-db
     environment:
       POSTGRES_DB: user_db
@@ -52,7 +52,7 @@ services:
       - user-db-data:/var/lib/postgresql/data
 
   match-db:
-    image: postgres:17
+    image: postgres:18
     container_name: softlaunch-match-db
     environment:
       POSTGRES_DB: match_db
@@ -64,7 +64,7 @@ services:
       - match-db-data:/var/lib/postgresql/data
 
   notification-db:
-    image: postgres:17
+    image: postgres:18
     container_name: softlaunch-notification-db
     environment:
       POSTGRES_DB: notification_db
@@ -76,7 +76,7 @@ services:
       - notification-db-data:/var/lib/postgresql/data
 
   verification-db:
-    image: postgres:17
+    image: postgres:18
     container_name: softlaunch-verification-db
     environment:
       POSTGRES_DB: verification_db
