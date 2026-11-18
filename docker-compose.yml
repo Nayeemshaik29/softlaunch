@@ -218,7 +218,7 @@ services:
       - "9411:9411"
 
   loki:
-    image: grafana/loki:3.5.0
+    image: grafana/loki:3.7.10
     container_name: softlaunch-loki
     ports:
       - "3100:3100"
