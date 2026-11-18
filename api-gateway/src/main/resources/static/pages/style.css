@@ -41,3 +41,24 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .error { color: var(--danger); min-height: 1.2em; margin-top: .75rem; font-weight: 500; }
 .error:empty { display: none; }
+
+/* ---- privacy policy (long text page) ---- */
+main.doc { max-width: 46rem; }
+.doc h2 { margin-top: 2rem; padding-top: .25rem; }
+.doc h3 { margin: 1.25rem 0 .4rem; font-size: 1.02rem; }
+.doc ul { margin: 0 0 .9rem; padding-left: 1.25rem; }
+.doc li { margin-bottom: .35rem; }
+.doc a { color: var(--brand); }
+.meta { color: var(--muted); font-size: .92rem; }
+.summary { background: var(--box); border-radius: 12px; padding: .9rem 1rem .2rem 1rem; }
+.table-wrap { overflow-x: auto; margin: 0 0 1rem; border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: .93rem; }
+th, td { text-align: left; vertical-align: top; padding: .55rem .7rem; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+th { background: var(--box); font-weight: 600; }
+mark.fill { background: #ffe58a; color: #3b2f00; padding: 0 .2rem; border-radius: 3px; }
+nav.toc { columns: 2; font-size: .93rem; margin-bottom: 1rem; }
+@media (max-width: 36rem) { nav.toc { columns: 1; } }
+nav.toc a { display: block; padding: .15rem 0; }
+footer.links { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--line); font-size: .92rem; }
+.links a { color: var(--brand); }

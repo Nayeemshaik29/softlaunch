@@ -240,7 +240,9 @@ services:
     container_name: softlaunch-loki
     ports:
       - "3100:3100"
-    command: -config.file=/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/loki.yaml
+    volumes:
+      - ./observability/loki/loki.yaml:/etc/loki/loki.yaml:ro   # 30-day retention (privacy policy)
 
   grafana:
     image: grafana/grafana:12.1.0

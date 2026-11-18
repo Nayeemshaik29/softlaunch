@@ -122,9 +122,10 @@ Move the stateful parts first: they're the hardest to run yourself.
 - [x] **Account deletion** endpoint: `DELETE /api/users/me` (see [DATA_DELETION.md](DATA_DELETION.md)).
 - [x] **Web link** for deletion without the app: `https://api.yourdomain.com/delete-account`. Put this URL in the Play Console.
 - [ ] **Email provider** for the deletion links (see section 4).
-- [ ] Privacy policy URL (public web page).
-- [ ] Data safety form: answers in [`AI_DATA.md`](AI_DATA.md) and [`DATA_DELETION.md`](DATA_DELETION.md), plus photos, location, DOB and KYC.
-- [ ] India's DPDP Act: consent text, purpose of each data item, and a grievance contact.
+- [x] **Privacy policy** page: `https://api.yourdomain.com/privacy` (put it in the Play Console and the app).
+- [ ] Replace every `[FILL IN]` in the policy, then have it reviewed. This must print **0**: `grep -c "FILL IN" api-gateway/src/main/resources/static/privacy/index.html`
+- [ ] Data safety form: answers in [`DATA_SAFETY.md`](DATA_SAFETY.md) (from [`DATA_INVENTORY.md`](DATA_INVENTORY.md)).
+- [ ] India's DPDP Act: the policy covers purposes, rights and a grievance contact. Still to do: a consent checkbox at signup that links the policy (Flutter app).
 - [ ] HTTPS everywhere; no database ports open (check with `nmap` from outside).
 - [ ] Fresh production secrets; nothing from `.env.example` or your laptop.
 - [ ] Backups running **and** one restore tested.

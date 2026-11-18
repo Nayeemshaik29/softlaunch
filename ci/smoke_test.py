@@ -225,6 +225,10 @@ with urllib.request.urlopen(f"{GW}/delete-account", timeout=30) as r:
     page, csp = r.read().decode(), r.headers.get("Content-Security-Policy", "")
 check("deletion page is served by the gateway", "Delete your account" in page)
 check("page has a strict Content-Security-Policy", "default-src 'none'" in csp and "frame-ancestors 'none'" in csp)
+with urllib.request.urlopen(f"{GW}/privacy", timeout=30) as r:
+    policy, pcsp = r.read().decode(), r.headers.get("Content-Security-Policy", "")
+check("privacy policy page is public (Play Store needs its URL)",
+      "Privacy Policy" in policy and 'id="version"' in policy and "default-src 'none'" in pcsp)
 
 asha_email = f"asha-{RUN}@ci.test"
 nobody_email = f"nobody-{RUN}@ci.test"

@@ -215,6 +215,7 @@ All requests go through the gateway at `http://localhost:8080`. Endpoints marked
 | GET 🔒 | `/api/users/me` | Current user |
 | DELETE 🔒 | `/api/users/me` | Delete my account (body `{"password"}`) → `204`, data removed everywhere via `user.deleted` |
 | GET | `/delete-account` | Web page to delete an account without the app (Play Store rule) |
+| GET | `/privacy` | Privacy policy page (written from [docs/DATA_INVENTORY.md](docs/DATA_INVENTORY.md)) |
 | POST | `/api/users/auth/deletion-requests` | Email me a deletion link (body `{"email"}`) → always `202` |
 | POST | `/api/users/auth/deletion-requests/confirm` | Delete with the emailed link (body `{"token"}`) → `204`, or `400` if expired/used |
 | GET 🔒 | `/api/users/me/profile` | My full profile + completion % |
@@ -294,7 +295,7 @@ docker exec -it softlaunch-kafka /opt/kafka/bin/kafka-consumer-groups.sh \
 softlaunch/
 ├── .github/workflows/ci.yml  # CI: unit tests, full-system smoke test, dependency scan
 ├── ci/                       # smoke_test.py + throwaway-secret generator used by CI
-├── docs/                     # DEPLOY.md (going live), AI_DATA.md (what the AI sees)
+├── docs/                     # DEPLOY.md (going live), DATA_INVENTORY/DATA_SAFETY/DATA_DELETION (privacy), AI_DATA.md
 ├── docker/                   # one Dockerfile for all services + build script
 ├── docker-compose.yml        # the whole system: infrastructure + 11 services (profiles)
 ├── config-repo/              # Centralised config served by Config Server
