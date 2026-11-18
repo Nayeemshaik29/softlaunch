@@ -214,6 +214,9 @@ All requests go through the gateway at `http://localhost:8080`. Endpoints marked
 | POST | `/api/users/auth/login` | Get a JWT |
 | GET 🔒 | `/api/users/me` | Current user |
 | DELETE 🔒 | `/api/users/me` | Delete my account (body `{"password"}`) → `204`, data removed everywhere via `user.deleted` |
+| GET | `/delete-account` | Web page to delete an account without the app (Play Store rule) |
+| POST | `/api/users/auth/deletion-requests` | Email me a deletion link (body `{"email"}`) → always `202` |
+| POST | `/api/users/auth/deletion-requests/confirm` | Delete with the emailed link (body `{"token"}`) → `204`, or `400` if expired/used |
 | GET 🔒 | `/api/users/me/profile` | My full profile + completion % |
 | PUT 🔒 | `/api/users/me/profile` | Create or update my profile |
 | GET 🔒 | `/api/users/{userId}/profile` | Someone's public profile |

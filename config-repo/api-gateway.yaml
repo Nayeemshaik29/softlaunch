@@ -10,6 +10,20 @@ spring:
       server:
         webflux:
           routes:
+            # Web account deletion (the /delete-account page). Same strictness as login, but its OWN bucket
+            # ("deletion:<ip>"), so asking for a deletion email never uses up someone's login attempts.
+            # Must come before user-auth: the first matching route wins.
+            - id: user-deletion-requests
+              uri: lb://user-service
+              predicates:
+                - Path=/api/users/auth/deletion-requests/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@deletionKeyResolver}"
+                    redis-rate-limiter.replenishRate: 1
+                    redis-rate-limiter.burstCapacity: 120
+                    redis-rate-limiter.requestedTokens: 12
             # Must come BEFORE the user-service route: the first matching route wins.
             # Login/signup per IP: each request costs 12 tokens, 1 token comes back per second
             # => 1 request per 12s = 5 per minute; a full bucket (120 tokens) allows a burst of 10.

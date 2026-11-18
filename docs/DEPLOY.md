@@ -47,6 +47,11 @@ api.yourdomain.com {
 ### 4. Secrets
 - Create a fresh `.env` **on the server** with new values (`openssl rand -base64 32`). Never reuse your laptop's values, never commit it, `chmod 600 .env`.
 - DigiLocker: production client id/secret and the production redirect URL.
+- **Email** (account-deletion links): Mailpit is for testing only, it sends nothing out. Use a real provider (Amazon SES in Mumbai, Brevo, …):
+  - set `spring.mail.host`/`port` in `config-repo/user-service.yaml` and `MAIL_USERNAME` / `MAIL_PASSWORD` in `.env`
+  - set `softlaunch.account-deletion.mail-from` to an address on your domain, and `page-url` to `https://api.yourdomain.com/delete-account`
+  - add the provider's **SPF and DKIM** DNS records, or the emails land in spam
+  - remove the `mailpit` service from the server's compose file
 
 ### 5. Photos
 Use real **S3** (or any S3-compatible store), not RustFS on the same disk:
@@ -115,7 +120,8 @@ Move the stateful parts first: they're the hardest to run yourself.
 ## Play Store launch checklist
 
 - [x] **Account deletion** endpoint: `DELETE /api/users/me` (see [DATA_DELETION.md](DATA_DELETION.md)).
-- [ ] **Web link** for deletion without the app (Play Store requirement). A small page on your website.
+- [x] **Web link** for deletion without the app: `https://api.yourdomain.com/delete-account`. Put this URL in the Play Console.
+- [ ] **Email provider** for the deletion links (see section 4).
 - [ ] Privacy policy URL (public web page).
 - [ ] Data safety form: answers in [`AI_DATA.md`](AI_DATA.md) and [`DATA_DELETION.md`](DATA_DELETION.md), plus photos, location, DOB and KYC.
 - [ ] India's DPDP Act: consent text, purpose of each data item, and a grievance contact.

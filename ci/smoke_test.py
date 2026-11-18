@@ -10,6 +10,7 @@ Standard library only (no pip install). Exits 1 if any check fails.
 No Ollama in CI: AI features must answer with their fallbacks (that's what we check).
 """
 import json
+import re
 import os
 import struct
 import sys
@@ -22,6 +23,7 @@ import zlib
 
 GW = os.environ.get("GATEWAY_URL", "http://localhost:8080")
 PROM = os.environ.get("PROMETHEUS_URL", "http://localhost:9090")
+MAILPIT = os.environ.get("MAILPIT_URL", "http://localhost:8025")   # fake inbox: catches every email
 PASSWORD = "ci-" + uuid.uuid4().hex   # throwaway test password, new every run
 RUN = uuid.uuid4().hex[:8]
 failures = []
@@ -217,6 +219,50 @@ notes_gone = eventually(lambda: (lambda r: r[0] == 200 and len(js(r[1])) == 0)(c
 check("→ match notification removed (notification-service)", notes_gone)
 s, _ = call("GET", f"{GW}/api/users/me", tok=A)
 check("Asha is unaffected", s == 200, f"HTTP {s}")
+
+# ---------- 8b. deletion from the WEB page (for people without the app) ----------
+with urllib.request.urlopen(f"{GW}/delete-account", timeout=30) as r:
+    page, csp = r.read().decode(), r.headers.get("Content-Security-Policy", "")
+check("deletion page is served by the gateway", "Delete your account" in page)
+check("page has a strict Content-Security-Policy", "default-src 'none'" in csp and "frame-ancestors 'none'" in csp)
+
+asha_email = f"asha-{RUN}@ci.test"
+nobody_email = f"nobody-{RUN}@ci.test"
+DEL = f"{GW}/api/users/auth/deletion-requests"
+s1, b1 = call("POST", DEL, {"email": nobody_email})
+s2, b2 = call("POST", DEL, {"email": asha_email.upper()})   # upper case: must be treated like at login
+check("same answer for an unknown and a real email (no account guessing)", s1 == s2 == 202 and b1 == b2, f"HTTP {s1}/{s2}")
+
+
+def inbox(to):
+    q = urllib.parse.urlencode({"query": f'to:"{to}"'})
+    s, b = call("GET", f"{MAILPIT}/api/v1/search?{q}")
+    return js(b).get("messages", []) if s == 200 else []
+
+
+mails = eventually(lambda: inbox(asha_email), seconds=30, every=2)
+check("deletion link emailed to Asha (Mailpit)", len(mails or []) == 1, f"{len(mails or [])} email(s)")
+token = None
+if mails:
+    s, b = call("GET", f"{MAILPIT}/api/v1/message/{mails[0]['ID']}")
+    m = re.search(r"/delete-account#token=([A-Za-z0-9_-]{43})", js(b).get("Text", ""))
+    token = m.group(1) if m else None
+check("email holds a one-time link (token after #)", token is not None)
+call("POST", DEL, {"email": asha_email})
+time.sleep(3)
+check("asking again within 10 min sends no 2nd email", len(inbox(asha_email)) == 1)
+check("unknown email got nothing", len(inbox(nobody_email)) == 0)
+
+s, _ = call("POST", f"{DEL}/confirm", {"token": "A" * 43})
+check("made-up link → 400", s == 400, f"HTTP {s}")
+s, _ = call("POST", f"{DEL}/confirm", {"token": token or "x"})
+check("Asha confirms on the page → deleted", s == 204, f"HTTP {s}")
+s, _ = call("POST", f"{DEL}/confirm", {"token": token or "x"})
+check("the same link can't be used twice", s == 400, f"HTTP {s}")
+s, _ = call("GET", f"{GW}/api/users/me", tok=A)
+check("her app token stops working", s == 401, f"HTTP {s}")
+s, _ = call("POST", f"{GW}/api/users/auth/login", {"email": asha_email, "password": PASSWORD})
+check("she can't log in any more", s == 401, f"HTTP {s}")
 
 # ---------- 9. monitoring ----------
 def all_targets_up():

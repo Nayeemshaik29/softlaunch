@@ -1,6 +1,8 @@
 spring:
   datasource:
     url: jdbc:postgresql://user-db:5432/user_db
+  mail:
+    host: mailpit                            # the fake inbox container (see docker-compose.yml)
 softlaunch:
   photos:
     endpoint: http://rustfs:9000             # user-service -> storage, inside the Docker network

@@ -79,6 +79,11 @@ public class GlobalExceptionHandler {
         return ProblemDetail.forStatusAndDetail(ex.getStatusCode(), ex.getReason());
     }
 
+    @ExceptionHandler(InvalidDeletionLinkException.class)
+    public ProblemDetail handleInvalidDeletionLink(InvalidDeletionLinkException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
     @ExceptionHandler(TooManyLoginAttemptsException.class)
     public ProblemDetail handleTooManyLoginAttempts(TooManyLoginAttemptsException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());

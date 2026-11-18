@@ -40,6 +40,12 @@ class RateLimitConfig {
         return exchange -> Mono.just("auth:" + clientIp(exchange));
     }
 
+    /** Web account deletion page: by IP, separate from logins (see api-gateway.yaml). */
+    @Bean
+    KeyResolver deletionKeyResolver() {
+        return exchange -> Mono.just("deletion:" + clientIp(exchange));
+    }
+
     /** Everything else: by user id (set by JwtAuthenticationFilter, which runs first). Public paths fall back to IP. */
     @Bean
     @Primary

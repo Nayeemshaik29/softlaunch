@@ -30,6 +30,7 @@ import java.util.UUID;
  *     Either all of it happens or none of it. The outbox publisher sends the event to Kafka,
  *     retrying until Kafka takes it, so no service can miss the deletion.
  *  4. Every service (this one too, for the photos in S3) cleans up its own data from that event.
+ * Two front doors share steps 2-4: the app (password) and the web page (emailed link).
  */
 @Service
 public class AccountDeletionService {
@@ -64,6 +65,7 @@ public class AccountDeletionService {
         this.metrics = metrics;
     }
 
+    /** From the app: the user is logged in and types their password again. */
     public void deleteAccount(UUID userId, String password) {
         User user = users.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
 
@@ -72,10 +74,18 @@ public class AccountDeletionService {
         }
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {   // BCrypt is slow: outside the transaction
             loginAttempts.recordFailure(user.getEmail());
-            metrics.counter("softlaunch.accounts.deleted", "result", "wrong_password").increment();
+            metrics.counter("softlaunch.accounts.deleted", "result", "wrong_password", "via", "app").increment();
             throw new InvalidCredentialsException();
         }
+        deleteVerified(user, "app");
+    }
 
+    /**
+     * Steps 2-4. Only call this once the person has PROVED they own the account:
+     * password in the app, or the emailed link on the web page (DeletionRequestService).
+     */
+    public void deleteVerified(User user, String via) {
+        UUID userId = user.getId();
         try {
             tokens.revokeAllTokensOf(userId);
         } catch (RuntimeException e) {
@@ -91,7 +101,7 @@ public class AccountDeletionService {
             outbox.save(OutboxEvent.of(TOPIC, userId.toString(), json.writeValueAsString(event)));
         });
         loginAttempts.recordSuccess(user.getEmail());   // clear any failure counter for that email
-        metrics.counter("softlaunch.accounts.deleted", "result", "deleted").increment();
-        log.info("Account {} deleted; user.deleted {} queued", userId, event.eventId());   // ids only, never the email
+        metrics.counter("softlaunch.accounts.deleted", "result", "deleted", "via", via).increment();
+        log.info("Account {} deleted via {}; user.deleted {} queued", userId, via, event.eventId());   // ids only, never the email
     }
 }

@@ -14,6 +14,15 @@ spring:
     redis:
       host: localhost
       port: 6379
+  mail:
+    host: localhost       # Mailpit locally. Production: your provider's SMTP host + MAIL_USERNAME/MAIL_PASSWORD
+    port: 1025
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
   kafka:
     bootstrap-servers: localhost:9092
     producer:
@@ -40,9 +49,20 @@ softlaunch:
     upload-link-ttl: 5m
     view-link-ttl: 1h
     pending-ttl: 24h
+  account-deletion:
+    # The web page for people who no longer have the app (Play Store rule). Served by the gateway.
+    page-url: http://localhost:8080/delete-account   # production: https://api.yourdomain.com/delete-account
+    link-ttl: 30m        # how long the emailed link works
+    email-cooldown: 10m  # at most one email per account in this window (stops inbox flooding)
+    mail-from: "SoftLaunch <no-reply@softlaunch.local>"
   login-lockout:
     max-failures: 5      # wrong passwords for one email...
     lock-duration: 15m   # ...within this window => that email is locked for the rest of it
   jwt:
     secret: ${JWT_SECRET}   # from the environment (.env locally). Never put the real value in git.
     expiration: 15m
+
+management:
+  health:
+    mail:
+      enabled: false   # a slow email provider must not mark user-service DOWN (emails are best effort)

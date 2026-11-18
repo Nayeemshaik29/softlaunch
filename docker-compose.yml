@@ -120,6 +120,19 @@ services:
     command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]   # no password = anyone on the network can read sessions & caches
     ports:
       - "6379:6379"
+  # Fake email server for local + CI: catches every email user-service sends (nothing reaches real inboxes).
+  # Inbox: http://localhost:8025   Production uses a real provider instead (docs/DEPLOY.md).
+  mailpit:
+    image: axllent/mailpit:v1.27
+    container_name: softlaunch-mailpit
+    ports:
+      - "8025:8025"   # web inbox + API (the smoke test reads emails here)
+      - "1025:1025"   # SMTP: where user-service sends
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      retries: 10
+
   kafka:
     image: apache/kafka:4.0.0
     container_name: softlaunch-kafka

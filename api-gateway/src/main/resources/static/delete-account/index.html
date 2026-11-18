@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex">
+  <title>Delete your SoftLaunch account</title>
+  <link rel="stylesheet" href="/delete-account/style.css">
+  <script src="/delete-account/app.js" defer></script>
+</head>
+<body>
+<main>
+  <p class="brand">SoftLaunch</p>
+  <h1>Delete your account</h1>
+
+  <!-- Step 1: ask for the email (no login needed: for people who no longer have the app) -->
+  <section id="ask" data-step hidden>
+    <p>Still have the app? You can also delete it there: <strong>Settings → Delete account</strong>.</p>
+    <p>Otherwise, enter the email you signed up with. We'll send you a link to confirm.</p>
+    <form id="ask-form" novalidate>
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="you@example.com">
+      <button type="submit">Send me the link</button>
+      <p class="error" id="ask-error" role="alert"></p>
+    </form>
+  </section>
+
+  <!-- Step 2: always the same answer, whether or not the email has an account -->
+  <section id="sent" data-step hidden>
+    <h2>Check your inbox</h2>
+    <p id="sent-message">If an account uses this email, we have sent it a link.</p>
+    <p class="muted">Nothing arrived? Check spam. You can ask again in 10 minutes.</p>
+  </section>
+
+  <!-- Step 3: opened from the email link (#token=...) -->
+  <section id="confirm" data-step hidden>
+    <h2>This can't be undone</h2>
+    <div class="box">
+      <p><strong>Deleted for good:</strong> your account, profile, photos, matches, chats, location and ID verification.</p>
+      <p><strong>Kept:</strong> safety reports, for up to 365 days, to protect other members. Reports <em>you</em> filed no longer show who you are.</p>
+    </div>
+    <label class="check"><input type="checkbox" id="understand"> I understand my account and data will be deleted permanently.</label>
+    <button type="button" id="delete" class="danger" disabled>Delete my account</button>
+    <p class="error" id="confirm-error" role="alert"></p>
+  </section>
+
+  <section id="done" data-step hidden>
+    <h2>Your account is deleted</h2>
+    <p>You've been signed out everywhere. Your data is being removed from all our systems now.</p>
+    <p class="muted">You can uninstall the app. Thank you for trying SoftLaunch.</p>
+  </section>
+
+  <section id="expired" data-step hidden>
+    <h2>This link doesn't work any more</h2>
+    <p>It may have expired (links work for 30 minutes) or already been used.</p>
+    <button type="button" id="again">Ask for a new link</button>
+  </section>
+
+  <noscript><p class="error">This page needs JavaScript to work.</p></noscript>
+</main>
+</body>
+</html>

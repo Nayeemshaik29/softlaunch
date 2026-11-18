@@ -1,0 +1,43 @@
+:root {
+  --bg: #faf7f5; --card: #ffffff; --text: #1d1a1a; --muted: #6b6363; --line: #e7e0dc;
+  --brand: #d6456b; --danger: #b3261e; --danger-text: #ffffff; --focus: #2f6fde; --box: #fbf1f3;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #151314; --card: #1f1c1d; --text: #f1ecea; --muted: #a79e9c; --line: #34302f;
+    --brand: #f07a98; --danger: #f2665c; --danger-text: #1d0b0a; --focus: #8ab4ff; --box: #2a2023;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+main {
+  max-width: 34rem; margin: 2.5rem auto; padding: 1.75rem 1.5rem;
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+}
+@media (max-width: 36rem) { main { margin: 0; border: 0; border-radius: 0; min-height: 100vh; padding: 1.5rem 1rem; } }
+.brand { margin: 0 0 .25rem; color: var(--brand); font-weight: 700; letter-spacing: .02em; }
+h1 { margin: 0 0 1rem; font-size: 1.6rem; line-height: 1.2; }
+h2 { margin: 0 0 .5rem; font-size: 1.2rem; }
+p { margin: 0 0 .9rem; }
+.muted { color: var(--muted); font-size: .92rem; }
+.box { background: var(--box); border-radius: 12px; padding: .9rem 1rem .1rem; margin: 0 0 1rem; }
+label { display: block; font-weight: 600; margin-bottom: .35rem; }
+input[type=email] {
+  width: 100%; padding: .7rem .8rem; font: inherit; color: inherit; background: var(--bg);
+  border: 1px solid var(--line); border-radius: 10px; margin-bottom: .9rem;
+}
+.check { display: flex; gap: .6rem; align-items: flex-start; font-weight: 500; margin-bottom: 1rem; }
+.check input { margin-top: .3rem; width: 1.1rem; height: 1.1rem; flex: none; }
+button {
+  font: inherit; font-weight: 600; padding: .75rem 1.2rem; border-radius: 10px; border: 0; cursor: pointer;
+  background: var(--text); color: var(--card); width: 100%;
+}
+button.danger { background: var(--danger); color: var(--danger-text); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.error { color: var(--danger); min-height: 1.2em; margin-top: .75rem; font-weight: 500; }
+.error:empty { display: none; }
