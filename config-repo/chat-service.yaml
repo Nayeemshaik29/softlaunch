@@ -3,7 +3,7 @@ server:
 
 spring:
   mongodb:
-    uri: mongodb://localhost:27017/chat_db
+    uri: mongodb://softlaunch:${DB_PASSWORD}@localhost:27017/chat_db?authSource=admin
   cloud:
     openfeign:
       client:

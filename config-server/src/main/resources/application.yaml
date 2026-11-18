@@ -17,6 +17,8 @@ eureka:
     service-url:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
 management:
+  server:
+    port: 1${server.port}   # actuator on an internal port (see config-repo/application.yaml)
   endpoints:
     web:
       exposure:

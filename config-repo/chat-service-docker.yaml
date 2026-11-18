@@ -1,3 +1,3 @@
 spring:
   mongodb:
-    uri: mongodb://chat-db:27017/chat_db
+    uri: mongodb://softlaunch:${DB_PASSWORD}@chat-db:27017/chat_db?authSource=admin

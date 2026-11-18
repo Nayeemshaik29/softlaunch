@@ -42,6 +42,11 @@ class KafkaConfig {
     }
 
     @Bean
+    NewTopic userDeletedDltTopic() {   // found by the topic audit: the only DLT that was never declared
+        return TopicBuilder.name("user.deleted.DLT").partitions(3).replicas(1).build();
+    }
+
+    @Bean
     NewTopic profileUpdatedDltTopic() {
         return TopicBuilder.name("profile.updated.DLT").partitions(3).replicas(1).build();
     }

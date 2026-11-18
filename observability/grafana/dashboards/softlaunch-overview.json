@@ -536,7 +536,7 @@
     {
       "id": 15,
       "type": "timeseries",
-      "title": "Kafka consumer lag (messages behind)",
+      "title": "Kafka consumer lag (messages behind, measured by Kafka)",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -578,8 +578,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "max by (application) (kafka_consumer_fetch_manager_records_lag_max)",
-          "legendFormat": "{{application}}"
+          "expr": "sum by (consumergroup) (kafka_consumergroup_lag)",
+          "legendFormat": "{{consumergroup}}"
         }
       ]
     },

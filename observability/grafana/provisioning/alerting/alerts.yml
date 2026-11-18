@@ -121,8 +121,8 @@ groups:
         execErrState: Error
         labels: { severity: warning }
         annotations:
-          summary: "{{ $labels.service }} is {{ $values.A.Value }} Kafka messages behind"
-          description: "A consumer in {{ $labels.service }} has been more than 100 messages behind for 2 minutes. Notifications / safety events are delayed."
+          summary: "{{ $labels.consumergroup }} is {{ $values.A.Value }} messages behind"
+          description: "Consumer group {{ $labels.consumergroup }} has been more than 100 messages behind for 2 minutes (measured by Kafka, so this also fires when the consumer has crashed)."
         data:
           - refId: A
             relativeTimeRange: { from: 300, to: 0 }
@@ -130,10 +130,8 @@ groups:
             model:
               refId: A
               instant: true
-              expr: |
-                label_replace(
-                  max by (application) (kafka_consumer_fetch_manager_records_lag_max),
-                "service", "$1", "application", "(.*)")
+              # from kafka-exporter (Kafka's own numbers). The app-side metric disappeared when a consumer died.
+              expr: 'sum by (consumergroup) (kafka_consumergroup_lag)'
           - refId: B
             datasourceUid: __expr__
             model:

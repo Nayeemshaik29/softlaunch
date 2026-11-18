@@ -10,6 +10,8 @@ eureka:
     register-with-eureka: false
     fetch-registry: false
 management:
+  server:
+    port: 1${server.port}   # actuator on an internal port (see config-repo/application.yaml)
   endpoints:
     web:
       exposure:

@@ -8,7 +8,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5436/verification_db
     username: softlaunch
-    password: softlaunch
+    password: ${DB_PASSWORD}       # from .env locally, a secret store in production. Never in git.
   jpa:
     hibernate:
       ddl-auto: validate      # Hibernate only CHECKS the tables; Flyway CREATES them

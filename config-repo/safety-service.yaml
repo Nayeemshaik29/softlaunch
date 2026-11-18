@@ -3,7 +3,7 @@ server:
 
 spring:
   mongodb:
-    uri: mongodb://localhost:27017/safety_db     # same Mongo server as chat, separate database
+    uri: mongodb://softlaunch:${DB_PASSWORD}@localhost:27017/safety_db?authSource=admin     # same Mongo server as chat, separate database
   data:
     redis:
       host: localhost

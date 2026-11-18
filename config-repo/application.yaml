@@ -11,6 +11,10 @@ eureka:
 
 
 management:
+  server:
+    # Actuator (health, metrics) on its OWN port = API port + 10000 (8081 -> 18081). In Docker that port is not
+    # published: Prometheus and health checks reach it inside the network; the internet never can.
+    port: 1${server.port}
   endpoints:
     web:
       exposure:
@@ -34,6 +38,9 @@ management:
       "[tasks.scheduled]": false   # outbox pollers run every 2s; tracing each empty poll is noise
 
 spring:
+  data:
+    redis:
+      password: ${REDIS_PASSWORD}   # Redis now requires a password (services without Redis ignore this)
   kafka:
     template:
       observation-enabled: true
