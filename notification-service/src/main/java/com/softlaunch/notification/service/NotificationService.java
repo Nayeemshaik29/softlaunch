@@ -21,7 +21,7 @@ import java.util.UUID;
 public class NotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
-    private static final String MATCH_MESSAGE = "You have a new match! 💘 Say hi before someone else does 😉";
+    private static final String MATCH_MESSAGE = "You have a new match. Say hi when you're ready.";
     private static final String NEW_MESSAGE_TEXT = "💬 You have a new message";
 
     private final NotificationRepository repository;

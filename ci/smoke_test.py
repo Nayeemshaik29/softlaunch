@@ -40,6 +40,16 @@ def call(method, url, body=None, tok=None, raw=None, headers=None, timeout=30):
     return status, data
 
 
+def refresh_cookie(email, password):
+    """Login and return the sl_refresh cookie value (HttpOnly refresh token)."""
+    req = urllib.request.Request(f"{GW}/api/users/auth/login", method="POST",
+                                 data=json.dumps({"email": email, "password": password}).encode(),
+                                 headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        m = re.match(r"sl_refresh=([^;]+)", r.headers.get("Set-Cookie") or "")
+        return m.group(1) if m else None
+
+
 def _call(method, url, body, tok, raw, headers, timeout):
     h = dict(headers or {})
     if body is not None:
@@ -138,6 +148,14 @@ s, _ = call("GET", f"{GW}/api/users/me", tok=A[:-4] + "AAAA")
 check("tampered token → 401", s == 401, f"HTTP {s}")
 s, _ = call("POST", f"{GW}/api/users/auth/login", {"email": f"asha-{RUN}@ci.test", "password": "not-the-password"})
 check("wrong password → 401", s == 401, f"HTTP {s}")
+
+# ---------- 2b. sessions: refresh tokens (HttpOnly cookie, rotation, theft detection) ----------
+r1 = refresh_cookie(f"asha-{RUN}@ci.test", PASSWORD)
+check("login sets the refresh cookie", bool(r1))
+s, b = call("POST", f"{GW}/api/users/auth/refresh", headers={"Cookie": f"sl_refresh={r1}"})
+check("refresh → new access token", s == 200 and js(b).get("accessToken"), f"HTTP {s}")
+s, _ = call("POST", f"{GW}/api/users/auth/refresh", headers={"Cookie": f"sl_refresh={r1}"})
+check("old refresh token reused → 401 (session revoked)", s == 401, f"HTTP {s}")
 
 # ---------- 3. feed ----------
 def feed_has_bharat():

@@ -185,6 +185,8 @@ export default function MatchScene({
   }, [skipRef]);
   return (
     <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0.25, 4.2], fov: 40 }} gl={{ alpha: true, antialias: true }}>
+      {/* solid backdrop = the page colour: the bloom pass makes the canvas opaque, so match it exactly */}
+      <color attach="background" args={[palette.bg]} />
       <Environment resolution={64}>
         <Lightformer intensity={2} position={[0, 2, 3]} scale={[6, 1, 1]} color="#ffd9c8" />
         <Lightformer intensity={1.2} position={[-3, 0, 2]} scale={[1, 4, 1]} color={palette.c} />

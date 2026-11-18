@@ -40,6 +40,12 @@ class RateLimitConfig {
         return exchange -> Mono.just("auth:" + clientIp(exchange));
     }
 
+    /** Refresh / logout: by IP, own bucket (see api-gateway.yaml). */
+    @Bean
+    KeyResolver sessionKeyResolver() {
+        return exchange -> Mono.just("session:" + clientIp(exchange));
+    }
+
     /** Web account deletion page: by IP, separate from logins (see api-gateway.yaml). */
     @Bean
     KeyResolver deletionKeyResolver() {

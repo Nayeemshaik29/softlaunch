@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { Logo } from "@/components/ui/Logo";
 import { api, ApiError } from "@/lib/api";
-import { startSession } from "@/lib/session";
+import { startSession, useSession } from "@/lib/session";
+import { useEffect } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,13 +16,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const session = useSession();
+  useEffect(() => {
+    if (session) router.replace("/swipe"); // still logged in from last time
+  }, [session, router]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      const res = await api<{ accessToken: string }>("/api/users/auth/login", { method: "POST", body: { email, password }, auth: false });
+      const res = await api<{ accessToken: string }>("/api/users/auth/login", { method: "POST", body: { email, password }, auth: false, credentials: "include" });
       startSession(res.accessToken);
       router.push("/swipe");
     } catch (err) {

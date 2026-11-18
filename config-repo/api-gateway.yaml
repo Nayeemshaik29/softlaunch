@@ -22,8 +22,22 @@ spring:
                 allowed-origins: "${WEB_ORIGINS:http://localhost:3030}"
                 allowed-methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
                 allowed-headers: [Authorization, Content-Type]
+                allow-credentials: true   # the refresh cookie (HttpOnly). Needs the exact origins above, never "*"
                 max-age: 3600
           routes:
+            # Session refresh/logout: called every ~15 min per open app, so more generous than login,
+            # with its own bucket ("session:<ip>"): ~60 per minute per IP, bursts of 30.
+            - id: user-session
+              uri: lb://user-service
+              predicates:
+                - Path=/api/users/auth/refresh,/api/users/auth/logout
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@sessionKeyResolver}"
+                    redis-rate-limiter.replenishRate: 1
+                    redis-rate-limiter.burstCapacity: 30
+                    redis-rate-limiter.requestedTokens: 1
             # Web account deletion (the /delete-account page). Same strictness as login, but its OWN bucket
             # ("deletion:<ip>"), so asking for a deletion email never uses up someone's login attempts.
             # Must come before user-auth: the first matching route wins.

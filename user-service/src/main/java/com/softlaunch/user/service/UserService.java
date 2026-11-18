@@ -27,9 +27,12 @@ public class UserService {
     private final String dummyHash;
     private final AuthMetrics authMetrics;
     private final LoginAttemptService loginAttempts;
+    private final com.softlaunch.user.session.RefreshTokenService refreshTokens;
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService,
-                       AuthMetrics authMetrics, LoginAttemptService loginAttempts) {
+                       AuthMetrics authMetrics, LoginAttemptService loginAttempts,
+                       com.softlaunch.user.session.RefreshTokenService refreshTokens) {
+        this.refreshTokens = refreshTokens;
         this.authMetrics = authMetrics;
         this.loginAttempts = loginAttempts;
         this.userRepository = userRepository;
@@ -57,7 +60,11 @@ public class UserService {
         authMetrics.signupCommitted();
         return saved;
     }
-    public AuthResponse login(LoginRequest request) {
+    /** Access token for the response body + refresh token for the HttpOnly cookie. */
+    public record LoginResult(AuthResponse response, String refreshToken) {
+    }
+
+    public LoginResult login(LoginRequest request) {
         String email = request.email().trim().toLowerCase();
 
         // Checked BEFORE the password: while locked even the right password is refused,
@@ -80,7 +87,19 @@ public class UserService {
         String token = jwtService.generateToken(user);
         authMetrics.loginSucceeded();
         loginAttempts.recordSuccess(email);
-        return new AuthResponse(token, "Bearer", jwtService.getExpiration().toSeconds());
+        return new LoginResult(new AuthResponse(token, "Bearer", jwtService.getExpiration().toSeconds()),
+                refreshTokens.startSession(user.getId()));
+    }
+
+    /** Refresh: new access token + rotated refresh token (same session). */
+    public LoginResult refresh(String refreshToken) {
+        com.softlaunch.user.session.RefreshTokenService.Rotation r = refreshTokens.rotate(refreshToken);
+        return new LoginResult(new AuthResponse(jwtService.generateToken(r.user()), "Bearer", jwtService.getExpiration().toSeconds()),
+                r.refreshToken());
+    }
+
+    public void logout(String refreshToken) {
+        refreshTokens.endSession(refreshToken);
     }
     @Transactional(readOnly = true)
     public UserResponse getById(UUID id) {

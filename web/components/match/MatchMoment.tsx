@@ -122,7 +122,7 @@ export default function MatchMoment({ data, onClose }: { data: MatchMomentData; 
       aria-modal="true"
       aria-labelledby="match-title"
       tabIndex={-1}
-      className="fixed inset-0 z-50 flex flex-col bg-bg/95 outline-none backdrop-blur-md"
+      className="fixed inset-0 z-50 flex flex-col bg-bg outline-none"
       style={{ x: shakeX, y: shakeY }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -156,7 +156,15 @@ export default function MatchMoment({ data, onClose }: { data: MatchMomentData; 
 
       <div className="relative flex-1">
         {cinematic ? (
-          <div className="absolute inset-0" aria-hidden>
+          <div
+            className="absolute inset-0"
+            aria-hidden
+            // soft edges: the 3D frame melts into the page instead of showing a box
+            style={{
+              WebkitMaskImage: "radial-gradient(ellipse 70% 70% at 50% 50%, #000 55%, transparent 100%)",
+              maskImage: "radial-gradient(ellipse 70% 70% at 50% 50%, #000 55%, transparent 100%)",
+            }}
+          >
             <MatchScene mine={data.myPhoto} theirs={data.theirPhoto} palette={palette} skipRef={skipRef} onStart={() => setStarted(true)} />
           </div>
         ) : (
@@ -183,7 +191,7 @@ export default function MatchMoment({ data, onClose }: { data: MatchMomentData; 
         </h2>
         <p className="mt-2 text-muted">{t("You both liked each other. No pressure, just say hi.", "The feeling\u2019s mutual. Go on, make the first move.")}</p>
         <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Button ref={primary} size="lg" onClick={() => { close(); router.push(`/matches?new=${data.matchId}`); }}>
+          <Button ref={primary} size="lg" onClick={() => { close(); router.push(`/matches/${data.matchId}`); }}>
             Send a message
           </Button>
           <Button variant="secondary" size="lg" onClick={close}>Keep swiping</Button>

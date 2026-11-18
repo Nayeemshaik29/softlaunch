@@ -56,6 +56,9 @@ softlaunch:
     link-ttl: 30m        # how long the emailed link works
     email-cooldown: 10m  # at most one email per account in this window (stops inbox flooding)
     mail-from: "SoftLaunch <no-reply@softlaunch.local>"
+  auth:
+    refresh-ttl: 30d                                        # stay logged in this long without typing the password
+    refresh-cookie-secure: ${REFRESH_COOKIE_SECURE:false}   # true in production (HTTPS only); localhost is plain HTTP
   login-lockout:
     max-failures: 5      # wrong passwords for one email...
     lock-duration: 15m   # ...within this window => that email is locked for the rest of it

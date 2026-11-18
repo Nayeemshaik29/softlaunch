@@ -31,6 +31,7 @@ Every piece of personal data SoftLaunch stores, where, why, and for how long. Bu
 | Profile "vibe" embedding (numbers computed from interests, bio, prompts, places) | ai-service · ai-db | similar-vibe ranking | until profile change / account deletion |
 | AI chat-opener suggestions | ai-service · Redis | suggestions in a new chat | 30 minutes |
 | IP address | api-gateway · Redis rate-limit keys | stop abuse (login guessing, spam) | minutes |
+| Session (refresh token) | user-service · user-db `refresh_tokens` (SHA-256 only) + an HttpOnly cookie in the browser | stay logged in | 30 days, or until logout / theft detection / account deletion; rows purged 7 days after expiry |
 | Login failure counter | user-service · Redis (SHA-256 of email) | account lockout | 15 minutes |
 | Deletion-link token | user-service · Redis (SHA-256 only) | web account deletion | 30 minutes, single use |
 | Service logs | Loki | security, debugging. **ids only**, never emails, passwords, tokens, chat or profile text | 30 days (`observability/loki/loki.yaml`) |

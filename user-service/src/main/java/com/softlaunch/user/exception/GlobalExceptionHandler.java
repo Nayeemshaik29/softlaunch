@@ -68,6 +68,16 @@ public class GlobalExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    @ExceptionHandler(com.softlaunch.user.session.InvalidRefreshTokenException.class)
+    public org.springframework.http.ResponseEntity<ProblemDetail> handleInvalidRefresh(com.softlaunch.user.session.InvalidRefreshTokenException ex) {
+        // also delete the dead cookie, so the browser stops sending it
+        String clear = org.springframework.http.ResponseCookie.from(com.softlaunch.user.session.SessionCookie.NAME, "")
+                .httpOnly(true).sameSite("Strict").path("/api/users/auth").maxAge(0).build().toString();
+        return org.springframework.http.ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .header(org.springframework.http.HttpHeaders.SET_COOKIE, clear)
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage()));
+    }
+
     @ExceptionHandler(InvalidCredentialsException.class)
     public ProblemDetail handleInvalidCredentials(InvalidCredentialsException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());

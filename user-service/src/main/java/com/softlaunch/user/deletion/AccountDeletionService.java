@@ -48,11 +48,14 @@ public class AccountDeletionService {
     private final TransactionTemplate tx;
     private final JsonMapper json;
     private final MeterRegistry metrics;
+    private final com.softlaunch.user.session.RefreshTokenService sessions;
 
     public AccountDeletionService(UserRepository users, ProfileRepository profiles, PhotoUploadRepository uploads,
                                   OutboxRepository outbox, PasswordEncoder passwordEncoder,
                                   LoginAttemptService loginAttempts, TokenRevocation tokens,
-                                  TransactionTemplate tx, JsonMapper json, MeterRegistry metrics) {
+                                  TransactionTemplate tx, JsonMapper json, MeterRegistry metrics,
+                                  com.softlaunch.user.session.RefreshTokenService sessions) {
+        this.sessions = sessions;
         this.users = users;
         this.profiles = profiles;
         this.uploads = uploads;
@@ -97,6 +100,7 @@ public class AccountDeletionService {
         tx.executeWithoutResult(status -> {
             profiles.findById(userId).ifPresent(profiles::delete);   // profile shares the user's id (@MapsId): first
             uploads.deleteByUserId(userId);
+            sessions.deleteAllOf(userId);   // refresh tokens: no way back in, even with an old cookie
             users.delete(user);
             outbox.save(OutboxEvent.of(TOPIC, userId.toString(), json.writeValueAsString(event)));
         });

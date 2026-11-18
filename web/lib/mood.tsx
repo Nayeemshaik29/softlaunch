@@ -9,8 +9,8 @@ const CASUAL = new Set(["HOOKUP", "FRIENDS_WITH_BENEFITS", "ONE_NIGHT_STAND", "C
 
 /** 3D scenes read their colors from here (WebGL can't use CSS variables). */
 export const palettes = {
-  calm: { a: "#ff8a6b", b: "#f66f9a", c: "#b79bff", glow: "#ffd2c2", core: "#b79bff" },
-  "after-dark": { a: "#ffb07a", b: "#ff6f91", c: "#d77be0", glow: "#ffc2cf", core: "#ff6f91" },
+  calm: { a: "#ff8a6b", b: "#f66f9a", c: "#b79bff", glow: "#ffd2c2", core: "#b79bff", bg: "#0e0c10" },
+  "after-dark": { a: "#ffb07a", b: "#ff6f91", c: "#d77be0", glow: "#ffc2cf", core: "#ff6f91", bg: "#0b0608" },
 } as const;
 
 interface Ctx {

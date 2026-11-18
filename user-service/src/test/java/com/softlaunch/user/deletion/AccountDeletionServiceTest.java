@@ -41,6 +41,7 @@ class AccountDeletionServiceTest {
     private final LoginAttemptService attempts = mock(LoginAttemptService.class);
     private final TokenRevocation tokens = mock(TokenRevocation.class);
     private final TransactionTemplate tx = mock(TransactionTemplate.class);
+    private final com.softlaunch.user.session.RefreshTokenService sessions = mock(com.softlaunch.user.session.RefreshTokenService.class);
     private AccountDeletionService service;
     private User user;
     private UUID id;
@@ -48,7 +49,7 @@ class AccountDeletionServiceTest {
     @BeforeEach
     void setUp() {
         service = new AccountDeletionService(users, profiles, uploads, outbox, ENCODER, attempts, tokens, tx,
-                JsonMapper.builder().findAndAddModules().build(), new SimpleMeterRegistry());
+                JsonMapper.builder().findAndAddModules().build(), new SimpleMeterRegistry(), sessions);
         user = spy(new User("asha@test.com", ENCODER.encode("right-password"), "Asha", LocalDate.of(1998, 5, 10)));
         id = UUID.randomUUID();
         doReturn(id).when(user).getId();
@@ -62,7 +63,7 @@ class AccountDeletionServiceTest {
     void wrongPasswordDeletesNothingAndCountsAsAFailedLogin() {
         assertThatThrownBy(() -> service.deleteAccount(id, "guess")).isInstanceOf(InvalidCredentialsException.class);
         verify(attempts).recordFailure("asha@test.com");
-        verifyNoInteractions(tokens, tx, outbox);
+        verifyNoInteractions(tokens, tx, outbox, sessions);
         verify(users, never()).delete(any());
     }
 
@@ -89,6 +90,7 @@ class AccountDeletionServiceTest {
         order.verify(tokens).revokeAllTokensOf(id);
         order.verify(tx).executeWithoutResult(any());
         verify(uploads).deleteByUserId(id);
+        verify(sessions).deleteAllOf(id);   // no way back in with an old refresh cookie
         verify(users).delete(user);
 
         ArgumentCaptor<OutboxEvent> event = ArgumentCaptor.forClass(OutboxEvent.class);

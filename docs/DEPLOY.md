@@ -47,6 +47,9 @@ api.yourdomain.com {
 ### 4. Secrets
 - Create a fresh `.env` **on the server** with new values (`openssl rand -base64 32`). Never reuse your laptop's values, never commit it, `chmod 600 .env`.
 - DigiLocker: production client id/secret and the production redirect URL.
+- **Sessions:** `REFRESH_COOKIE_SECURE=true` (the login cookie only travels over HTTPS), and `WEB_ORIGINS=https://yourdomain.com`.
+  Serve the web app and the API from the **same site** (e.g. `yourdomain.com` + `api.yourdomain.com`): the cookie is `SameSite=Strict`,
+  so a web app on a different domain would never send it.
 - **Email** (account-deletion links): Mailpit is for testing only, it sends nothing out. Use a real provider (Amazon SES in Mumbai, Brevo, …):
   - set `spring.mail.host`/`port` in `config-repo/user-service.yaml` and `MAIL_USERNAME` / `MAIL_PASSWORD` in `.env`
   - set `softlaunch.account-deletion.mail-from` to an address on your domain, and `page-url` to `https://api.yourdomain.com/delete-account`

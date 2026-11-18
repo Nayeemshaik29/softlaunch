@@ -1,6 +1,6 @@
 "use client";
 
-import { endSession, getSession } from "./session";
+import { endSession, getSession, refreshSession } from "./session";
 import type { Problem } from "./types";
 
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080").replace(/\/$/, "");
@@ -20,9 +20,12 @@ interface Options {
   body?: unknown;
   signal?: AbortSignal;
   auth?: boolean;
+  /** "include" only for auth calls that set the refresh cookie (login/signup) */
+  credentials?: RequestCredentials;
 }
 
-export async function api<T>(path: string, { method = "GET", body, signal, auth = true }: Options = {}): Promise<T> {
+export async function api<T>(path: string, options: Options = {}, retried = false): Promise<T> {
+  const { method = "GET", body, signal, auth = true, credentials = "omit" } = options;
   const headers: Record<string, string> = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
   const session = auth ? getSession() : null;
@@ -36,7 +39,7 @@ export async function api<T>(path: string, { method = "GET", body, signal, auth 
       body: body === undefined ? undefined : JSON.stringify(body),
       // never wait forever: 12s, then the UI rolls back (the gateway itself gives up after 10s)
       signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(12_000)]) : AbortSignal.timeout(12_000),
-      credentials: "omit",
+      credentials,
     });
   } catch (e) {
     if ((e as Error).name === "AbortError") throw e;
@@ -44,7 +47,14 @@ export async function api<T>(path: string, { method = "GET", body, signal, auth 
     throw new ApiError(0, { detail: "Can't reach SoftLaunch. Check your connection." });
   }
 
-  if (res.status === 401 && auth && session) endSession(); // expired or revoked token: back to login
+  if (res.status === 401 && auth && session) {
+    // access token expired early or was revoked: try ONE refresh, then repeat the request
+    if (!retried) {
+      const renewed = await refreshSession();
+      if (renewed && renewed.token !== session.token) return api<T>(path, options, true);
+    }
+    endSession(); // still 401: back to login
+  }
   if (!res.ok) {
     let problem: Problem = {};
     try {

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Logo } from "@/components/ui/Logo";
-import { endSession } from "@/lib/session";
+import { logout } from "@/lib/session";
 import { MoodToggle } from "@/lib/mood";
 import { EnergyMeter } from "./EnergyMeter";
 
@@ -44,8 +44,8 @@ export function AppHeader({ unread = 0 }: { unread?: number }) {
           <EnergyMeter />
           <button
             type="button"
-            onClick={() => {
-              endSession();
+            onClick={async () => {
+              await logout(); // revokes the refresh token on the server too
               router.push("/");
             }}
             aria-label="Log out"
