@@ -101,6 +101,7 @@ public class PhotoService implements PhotoLinks {
 
         ImageProcessor.Processed processed = process(upload);
         storage.writeJpeg(upload.photoKey(), processed.jpeg());
+        storage.writeJpeg(PhotoKeys.veilOf(upload.photoKey()), ImageProcessor.veil(processed.jpeg()));   // ready if they veil later
         storage.delete(upload.pendingKey());   // the raw original (with its metadata) is gone for good
 
         tx.executeWithoutResult(status -> {
@@ -152,6 +153,20 @@ public class PhotoService implements PhotoLinks {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Photo not found");
         }
         storage.delete(key);
+        storage.delete(PhotoKeys.veilOf(key));
+    }
+
+    /** Photos uploaded before veils existed get their blurred copy now. Returns how many were made. */
+    public int ensureVeils(List<String> photoKeys) {
+        int made = 0;
+        for (String key : photoKeys) {
+            String veil = PhotoKeys.veilOf(key);
+            if (storage.head(veil).isEmpty()) {
+                storage.writeJpeg(veil, ImageProcessor.veil(storage.read(key)));
+                made++;
+            }
+        }
+        return made;
     }
 
     /** New order of the user's photos (first = main photo). Must list exactly the photos they have. */

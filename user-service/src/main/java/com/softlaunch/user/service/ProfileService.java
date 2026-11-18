@@ -26,9 +26,11 @@ public class ProfileService {
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final PhotoLinks photoLinks;
+    private final com.softlaunch.user.privacy.MatchChecker matchChecker;
 
     public ProfileService(ProfileRepository profileRepository, UserRepository userRepository, ApplicationEventPublisher eventPublisher,
-                          PhotoLinks photoLinks) {
+                          PhotoLinks photoLinks, com.softlaunch.user.privacy.MatchChecker matchChecker) {
+        this.matchChecker = matchChecker;
         this.photoLinks = photoLinks;
         this.profileRepository = profileRepository;
         this.userRepository = userRepository;
@@ -95,10 +97,11 @@ public class ProfileService {
             target.addAll(source);
         }
     }
+    /** Veiled photos stay blurred unless the viewer is the owner or a match (checked with match-service, fails closed). */
     @Transactional(readOnly = true)
-    public PublicProfileResponse getPublicProfile(UUID userId) {
-        return profileRepository.findById(userId)
-                .map(p -> PublicProfileResponse.from(p, photoLinks))
-                .orElseThrow(() -> new ProfileNotFoundException(userId));
+    public PublicProfileResponse getPublicProfile(UUID userId, UUID viewerId) {
+        Profile p = profileRepository.findById(userId).orElseThrow(() -> new ProfileNotFoundException(userId));
+        boolean veil = p.isVeiledPhotos() && !userId.equals(viewerId) && (viewerId == null || !matchChecker.matched(viewerId, userId));
+        return PublicProfileResponse.from(p, photoLinks, veil);
     }
 }

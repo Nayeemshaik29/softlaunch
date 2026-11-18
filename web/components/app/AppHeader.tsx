@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Logo } from "@/components/ui/Logo";
-import { logout } from "@/lib/session";
 import { MoodToggle } from "@/lib/mood";
 import { EnergyMeter } from "./EnergyMeter";
 
@@ -15,7 +14,6 @@ const NAV = [
 
 export function AppHeader({ unread = 0 }: { unread?: number }) {
   const path = usePathname();
-  const router = useRouter();
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-bg/90 backdrop-blur">
       <div className="mx-auto flex max-w-[1120px] items-center justify-between gap-4 px-4 sm:px-6">
@@ -42,20 +40,17 @@ export function AppHeader({ unread = 0 }: { unread?: number }) {
         <div className="flex items-center gap-1 sm:gap-2">
           <MoodToggle />
           <EnergyMeter />
-          <button
-            type="button"
-            onClick={async () => {
-              await logout(); // revokes the refresh token on the server too
-              router.push("/");
-            }}
-            aria-label="Log out"
-            className="inline-flex min-h-12 min-w-12 items-center justify-center gap-2 whitespace-nowrap rounded-md px-2 text-sm text-muted hover:text-text lg:px-4"
+          <Link
+            href="/settings"
+            aria-label="Settings"
+            aria-current={path.startsWith("/settings") ? "page" : undefined}
+            className={`inline-flex min-h-12 min-w-12 items-center justify-center rounded-md ${path.startsWith("/settings") ? "text-accent" : "text-muted hover:text-text"}`}
           >
-            <svg aria-hidden width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M8 4H5a1 1 0 00-1 1v10a1 1 0 001 1h3M12 14l4-4-4-4M16 10H8" />
+            <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" />
             </svg>
-            <span className="hidden lg:inline">Log out</span>
-          </button>
+          </Link>
         </div>
       </div>
     </header>

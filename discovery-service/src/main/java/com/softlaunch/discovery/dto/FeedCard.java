@@ -16,5 +16,6 @@ public record FeedCard(
         List<String> sharedInterests,
         List<String> photoUrls,
         List<String> reasons,
-        int score) {
+        int score,
+        boolean veiled) {   // photos are blurred copies until you match
 }

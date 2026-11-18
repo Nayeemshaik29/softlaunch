@@ -17,6 +17,8 @@ Every piece of personal data SoftLaunch stores, where, why, and for how long. Bu
 | Gender, "interested in" | user-service · user-db | matching. **Sensitive**: can reveal sexual orientation | until account deletion |
 | City + **exact latitude/longitude** | user-db (profile), Redis `geo:users` | nearby feed. Others only see a distance, rounded up | until account deletion or location change |
 | Photos | user-service · S3 bucket (private) | shown to members via expiring links. Re-encoded on upload: **camera metadata/GPS removed** | until removed or account deletion. Unconfirmed uploads: 1 day |
+| Blurred photo copies (120 px) | user-service · S3, next to each photo | Veiled photos: what others see before a match | same as the photo |
+| Privacy settings (Private Mode, Veiled photos) | user-db (profile) + Redis sets `privacy:private_mode`, `privacy:veiled` | hide you / blur your photos everywhere at once | until changed or account deletion |
 | Swipes, matches | match-service · match-db | matching, "who liked whom" | until unmatch / account deletion |
 | Chat messages | chat-service · Mongo | messaging | **24 hours** (auto-delete), or earlier on unmatch / deletion |
 | Message text for scam screening | Kafka `message.screening` → ai-service | scam/fraud detection by **our own AI on our servers** | 24 hours in Kafka. The verdict stores **no text** |

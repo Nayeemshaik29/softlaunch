@@ -38,6 +38,10 @@ public class PresenceService {
     }
 
     public PresenceResponse presenceOf(String userId) {
+        // Private Mode (set by user-service): always "offline", no last seen
+        if (Boolean.TRUE.equals(redis.opsForSet().isMember("privacy:private_mode", userId.toString()))) {
+            return new PresenceResponse(userId, false, null);
+        }
         boolean online = Boolean.TRUE.equals(redis.hasKey(onlineKey(userId)));
         String lastSeen = redis.opsForValue().get(lastSeenKey(userId));
         return new PresenceResponse(userId, online, lastSeen == null ? null : Instant.parse(lastSeen));

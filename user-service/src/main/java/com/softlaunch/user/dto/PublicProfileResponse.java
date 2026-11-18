@@ -29,9 +29,10 @@ public record PublicProfileResponse(
         String education,
         Set<String> languages,
         String city,
-        List<String> photoUrls
+        List<String> photoUrls,
+        boolean veiled   // true = the photos are blurred copies (no match yet)
 ) {
-    public static PublicProfileResponse from(Profile p, PhotoLinks photoLinks) {
+    public static PublicProfileResponse from(Profile p, PhotoLinks photoLinks, boolean veil) {
         User user = p.getUser();
         return new PublicProfileResponse(
                 p.getUserId(),
@@ -54,7 +55,8 @@ public record PublicProfileResponse(
                 p.getEducation(),
                 Set.copyOf(p.getLanguages()),
                 p.getCity(),
-                photoLinks.of(p.getPhotoKeys())
+                veil ? photoLinks.veiledOf(p.getPhotoKeys()) : photoLinks.of(p.getPhotoKeys()),
+                veil
         );
     }
 }

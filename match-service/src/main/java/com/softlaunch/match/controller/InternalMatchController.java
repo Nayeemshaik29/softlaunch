@@ -21,6 +21,16 @@ public class InternalMatchController {
         this.matchRepository = matchRepository;
     }
 
+    /** user-service: may this viewer see a veiled profile's real photos? Only if they're matched. */
+    @GetMapping("/between")
+    @Transactional(readOnly = true)
+    public java.util.Map<String, Boolean> between(@org.springframework.web.bind.annotation.RequestParam UUID a,
+                                                  @org.springframework.web.bind.annotation.RequestParam UUID b) {
+        UUID first = a.compareTo(b) < 0 ? a : b;   // pairs are stored sorted (Match.between)
+        UUID second = first.equals(a) ? b : a;
+        return java.util.Map.of("matched", matchRepository.existsByUserAIdAndUserBId(first, second));
+    }
+
     @GetMapping("/{matchId}")
     @Transactional(readOnly = true)
     public MatchSummary getMatch(@PathVariable UUID matchId) {

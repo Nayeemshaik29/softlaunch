@@ -7,6 +7,11 @@ import java.util.List;
 public interface PhotoLinks {
     List<String> of(List<String> photoKeys);
 
+    /** Links to the BLURRED copies: what others see of a veiled profile before a match. */
+    default List<String> veiledOf(List<String> photoKeys) {
+        return of(photoKeys.stream().map(PhotoKeys::veilOf).toList());
+    }
+
     /** Same links, with each photo's id (the owner's app needs it to reorder or delete). */
     default List<PhotoRef> refs(List<String> photoKeys) {
         List<String> urls = of(photoKeys);

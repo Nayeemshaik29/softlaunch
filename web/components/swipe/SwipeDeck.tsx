@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { useEnergy } from "@/lib/energy";
 import { useMatchMoment } from "@/lib/match-moment";
-import { myProfile } from "@/lib/me";
+import { myProfile, profileOf } from "@/lib/me";
 import { spring } from "@/lib/motion";
 import type { FeedCard, SwipeAction, SwipeResponse } from "@/lib/types";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -84,8 +84,10 @@ export function SwipeDeck() {
       api<SwipeResponse>("/api/matches/swipes", { method: "POST", body: { targetUserId: card.userId, direction: action } })
         .then(async (res) => {
           if (res.matched && res.matchId) {
-            const me = await myProfile();
-            celebrate({ matchId: res.matchId, name: card.displayName, theirPhoto: card.photoUrls[0] ?? null, myPhoto: me?.photoUrls[0] ?? null });
+            // matched now: a veiled profile's REAL photo is allowed, ask for it (the veil lifts in the match moment)
+            const [me, them] = await Promise.all([myProfile(), card.veiled ? profileOf(card.userId, true) : null]);
+            const theirPhoto = (card.veiled ? them?.photoUrls[0] : card.photoUrls[0]) ?? null;
+            celebrate({ matchId: res.matchId, name: card.displayName, theirPhoto, myPhoto: me?.photoUrls[0] ?? null });
           }
         })
         .catch(async (err: unknown) => {

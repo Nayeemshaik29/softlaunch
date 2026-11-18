@@ -37,7 +37,9 @@ public class MatchQueryGrpcService extends MatchQueryServiceGrpc.MatchQueryServi
                 .map(UUID::toString)
                 .toList();
 
-        responseObserver.onNext(GetSwipedUserIdsResponse.newBuilder().addAllUserIds(swiped).build());
+        List<String> likedBy = swipeRepository.findLikerIdsOf(userId).stream().map(UUID::toString).toList();
+
+        responseObserver.onNext(GetSwipedUserIdsResponse.newBuilder().addAllUserIds(swiped).addAllLikedByIds(likedBy).build());
         responseObserver.onCompleted();
     }
 }

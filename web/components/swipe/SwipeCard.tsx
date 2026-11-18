@@ -40,13 +40,18 @@ function PhotoCarousel({ card, draggedRef }: { card: FeedCard; draggedRef: React
         <img
           src={photos[i]!}
           alt={`${card.displayName}, photo ${i + 1} of ${photos.length}`}
-          className="absolute inset-0 h-full w-full select-none object-cover"
+          className={`absolute inset-0 h-full w-full select-none object-cover ${card.veiled ? "scale-110 blur-xl" : ""}`}
           draggable={false}
         />
       ) : (
-        <div className="absolute inset-0 grid place-items-center bg-surface-2 font-display text-4xl text-muted" aria-hidden>
-          {card.displayName.slice(0, 1)}
-        </div>
+        card.veiled ? (
+          // veiled, links not ready yet: a soft wash of the brand colours
+          <div className="absolute inset-0 bg-grad-warm opacity-60 blur-2xl" aria-hidden />
+        ) : (
+          <div className="absolute inset-0 grid place-items-center bg-surface-2 font-display text-4xl text-muted" aria-hidden>
+            {card.displayName.slice(0, 1)}
+          </div>
+        )
       )}
       {photos.length > 1 && (
         <>
@@ -240,6 +245,7 @@ export const TopCard = forwardRef<TopCardHandle, Props>(function TopCard({ card,
       <Stamp label="SUPER" color="var(--super)" opacity={superO} className="bottom-[34%] left-1/2 -translate-x-1/2" />
       {!reduce && <StarBurst strength={superO} />}
 
+      {card.veiled && <VeilBadge />}
       <CardInfo card={card} />
     </motion.article>
   );
@@ -260,11 +266,24 @@ export function BackCard({ card, depth, progress }: { card: FeedCard; depth: num
     >
       {card.photoUrls[0] && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={card.photoUrls[0]} alt="" className="absolute inset-0 h-full w-full object-cover" draggable={false} />
+        <img src={card.photoUrls[0]} alt="" className={`absolute inset-0 h-full w-full object-cover ${card.veiled ? "scale-110 blur-xl" : ""}`} draggable={false} />
       )}
       <div className="absolute inset-0 bg-scrim" />
       <CardInfo card={card} />
     </motion.div>
+  );
+}
+
+/** Veiled profile: the photos are blurred copies; the real ones appear only after a match. */
+function VeilBadge() {
+  return (
+    <div className="pointer-events-none absolute inset-x-0 top-[34%] z-10 flex flex-col items-center gap-2 text-white">
+      <svg aria-hidden width="40" height="24" viewBox="0 0 40 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round">
+        <path d="M2 6c6-4 12-4 18 0 6-4 12-4 18 0-1 8-5 14-11 14-3 0-5-2-7-5-2 3-4 5-7 5C7 20 3 14 2 6z" />
+        <ellipse cx="11" cy="10" rx="3.2" ry="2" /><ellipse cx="29" cy="10" rx="3.2" ry="2" />
+      </svg>
+      <span className="rounded-full bg-black/35 px-4 py-1 text-sm font-medium backdrop-blur-sm">Photos unveil when you match</span>
+    </div>
   );
 }
 

@@ -28,4 +28,9 @@ public interface SwipeRepository extends JpaRepository<Swipe, UUID> {
 
     @Query("select s.targetId from Swipe s where s.swiperId = :swiperId")
     List<UUID> findTargetIdsBySwiperId(@Param("swiperId") UUID swiperId);
+
+    /** Who liked (or super liked) this user: a person in Private Mode is only shown to these people. */
+    @Query("select s.swiperId from Swipe s where s.targetId = :targetId and s.direction in "
+            + "(com.softlaunch.match.model.SwipeDirection.LIKE, com.softlaunch.match.model.SwipeDirection.SUPER_LIKE)")
+    List<UUID> findLikerIdsOf(@Param("targetId") UUID targetId);
 }

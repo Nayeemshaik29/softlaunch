@@ -24,7 +24,9 @@ public record InternalProfileResponse(
         Set<String> interests,
         List<String> photoUrls,
         List<String> hangoutPlaces,
-        List<PromptAnswer> prompts) {
+        List<PromptAnswer> prompts,
+        boolean privateMode,
+        boolean veiledPhotos) {
 
     /** Free-text answers ("My ideal Sunday: ..."): the richest signal for the AI's "similar vibe" matching. */
     public record PromptAnswer(String question, String answer) {
@@ -45,8 +47,11 @@ public record InternalProfileResponse(
                 p.getAgeMax(),
                 p.getLookingFor().stream().map(Enum::name).collect(Collectors.toSet()),
                 p.getInterests().stream().map(Enum::name).collect(Collectors.toSet()),
-                photoLinks.of(p.getPhotoKeys()),
+                // feeds never contain matched people, so a veiled profile is always shown blurred here
+                p.isVeiledPhotos() ? photoLinks.veiledOf(p.getPhotoKeys()) : photoLinks.of(p.getPhotoKeys()),
                 List.copyOf(p.getHangoutPlaces()),
-                p.getPrompts().stream().map(q -> new PromptAnswer(q.getQuestion(), q.getAnswer())).toList());
+                p.getPrompts().stream().map(q -> new PromptAnswer(q.getQuestion(), q.getAnswer())).toList(),
+                p.isPrivateMode(),
+                p.isVeiledPhotos());
     }
 }

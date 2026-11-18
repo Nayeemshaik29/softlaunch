@@ -4,6 +4,7 @@ import com.softlaunch.user.dto.PublicProfileResponse;
 import com.softlaunch.user.service.ProfileService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -18,7 +19,8 @@ public class PublicProfileController {
     }
 
     @GetMapping("/api/users/{userId}/profile")
-    public PublicProfileResponse getPublicProfile(@PathVariable UUID userId) {
-        return profileService.getPublicProfile(userId);
+    public PublicProfileResponse getPublicProfile(@PathVariable UUID userId,
+                                                  @RequestHeader(value = "X-User-Id", required = false) UUID viewerId) {
+        return profileService.getPublicProfile(userId, viewerId);
     }
 }

@@ -52,6 +52,36 @@ final class ImageProcessor {
         return new Processed(encodeJpeg(resized), resized.getWidth(), resized.getHeight());
     }
 
+    /**
+     * Veiled photo: shrink to 12 px wide (all detail is gone, only colour and light remain), then smooth it back up
+     * to 120 px. Faces, text and bodies can't be recovered from it; that's the point.
+     */
+    static byte[] veil(byte[] jpeg) {
+        BufferedImage src;
+        try {
+            src = ImageIO.read(new ByteArrayInputStream(jpeg));
+        } catch (java.io.IOException e) {
+            throw new InvalidImageException("Not an image");
+        }
+        if (src == null) throw new InvalidImageException("Not an image");
+        int tinyW = 12;
+        int tinyH = Math.max(1, Math.round(tinyW * (float) src.getHeight() / src.getWidth()));
+        BufferedImage tiny = new BufferedImage(tinyW, tinyH, BufferedImage.TYPE_INT_RGB);
+        java.awt.Graphics2D g = tiny.createGraphics();
+        g.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.setRenderingHint(java.awt.RenderingHints.KEY_RENDERING, java.awt.RenderingHints.VALUE_RENDER_QUALITY);
+        g.drawImage(src.getScaledInstance(tinyW, tinyH, java.awt.Image.SCALE_AREA_AVERAGING), 0, 0, null);
+        g.dispose();
+        int outW = 120;
+        int outH = Math.round(outW * (float) tinyH / tinyW);
+        BufferedImage out = new BufferedImage(outW, outH, BufferedImage.TYPE_INT_RGB);
+        java.awt.Graphics2D g2 = out.createGraphics();
+        g2.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g2.drawImage(tiny, 0, 0, outW, outH, null);
+        g2.dispose();
+        return encodeJpeg(out);
+    }
+
     private static BufferedImage decode(byte[] bytes, long maxPixels) {
         try (ImageInputStream in = ImageIO.createImageInputStream(new ByteArrayInputStream(bytes))) {
             Iterator<ImageReader> readers = ImageIO.getImageReaders(in);

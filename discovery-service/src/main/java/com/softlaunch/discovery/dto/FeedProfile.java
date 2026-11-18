@@ -17,5 +17,7 @@ public record FeedProfile(
         Integer ageMax,
         Set<String> lookingFor,
         Set<String> interests,
-        List<String> photoUrls) {
+        List<String> photoUrls,
+        Boolean privateMode,
+        Boolean veiledPhotos) {
 }

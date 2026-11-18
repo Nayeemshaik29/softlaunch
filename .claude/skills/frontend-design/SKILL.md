@@ -177,3 +177,6 @@ Rules:
 - Imagery: mood comes from color, light and blur, not from bodies. No nudity, no lingerie stock, no suggestive emoji (🍑🍆💦).
 - 3D: read colors from `palettes[mood]` (WebGL can't read CSS variables).
 - Same spacing, type, motion and accessibility rules as the calm mood.
+- **Veiled photos** (mask motif): blur is decided by the SERVER (the browser only gets a 120 px blurred copy). In the UI:
+  `scale-110 blur-xl` on the image, the mask icon and "Photos unveil when you match". The match moment is the unveil.
+- **Private Mode / Settings switches**: `role="switch"`, label + description, optimistic with rollback.

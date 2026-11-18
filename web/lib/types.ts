@@ -17,6 +17,7 @@ export interface FeedCard {
   photoUrls: string[];
   reasons: string[];
   score: number;
+  veiled: boolean; // photos are blurred copies until you match
 }
 
 /** match-service SwipeResponse */
@@ -63,6 +64,7 @@ export interface PublicProfile {
   city: string | null;
   interests: string[];
   photoUrls: string[];
+  veiled?: boolean;
 }
 
 export interface PhotoRef {
@@ -77,6 +79,13 @@ export interface MyProfile extends PublicProfile {
   interestedIn: Gender[];
   lookingFor: string[];
   photos: PhotoRef[];
+  privateMode: boolean;
+  veiledPhotos: boolean;
+}
+
+export interface PrivacySettings {
+  privateMode: boolean;
+  veiledPhotos: boolean;
 }
 
 /** user-service PhotoService.UploadTicket */

@@ -43,7 +43,9 @@ public record MyProfileResponse(
         Integer ageMax,
         Integer maxDistanceKm,
         Instant updatedAt,
-        int percent) {
+        int percent,
+        boolean privateMode,
+        boolean veiledPhotos) {
     public static MyProfileResponse from(Profile p, PhotoLinks photoLinks) {
         User user = p.getUser();
         return new MyProfileResponse(
@@ -77,7 +79,9 @@ public record MyProfileResponse(
                 p.getAgeMax(),
                 p.getMaxDistanceKm(),
                 p.getUpdatedAt(),
-                ProfileCompletion.percent(p)
+                ProfileCompletion.percent(p),
+                p.isPrivateMode(),
+                p.isVeiledPhotos()
         );
     }
 

@@ -35,9 +35,11 @@ public class FeedService {
     private final FeedCache feedCache;
     private final SafetyFilter safetyFilter;
     private final VibeScores vibeScores;
+    private final PrivateModeFilter privateMode;
 
     public FeedService(LocationService locationService, UserProfileClient userProfileClient, FeedCache feedCache,
-                       SafetyFilter safetyFilter, VibeScores vibeScores) {
+                       SafetyFilter safetyFilter, VibeScores vibeScores, PrivateModeFilter privateMode) {
+        this.privateMode = privateMode;
         this.vibeScores = vibeScores;
         this.locationService = locationService;
         this.userProfileClient = userProfileClient;
@@ -51,12 +53,11 @@ public class FeedService {
             feedCache.put(me, radiusKm, fresh);
             return fresh;
         });
-        // Applied on EVERY read, even cached feeds: a block or review must take effect immediately.
+        // Applied on EVERY read, even cached feeds: a block, a review or Private Mode must take effect immediately.
         Set<String> hidden = safetyFilter.hiddenFrom(me);
-        if (hidden.isEmpty()) {
-            return feed;
-        }
-        return feed.stream().filter(card -> !hidden.contains(card.userId().toString())).toList();
+        List<FeedCard> visible = hidden.isEmpty() ? feed
+                : feed.stream().filter(card -> !hidden.contains(card.userId().toString())).toList();
+        return privateMode.apply(me, visible);
     }
 
     private List<FeedCard> buildFeed(UUID me, int radiusKm) {
@@ -139,7 +140,7 @@ public class FeedService {
         int score = distancePoints + interestPoints + intentPoints + completenessPoints + verifiedPoints + vibePoints;
 
         return new FeedCard(them.userId(), them.displayName(), them.verified(), them.age(), distanceKm, them.bio(), them.city(),
-                them.lookingFor(), shared, them.photoUrls(), reasons, score);
+                them.lookingFor(), shared, them.photoUrls(), reasons, score, Boolean.TRUE.equals(them.veiledPhotos()));
     }
     static int vibePoints(Double similarity) {
         if (similarity == null) return 0;   // no embedding yet, or ai-service unavailable

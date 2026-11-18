@@ -11,6 +11,11 @@ final class PhotoKeys {
         return "photos/" + userId + "/" + photoId + ".jpg";
     }
 
+    /** The blurred copy shown before a match: photos/<user>/<photoId>.veil.jpg */
+    static String veilOf(String key) {
+        return key.substring(0, key.length() - ".jpg".length()) + ".veil.jpg";
+    }
+
     /** "photos/<user>/<photoId>.jpg" → photoId */
     static UUID idOf(String key) {
         String file = key.substring(key.lastIndexOf('/') + 1);

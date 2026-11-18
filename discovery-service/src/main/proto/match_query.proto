@@ -15,4 +15,7 @@ message GetSwipedUserIdsRequest {
 
 message GetSwipedUserIdsResponse {
   repeated string user_ids = 1;
+  // People who liked user_id. Private Mode: you're only shown to people YOU liked, so discovery
+  // checks a private candidate's own likes. New field = old clients simply ignore it.
+  repeated string liked_by_ids = 2;
 }

@@ -12,7 +12,8 @@ export function myProfile(force = false): Promise<MyProfile | null> {
 }
 
 const people = new Map<string, Promise<PublicProfile | null>>();
-export function profileOf(userId: string): Promise<PublicProfile | null> {
-  if (!people.has(userId)) people.set(userId, api<PublicProfile>(`/api/users/${userId}/profile`).catch(() => null));
+/** fresh = skip the cache (e.g. right after a match, when veiled photos become real). */
+export function profileOf(userId: string, fresh = false): Promise<PublicProfile | null> {
+  if (fresh || !people.has(userId)) people.set(userId, api<PublicProfile>(`/api/users/${userId}/profile`).catch(() => null));
   return people.get(userId)!;
 }

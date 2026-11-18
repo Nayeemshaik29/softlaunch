@@ -113,6 +113,16 @@ public class Profile {
     @Column(nullable = false)
     private Instant updatedAt;
 
+    /** Private Mode: only people this user has liked can see them in Discover; online / last seen hidden. */
+    @org.hibernate.annotations.ColumnDefault("false")
+    @Column(nullable = false)
+    private boolean privateMode;
+
+    /** Veiled photos: others see a blurred copy until there's a match. */
+    @org.hibernate.annotations.ColumnDefault("false")
+    @Column(nullable = false)
+    private boolean veiledPhotos;
+
     protected Profile() {
     }
 
@@ -321,6 +331,11 @@ public class Profile {
     public void setMaxDistanceKm(Integer maxDistanceKm) {
         this.maxDistanceKm = maxDistanceKm;
     }
+
+    public boolean isPrivateMode() { return privateMode; }
+    public void setPrivateMode(boolean privateMode) { this.privateMode = privateMode; }
+    public boolean isVeiledPhotos() { return veiledPhotos; }
+    public void setVeiledPhotos(boolean veiledPhotos) { this.veiledPhotos = veiledPhotos; }
 
     public Instant getUpdatedAt() {
         return updatedAt;

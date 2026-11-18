@@ -68,6 +68,29 @@ class ImageProcessorTest {
 
     // ---------- helpers ----------
 
+    @Test
+    void veilKeepsOnlyColourNotDetail() throws Exception {
+        // a sharp black/white checkerboard: lots of detail
+        java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(800, 1000, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        for (int y = 0; y < 1000; y++) for (int x = 0; x < 800; x++) img.setRGB(x, y, ((x / 20 + y / 20) % 2 == 0) ? 0xFFFFFF : 0x000000);
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        javax.imageio.ImageIO.write(img, "jpeg", out);
+
+        byte[] veil = ImageProcessor.veil(out.toByteArray());
+        java.awt.image.BufferedImage v = javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(veil));
+
+        assertThat(v.getWidth()).isEqualTo(120);
+        assertThat(v.getHeight()).isEqualTo(150);                 // same shape as the photo
+        assertThat(veil.length).isLessThan(8_000);               // tiny: nothing to zoom into
+        int min = 255, max = 0;                                  // the checkerboard is gone: everything is mid-grey
+        for (int y = 0; y < v.getHeight(); y++) for (int x = 0; x < v.getWidth(); x++) {
+            int g = v.getRGB(x, y) & 0xFF;
+            min = Math.min(min, g);
+            max = Math.max(max, g);
+        }
+        assertThat(max - min).isLessThan(60);
+    }
+
     private static byte[] jpeg(int w, int h) throws Exception {
         BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
         var g = img.createGraphics();

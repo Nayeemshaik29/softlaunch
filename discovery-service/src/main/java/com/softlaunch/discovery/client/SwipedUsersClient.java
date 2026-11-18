@@ -23,6 +23,19 @@ public class SwipedUsersClient {
         this.stub = stub;
     }
 
+    /** People who liked `me`. Fails CLOSED (empty): a private profile is then simply not shown. */
+    public Set<String> likedBy(UUID me) {
+        try {
+            return new HashSet<>(stub
+                    .withDeadlineAfter(2, TimeUnit.SECONDS)
+                    .getSwipedUserIds(GetSwipedUserIdsRequest.newBuilder().setUserId(me.toString()).build())
+                    .getLikedByIdsList());
+        } catch (StatusRuntimeException e) {
+            log.warn("match-service unavailable ({}), hiding private profiles", e.getStatus().getCode());
+            return Set.of();
+        }
+    }
+
     public Set<String> swipedBy(UUID me) {
         try {
             return new HashSet<>(stub

@@ -20,8 +20,10 @@ public class PhotoCleanupListener {
 
     private final PhotoService photos;
     private final JsonMapper json;
+    private final com.softlaunch.user.privacy.PrivacyService privacy;
 
-    public PhotoCleanupListener(PhotoService photos, JsonMapper json) {
+    public PhotoCleanupListener(PhotoService photos, JsonMapper json, com.softlaunch.user.privacy.PrivacyService privacy) {
+        this.privacy = privacy;
         this.photos = photos;
         this.json = json;
     }
@@ -32,7 +34,8 @@ public class PhotoCleanupListener {
         if (event.userId() == null) {
             throw new InvalidEventException("user.deleted without userId");
         }
-        int removed = photos.deleteAllOf(event.userId());
+        int removed = photos.deleteAllOf(event.userId());   // originals AND blurred copies (same folder)
+        privacy.forget(event.userId());
         log.info("Deleted user {}: {} photo file(s) removed from storage", event.userId(), removed);
     }
 }

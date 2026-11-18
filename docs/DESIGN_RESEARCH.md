@@ -39,8 +39,8 @@ None of them rely on explicit pictures, because the stores wouldn't let them.
 |---|---|---|---|---|
 | 1 | Messages vanish | Pure | 24-hour chats | ✅ have |
 | 2 | Screenshot alerts | Pure, Nymph | chat-service capture events | ✅ backend; iOS: detect, Android: block (`FLAG_SECURE`) |
-| 3 | **Private Mode** | Nymph, Pure | you're only shown to people you've liked; "last seen" hidden | 🆕 build next |
-| 4 | **Veiled photos** | Masked Love (mask motif) | After dark option: photos **blurred until a match** (the profile is real, only the photos are veiled) | 🆕 |
+| 3 | **Private Mode** | Nymph, Pure | you're only shown to people you've liked; online / last seen hidden | ✅ built (Settings) |
+| 4 | **Veiled photos** | Masked Love (mask motif) | photos **blurred until a match**: the server only hands out 120 px blurred copies until then | ✅ built (Settings) |
 | 5 | **Desires** list ("into / open to / not into") | HUD Bedroom, Pure turn-ons | optional profile section, shown only in After dark, never on the public card by default; "mutual desires" chips | 🆕 consent-forward copy |
 | 6 | One profile at a time | Pure 2026 redesign | our swipe deck already is | ✅ have |
 | 7 | **Discreet app icon** | common in this category | alternate icon: plain "SL" mark, neutral name | 🆕 native shell needed |

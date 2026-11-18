@@ -32,6 +32,11 @@ updates:
     groups:
       web:
         patterns: ["*"]
+    # Majors (TypeScript 7, ESLint 10, Framer Motion 14...) break things and need a hands-on migration:
+    # we do those on purpose, not in a bulk weekly PR. Dependabot security alerts still cover majors.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     open-pull-requests-limit: 5
   - package-ecosystem: github-actions  # keeps the pinned action SHAs current
     directory: /
