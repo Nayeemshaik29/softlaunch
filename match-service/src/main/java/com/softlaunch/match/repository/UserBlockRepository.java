@@ -16,6 +16,11 @@ public interface UserBlockRepository extends JpaRepository<UserBlock, UUID> {
     @Query("delete from UserBlock b where b.blockerId = :blocker and b.blockedId = :blocked")
     int deleteDirection(@Param("blocker") UUID blocker, @Param("blocked") UUID blocked);
 
+    /** Account deletion: blocks they made and blocks against them (the person no longer exists). */
+    @Modifying
+    @Query("delete from UserBlock b where b.blockerId = :user or b.blockedId = :user")
+    int deleteAllInvolving(@Param("user") UUID user);
+
     /** Blocked in EITHER direction. */
     default boolean isBlocked(UUID a, UUID b) {
         return existsByBlockerIdAndBlockedId(a, b) || existsByBlockerIdAndBlockedId(b, a);

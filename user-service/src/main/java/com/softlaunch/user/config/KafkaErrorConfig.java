@@ -31,6 +31,16 @@ public class KafkaErrorConfig {
     }
 
     @Bean
+    public NewTopic userDeletedTopic() {
+        return TopicBuilder.name("user.deleted").partitions(3).replicas(1).build();
+    }
+
+    @Bean
+    public NewTopic userDeletedDltTopic() {
+        return TopicBuilder.name("user.deleted.DLT").partitions(3).replicas(1).build();
+    }
+
+    @Bean
     public DefaultErrorHandler kafkaErrorHandler(KafkaTemplate<String, String> kafkaTemplate) {
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate,
                 (record, ex) -> new TopicPartition(record.topic() + ".DLT", record.partition()));

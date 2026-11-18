@@ -44,6 +44,24 @@ public class SafetyFilter {
     }
 
     /** Everyone hidden from me: people I blocked, people who blocked me, and everyone under review. */
+    /**
+     * Account deleted: drop their own lists, and take them out of everyone else's
+     * (blockedby:<them> tells us exactly whose blocking: set mentions them). Idempotent.
+     */
+    public void forget(UUID userId) {
+        String id = userId.toString();
+        Set<String> blockers = redis.opsForSet().members("blockedby:" + id);
+        if (blockers != null) {
+            blockers.forEach(blocker -> redis.opsForSet().remove("blocking:" + blocker, id));
+        }
+        Set<String> blocked = redis.opsForSet().members("blocking:" + id);
+        if (blocked != null) {
+            blocked.forEach(other -> redis.opsForSet().remove("blockedby:" + other, id));
+        }
+        redis.delete(Set.of("blocking:" + id, "blockedby:" + id));
+        redis.opsForSet().remove(UNDER_REVIEW, id);
+    }
+
     public Set<String> hiddenFrom(UUID me) {
         Set<String> hidden = new HashSet<>();
         Set<String> union = redis.opsForSet().union("blocking:" + me, Set.of("blockedby:" + me, UNDER_REVIEW));

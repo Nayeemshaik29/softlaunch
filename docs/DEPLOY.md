@@ -114,9 +114,10 @@ Move the stateful parts first: they're the hardest to run yourself.
 
 ## Play Store launch checklist
 
-- [ ] **Account deletion** inside the app **and** a web link (Play Store requirement). Endpoint still to do. ai-service already cleans up on `user.deleted`.
+- [x] **Account deletion** endpoint: `DELETE /api/users/me` (see [DATA_DELETION.md](DATA_DELETION.md)).
+- [ ] **Web link** for deletion without the app (Play Store requirement). A small page on your website.
 - [ ] Privacy policy URL (public web page).
-- [ ] Data safety form: answers in [`AI_DATA.md`](AI_DATA.md), plus photos, location, DOB and KYC.
+- [ ] Data safety form: answers in [`AI_DATA.md`](AI_DATA.md) and [`DATA_DELETION.md`](DATA_DELETION.md), plus photos, location, DOB and KYC.
 - [ ] India's DPDP Act: consent text, purpose of each data item, and a grievance contact.
 - [ ] HTTPS everywhere; no database ports open (check with `nmap` from outside).
 - [ ] Fresh production secrets; nothing from `.env.example` or your laptop.

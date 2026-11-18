@@ -11,4 +11,6 @@ public interface VerificationRepository extends JpaRepository<Verification, UUID
     boolean existsByUserIdAndStatus(UUID userId, VerificationStatus status);
     boolean existsBySubjectHashAndStatus(String subjectHash, VerificationStatus status);
     Optional<Verification> findFirstByUserIdOrderByCreatedAtDesc(UUID userId);
+
+    long deleteByUserId(UUID userId);   // account deletion
 }

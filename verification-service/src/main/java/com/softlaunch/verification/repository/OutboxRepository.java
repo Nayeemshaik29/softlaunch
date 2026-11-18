@@ -22,4 +22,6 @@ public interface OutboxRepository extends JpaRepository<OutboxEvent, UUID> {
             FOR UPDATE SKIP LOCKED
             """, nativeQuery = true)
     List<OutboxEvent> lockNextBatch(@Param("limit") int limit);
+
+    long deleteByMessageKey(String messageKey);   // account deletion: user.verified events are keyed by user id
 }

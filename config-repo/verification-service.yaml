@@ -24,6 +24,9 @@ spring:
         max.block.ms: 5000          # if Kafka is down, fail in 5s instead of hanging 60s
         request.timeout.ms: 3000
         delivery.timeout.ms: 8000
+    consumer:
+      group-id: verification-service
+      auto-offset-reset: earliest   # account deletions must never be skipped
   cloud:
     openfeign:
       client:

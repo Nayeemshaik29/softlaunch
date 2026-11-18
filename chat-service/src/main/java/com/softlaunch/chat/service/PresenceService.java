@@ -43,6 +43,11 @@ public class PresenceService {
         return new PresenceResponse(userId, online, lastSeen == null ? null : Instant.parse(lastSeen));
     }
 
+    /** Account deleted: forget when they were last online. Idempotent. */
+    public void forget(String userId) {
+        redis.delete(java.util.List.of(onlineKey(userId), lastSeenKey(userId)));
+    }
+
     private String onlineKey(String userId) {
         return "presence:" + userId;
     }

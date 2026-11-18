@@ -213,6 +213,7 @@ All requests go through the gateway at `http://localhost:8080`. Endpoints marked
 | POST | `/api/users/auth/signup` | Create an account (18+) |
 | POST | `/api/users/auth/login` | Get a JWT |
 | GET 🔒 | `/api/users/me` | Current user |
+| DELETE 🔒 | `/api/users/me` | Delete my account (body `{"password"}`) → `204`, data removed everywhere via `user.deleted` |
 | GET 🔒 | `/api/users/me/profile` | My full profile + completion % |
 | PUT 🔒 | `/api/users/me/profile` | Create or update my profile |
 | GET 🔒 | `/api/users/{userId}/profile` | Someone's public profile |

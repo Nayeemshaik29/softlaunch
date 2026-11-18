@@ -24,4 +24,4 @@ The AI never bans, blocks or hides anyone. Scam suspicions become reports; a mod
 - **Data shared with third parties:** No (AI is self-hosted).
 - **Messages:** collected; used for app functionality and safety (fraud prevention); deleted after 24 h (except reported conversations, kept as evidence).
 - **App activity / profile info:** used for personalisation (matching).
-- **Users can request deletion:** yes. `user.deleted` removes embeddings and cached openers (account deletion endpoint: to do before launch).
+- **Users can request deletion:** yes. `DELETE /api/users/me` → `user.deleted` removes embeddings and cached openers. Full list: [DATA_DELETION.md](DATA_DELETION.md).

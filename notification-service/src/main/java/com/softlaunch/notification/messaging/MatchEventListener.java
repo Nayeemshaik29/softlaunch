@@ -49,6 +49,15 @@ public class MatchEventListener {
         notificationService.handleMessageSent(parseAndValidate(payload, MessageSentEvent.class));
     }
 
+    @KafkaListener(topics = "user.deleted")
+    public void onUserDeleted(String payload) {
+        tools.jackson.databind.JsonNode userId = jsonMapper.readTree(payload).get("userId");
+        if (userId == null || userId.isNull()) {
+            throw new InvalidEventException("user.deleted without userId");
+        }
+        notificationService.handleUserDeleted(java.util.UUID.fromString(userId.asString()));
+    }
+
     private <T> T parseAndValidate(String payload, Class<T> type) {
         T event = jsonMapper.readValue(payload, type);
         Set<ConstraintViolation<T>> violations = validator.validate(event);

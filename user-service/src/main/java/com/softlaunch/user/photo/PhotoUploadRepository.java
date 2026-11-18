@@ -13,5 +13,7 @@ public interface PhotoUploadRepository extends JpaRepository<PhotoUpload, UUID> 
 
     long countByUserIdAndStatusAndExpiresAtAfter(UUID userId, PhotoUpload.Status status, Instant now);
 
+    long deleteByUserId(UUID userId);   // account deletion (runs inside its transaction)
+
     List<PhotoUpload> findTop200ByStatusAndExpiresAtBefore(PhotoUpload.Status status, Instant now);
 }

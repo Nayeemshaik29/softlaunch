@@ -4,9 +4,12 @@ import com.softlaunch.gateway.config.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
+import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -15,12 +18,16 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
+import java.time.Duration;
 import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     public static final String USER_ID_HEADER = "X-User-Id";
+    /** Written by user-service when an account is deleted (see TokenRevocation there). */
+    private static final String REVOKED_PREFIX = "revoked:user:";
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private static final List<String> PUBLIC_PATHS = List.of(
             "/api/users/auth/",
@@ -29,9 +36,11 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     );
 
     private final SecretKey key;
+    private final ReactiveStringRedisTemplate redis;
 
-    public JwtAuthenticationFilter(JwtProperties properties) {
+    public JwtAuthenticationFilter(JwtProperties properties, ReactiveStringRedisTemplate redis) {
         this.key = JwtKeys.fromBase64(properties.secret());
+        this.redis = redis;
     }
 
     @Override
@@ -56,14 +65,31 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                     .parseSignedClaims(token)
                     .getPayload();
 
+            String userId = claims.getSubject();
             ServerHttpRequest request = exchange.getRequest().mutate()
-                    .headers(headers -> headers.set(USER_ID_HEADER, claims.getSubject()))
+                    .headers(headers -> headers.set(USER_ID_HEADER, userId))
                     .build();
 
-            return chain.filter(exchange.mutate().request(request).build());
+            return isRevoked(userId).flatMap(revoked -> revoked
+                    ? unauthorized(exchange)   // account deleted: its tokens die now, not in 15 minutes
+                    : chain.filter(exchange.mutate().request(request).build()));
         } catch (JwtException | IllegalArgumentException e) {
             return unauthorized(exchange);
         }
+    }
+
+    /**
+     * One Redis lookup per request (~0.2 ms). Fail-open: if Redis is down we let the token through,
+     * because the deleted user's data is already gone everywhere (they would only see empty/404 answers),
+     * while failing closed would log out EVERY user during a Redis hiccup.
+     */
+    private Mono<Boolean> isRevoked(String userId) {
+        return redis.hasKey(REVOKED_PREFIX + userId)
+                .timeout(Duration.ofMillis(300))
+                .onErrorResume(e -> {
+                    log.warn("Revocation check skipped ({})", e.getClass().getSimpleName());
+                    return Mono.just(false);
+                });
     }
 
     private boolean isPublic(String path) {

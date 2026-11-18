@@ -35,6 +35,11 @@ public class LocationService {
         this.feedCache = feedCache;
     }
 
+    /** Account deleted: off the map, so nobody's "nearby" or feed can find them again. Idempotent. */
+    public void forget(UUID userId) {
+        redis.opsForGeo().remove(GEO_KEY, userId.toString());
+    }
+
     public void updateLocation(UUID me, LocationRequest request) {
         redis.opsForGeo().add(GEO_KEY, new Point(request.longitude(), request.latitude()), me.toString());
         feedCache.evict(me);

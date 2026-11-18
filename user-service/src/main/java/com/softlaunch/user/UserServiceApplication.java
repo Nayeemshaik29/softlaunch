@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 
 @ConfigurationPropertiesScan
-@EnableScheduling   // photo upload cleanup
+@EnableScheduling   // photo upload cleanup + outbox publisher
 @SpringBootApplication
 public class UserServiceApplication {
 

@@ -61,6 +61,16 @@ public class NotificationService {
         return NotificationResponse.from(notification);
     }
 
+    /**
+     * Account deleted. Notifications about their matches already go via match.removed; this catches the rest
+     * (e.g. one created a moment after the match was removed). Idempotent.
+     */
+    @Transactional
+    public void handleUserDeleted(UUID userId) {
+        long deleted = repository.deleteByRecipientId(userId);
+        log.info("Deleted user {}: removed {} notification(s)", userId, deleted);
+    }
+
     @Transactional
     public void handleMatchRemoved(MatchRemovedEvent event) {
         long deleted = repository.deleteByReferenceIdAndType(event.matchId(), NotificationType.MATCH_CREATED)

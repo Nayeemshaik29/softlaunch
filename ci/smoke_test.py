@@ -197,7 +197,28 @@ if ticket.get("uploadUrl"):
 s, b = call("POST", f"{GW}/api/users/me/photos/upload-url", {"contentType": "image/gif", "sizeBytes": 100}, tok=A)
 check("GIF refused", s == 400, f"HTTP {s}")
 
-# ---------- 8. monitoring ----------
+# ---------- 8. account deletion (Play Store requirement) ----------
+s, _ = call("DELETE", f"{GW}/api/users/me", {"password": "not-my-password"}, tok=B)
+check("delete account with wrong password → 401", s == 401, f"HTTP {s}")
+s, _ = call("DELETE", f"{GW}/api/users/me", {"password": PASSWORD}, tok=B)
+check("Bharat deletes his account", s == 204, f"HTTP {s}")
+s, _ = call("GET", f"{GW}/api/users/me", tok=B)
+check("his token stops working immediately (gateway blocklist)", s == 401, f"HTTP {s}")
+s, _ = call("POST", f"{GW}/api/users/auth/login", {"email": f"bharat-{RUN}@ci.test", "password": PASSWORD})
+check("he can't log in any more", s == 401, f"HTTP {s}")
+s, _ = call("GET", f"{GW}/api/users/{b_id}/profile", tok=A)
+check("his profile is gone", s == 404, f"HTTP {s}")
+gone = eventually(lambda: (lambda r: r[0] == 200 and all(m.get("matchId", m.get("id")) != match_id for m in js(r[1])))(
+    call("GET", f"{GW}/api/matches", tok=A)), seconds=60)
+check("user.deleted → match removed for Asha (match-service)", gone)
+chat_gone = eventually(lambda: call("GET", f"{GW}/api/chats/{match_id}/messages", tok=A)[0] in (403, 404), seconds=60)
+check("→ match.removed → chat closed (chat-service)", chat_gone)
+notes_gone = eventually(lambda: (lambda r: r[0] == 200 and len(js(r[1])) == 0)(call("GET", f"{GW}/api/notifications", tok=A)), seconds=60)
+check("→ match notification removed (notification-service)", notes_gone)
+s, _ = call("GET", f"{GW}/api/users/me", tok=A)
+check("Asha is unaffected", s == 200, f"HTTP {s}")
+
+# ---------- 9. monitoring ----------
 def all_targets_up():
     s, b = call("GET", f"{PROM}/api/v1/targets?state=active")
     t = js(b).get("data", {}).get("activeTargets", [])

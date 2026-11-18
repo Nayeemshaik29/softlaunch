@@ -180,6 +180,8 @@ services:
         create user.verified.DLT 3
         create user.deleted.DLT 3
         create profile.updated.DLT 3
+        create swipe.recorded.DLT 3
+        create user.review_status.DLT 3
         create message.screening 3 --config retention.ms=86400000
         create message.screening.DLT 3 --config retention.ms=86400000
         echo "all topics ready"

@@ -21,6 +21,11 @@ public interface SwipeRepository extends JpaRepository<Swipe, UUID> {
     int deleteBetween(@org.springframework.data.repository.query.Param("a") UUID a,
                       @org.springframework.data.repository.query.Param("b") UUID b);
 
+    /** Account deletion: their swipes AND everyone's swipes on them. */
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("delete from Swipe s where s.swiperId = :user or s.targetId = :user")
+    int deleteAllInvolving(@Param("user") UUID user);
+
     @Query("select s.targetId from Swipe s where s.swiperId = :swiperId")
     List<UUID> findTargetIdsBySwiperId(@Param("swiperId") UUID swiperId);
 }
