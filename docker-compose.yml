@@ -245,7 +245,7 @@ services:
       - ./observability/loki/loki.yaml:/etc/loki/loki.yaml:ro   # 30-day retention (privacy policy)
 
   grafana:
-    image: grafana/grafana:12.1.0
+    image: grafana/grafana:13.3.1
     container_name: softlaunch-grafana
     ports:
       - "3000:3000"
