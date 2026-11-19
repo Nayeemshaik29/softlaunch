@@ -16,7 +16,7 @@ const NAV = [
 export function AppHeader({ unread = 0 }: { unread?: number }) {
   const path = usePathname();
   return (
-    <header className="sticky top-0 z-20 border-b border-line bg-bg/90 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-line bg-bg/90 pt-[env(safe-area-inset-top)] backdrop-blur">
       <div className="mx-auto flex max-w-[1120px] items-center justify-between gap-4 px-4 sm:px-6">
         <Logo href="/swipe" />
         <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
@@ -62,7 +62,7 @@ export function AppHeader({ unread = 0 }: { unread?: number }) {
 export function BottomNav({ unread = 0 }: { unread?: number }) {
   const path = usePathname();
   return (
-    <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-bg/95 backdrop-blur md:hidden">
+    <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
       <ul className="grid grid-cols-4">
         {NAV.map((n) => {
           const active = path.startsWith(n.href);

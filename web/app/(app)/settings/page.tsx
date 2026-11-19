@@ -11,6 +11,7 @@ import { spring } from "@/lib/motion";
 import { useMood } from "@/lib/mood";
 import { API_URL_PUBLIC } from "@/lib/public-env";
 import { logout } from "@/lib/session";
+import { discreetIconOn, isNative, setDiscreetIcon } from "@/lib/native";
 import type { PrivacySettings } from "@/lib/types";
 
 /** Accessible on/off switch (role="switch"), 48px tall row. */
@@ -52,9 +53,11 @@ export default function SettingsPage() {
   const [privacy, setPrivacy] = useState<PrivacySettings | null>(null);
   const [busy, setBusy] = useState<keyof PrivacySettings | null>(null);
   const [status, setStatus] = useState("");
+  const [discreet, setDiscreet] = useState<boolean | null>(null); // null = not an app / not supported
 
   useEffect(() => {
     void api<PrivacySettings>("/api/users/me/privacy").then(setPrivacy).catch(() => setStatus("Couldn't load your settings."));
+    if (isNative()) void discreetIconOn().then(setDiscreet).catch(() => setDiscreet(null));
   }, []);
 
   const change = async (key: keyof PrivacySettings, value: boolean) => {
@@ -112,6 +115,14 @@ export default function SettingsPage() {
 
       <section aria-labelledby="look" className="mt-6 rounded-lg border border-line bg-surface px-6">
         <h2 id="look" className="pt-6 text-sm font-medium tracking-wide text-accent uppercase">Look</h2>
+        {discreet !== null && (
+          <Switch
+            label="Discreet app icon"
+            description="Swap the home-screen icon for a plain, neutral one. Your phone may show a short notice when it changes."
+            checked={discreet}
+            onChange={(v) => void setDiscreetIcon(v).then((ok) => { if (ok) setDiscreet(v); else setStatus("This phone doesn't support changing the icon."); })}
+          />
+        )}
         <Switch
           label="After dark"
           description="A moodier night theme: deep wine colours, candle light and flirtier words. Only you see it."

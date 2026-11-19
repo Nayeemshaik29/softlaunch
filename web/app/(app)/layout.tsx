@@ -8,6 +8,7 @@ import { EnergyProvider } from "@/lib/energy";
 import { MatchMomentProvider } from "@/lib/match-moment";
 import { MoodProvider } from "@/lib/mood";
 import { useSession } from "@/lib/session";
+import { setupNative } from "@/lib/native";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const session = useSession();
@@ -17,6 +18,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (session === null) router.replace("/login");
   }, [session, router]);
+
+  // phone apps: status bar, Android back button, splash screen (no-op on the website)
+  useEffect(() => {
+    let cleanup = () => {};
+    void setupNative().then((c) => (cleanup = c));
+    return () => cleanup();
+  }, []);
 
   if (!session) {
     return <div className="min-h-dvh" aria-busy="true" />;

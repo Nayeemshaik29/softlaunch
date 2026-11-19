@@ -12,7 +12,8 @@ import { Field } from "@/components/ui/Field";
 import { Logo } from "@/components/ui/Logo";
 import { api, ApiError } from "@/lib/api";
 import { spring } from "@/lib/motion";
-import { startSession } from "@/lib/session";
+import { completeLogin } from "@/lib/session";
+import { isNative, nativeAuthHeaders } from "@/lib/native";
 import type { Gender, PhotoRef } from "@/lib/types";
 
 const STEPS = 5;
@@ -133,8 +134,11 @@ export default function Signup() {
       if (step === 3) {
         // create the account, then log in: from here on, steps save to the profile
         await api("/api/users/auth/signup", { method: "POST", auth: false, body: { email: email.trim(), password, displayName: name.trim(), dateOfBirth: dob } });
-        const res = await api<{ accessToken: string }>("/api/users/auth/login", { method: "POST", auth: false, credentials: "include", body: { email: email.trim(), password } });
-        startSession(res.accessToken);
+        const res = await api<{ accessToken: string; refreshToken?: string }>("/api/users/auth/login", {
+          method: "POST", auth: false, body: { email: email.trim(), password },
+          credentials: isNative() ? "omit" : "include", headers: nativeAuthHeaders(),
+        });
+        await completeLogin(res);
       }
       if (step === 4) {
         await api("/api/users/me/profile", { method: "PUT", body: profileBody() });

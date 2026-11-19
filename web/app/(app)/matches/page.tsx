@@ -53,7 +53,7 @@ function MatchesInner() {
             className="-mx-4 mt-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 [scrollbar-width:none]">
             {fresh.map((m) => (
               <motion.li key={m.matchId} variants={item} className="snap-start">
-                <Link href={`/matches/${m.matchId}`} onClick={() => void markRead(m)}
+                <Link href={`/chat?m=${m.matchId}`} onClick={() => void markRead(m)}
                   className="flex w-24 flex-col items-center gap-2 rounded-md py-1 text-center"
                   aria-label={`${m.person!.displayName}${m.unread ? ", new" : ""}`}>
                   <Avatar src={m.person!.photoUrls[0]} name={m.person!.displayName} unread={m.unread || m.matchId === highlight} />
@@ -70,7 +70,7 @@ function MatchesInner() {
         <motion.ul variants={reveal.container} initial="hidden" animate="show" className="mt-4 flex flex-col divide-y divide-line rounded-lg border border-line bg-surface">
           {items.map((m) => (
             <motion.li key={m.matchId} variants={item}>
-              <Link href={`/matches/${m.matchId}`} onClick={() => void markRead(m)}
+              <Link href={`/chat?m=${m.matchId}`} onClick={() => void markRead(m)}
                 className="flex min-h-20 items-center gap-4 px-4 py-2 hover:bg-surface-2">
                 <Avatar src={m.person!.photoUrls[0]} name={m.person!.displayName} size={48} />
                 <span className="min-w-0 flex-1">

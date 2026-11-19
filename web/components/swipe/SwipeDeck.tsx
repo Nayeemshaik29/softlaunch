@@ -7,6 +7,7 @@ import { api, ApiError } from "@/lib/api";
 import { useEnergy } from "@/lib/energy";
 import { useMatchMoment } from "@/lib/match-moment";
 import { myProfile, profileOf } from "@/lib/me";
+import { haptic } from "@/lib/native";
 import { spring } from "@/lib/motion";
 import type { FeedCard, SwipeAction, SwipeResponse } from "@/lib/types";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -78,6 +79,7 @@ export function SwipeDeck() {
       seen.current.add(card.userId);
       energy.spend();
       lastPassed.current = action === "PASS" ? card : null;
+      void haptic("swipe");
       setStatus(action === "LIKE" ? `Liked ${card.displayName}` : action === "PASS" ? `Passed on ${card.displayName}` : `Super liked ${card.displayName}`);
 
       // the card leaves the stack as soon as its throw finishes; the cards behind continue smoothly

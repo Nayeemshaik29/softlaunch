@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { use, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/matches/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -9,13 +10,23 @@ import { api, ApiError } from "@/lib/api";
 import { profileOf } from "@/lib/me";
 import { useMood } from "@/lib/mood";
 import { getSession } from "@/lib/session";
+import { protectScreen } from "@/lib/native";
 import type { MatchSummary, PublicProfile } from "@/lib/types";
 
 interface Msg { id: string; senderId: string; text: string; sentAt: string; type: "TEXT" | "SYSTEM" | null }
 
 /** Minimal web chat (REST, refreshed every 5s). Messages fade after 24 hours (chat-service). */
-export default function ChatPage({ params }: { params: Promise<{ matchId: string }> }) {
-  const { matchId } = use(params);
+export default function ChatPage() {
+  return (
+    <Suspense fallback={<Skeleton className="h-12 w-40" />}>
+      <Chat />
+    </Suspense>
+  );
+}
+
+/** /chat?m=<matchId>: a query parameter (not /matches/[id]) so the phone apps can ship as static files. */
+function Chat() {
+  const matchId = useSearchParams().get("m") ?? "";
   const { t } = useMood();
   const me = getSession()?.userId;
   const [person, setPerson] = useState<PublicProfile | null | undefined>(undefined);
@@ -42,6 +53,12 @@ export default function ChatPage({ params }: { params: Promise<{ matchId: string
   }, [matchId]);
 
   useEffect(() => { end.current?.scrollIntoView({ block: "end" }); }, [msgs?.length]);
+
+  // phone apps: Android blocks screenshots / recordings of chats, iOS hides them from the app switcher
+  useEffect(() => {
+    void protectScreen(true);
+    return () => void protectScreen(false);
+  }, []);
 
   async function send(e: React.FormEvent) {
     e.preventDefault();

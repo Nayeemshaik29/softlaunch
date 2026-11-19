@@ -21,7 +21,7 @@ spring:
               '[/api/**]':
                 allowed-origins: "${WEB_ORIGINS:http://localhost:3030}"
                 allowed-methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
-                allowed-headers: [Authorization, Content-Type]
+                allowed-headers: [Authorization, Content-Type, X-Refresh-Transport, X-Refresh-Token]   # last two: native apps
                 allow-credentials: true   # the refresh cookie (HttpOnly). Needs the exact origins above, never "*"
                 max-age: 3600
           routes:

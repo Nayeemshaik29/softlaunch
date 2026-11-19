@@ -51,7 +51,7 @@ function Row({ n, onOpen, onDismiss }: { n: AppNotification; onOpen: () => void;
         className={`relative flex touch-pan-y items-center gap-4 border px-4 py-2 ${n.read ? "border-line bg-bg" : "border-transparent bg-surface"} rounded-md`}
       >
         <span aria-hidden className={`h-2.5 w-2.5 shrink-0 rounded-full ${n.read ? "bg-transparent" : "bg-accent"}`} />
-        <Link href={`/matches/${n.referenceId}`} onClick={(e) => (dragged.current ? e.preventDefault() : onOpen())} className="min-h-14 min-w-0 flex-1 py-2" draggable={false}>
+        <Link href={`/chat?m=${n.referenceId}`} onClick={(e) => (dragged.current ? e.preventDefault() : onOpen())} className="min-h-14 min-w-0 flex-1 py-2" draggable={false}>
           <span className={`block ${n.read ? "text-muted" : "font-semibold text-text"}`}>{title}</span>
           <span className="block truncate text-sm text-muted">{stripEmoji(n.message)}</span>
         </Link>

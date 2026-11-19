@@ -9,6 +9,7 @@ import { useEnergy } from "@/lib/energy";
 import { reveal } from "@/lib/motion";
 import { useMood } from "@/lib/mood";
 import { mockPay, rupees, startCheckout } from "@/lib/plus";
+import { isNative } from "@/lib/native";
 import type { Checkout, Plan, PlusStatus } from "@/lib/types";
 
 const PERKS = [
@@ -86,6 +87,13 @@ export default function PlusPage() {
         ))}
       </motion.ul>
 
+      {isNative() ? (
+        // App Store / Play rules: digital purchases inside the apps must use Apple IAP / Google Play Billing
+        // (coming next). No outside payment links in the apps until then.
+        <p className="mt-12 rounded-lg border border-line bg-surface p-6 text-muted">
+          Plus can&rsquo;t be bought in the app just yet. If you already have Plus, it works here too.
+        </p>
+      ) : (<>
       <h2 className="mt-12 font-display text-xl font-normal">Choose a pass</h2>
       <p className="mt-1 text-sm text-muted">One-time payment, no auto-renew. Pay with UPI, card or wallet.</p>
       {status?.provider === "mock" && (
@@ -119,6 +127,7 @@ export default function PlusPage() {
       <p className="mt-6 text-xs text-muted">
         Payments are processed by Razorpay. We never see or store your card or UPI details.
       </p>
+      </>)}
 
       {mock && (
         <div role="dialog" aria-modal="true" aria-labelledby="mock-title" className="fixed inset-0 z-50 grid place-items-center bg-bg/80 p-4 backdrop-blur-sm">

@@ -22,11 +22,12 @@ interface Options {
   auth?: boolean;
   /** "include" only for auth calls that set the refresh cookie (login/signup) */
   credentials?: RequestCredentials;
+  headers?: Record<string, string>;
 }
 
 export async function api<T>(path: string, options: Options = {}, retried = false): Promise<T> {
   const { method = "GET", body, signal, auth = true, credentials = "omit" } = options;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...(options.headers ?? {}) };
   if (body !== undefined) headers["Content-Type"] = "application/json";
   const session = auth ? getSession() : null;
   if (session) headers.Authorization = `Bearer ${session.token}`;

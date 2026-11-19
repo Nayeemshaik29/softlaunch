@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { API_URL_PUBLIC as API_URL } from "./public-env";
+import { isNative, nativeAuthHeaders, refreshStore } from "./native";
 
 // Two tokens:
 //  - access token (JWT, 15 min): in sessionStorage + memory, sent as "Authorization: Bearer".
@@ -51,6 +52,12 @@ function set(next: Session | null) {
   emit();
 }
 
+/** After login/signup: apps also get a refresh token in the body, which goes to the Keychain/Keystore. */
+export async function completeLogin(res: { accessToken: string; refreshToken?: string }): Promise<Session> {
+  if (res.refreshToken) await refreshStore.set(res.refreshToken);
+  return startSession(res.accessToken);
+}
+
 /** Reads the JWT's subject + expiry (not verified here: the gateway verifies every request). */
 export function startSession(token: string): Session {
   const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
@@ -69,13 +76,26 @@ export function refreshSession(): Promise<Session | null> {
   if (inFlight) return inFlight;
   const run = async (): Promise<Session | null> => {
     try {
-      const res = await fetch(`${API_URL}/api/users/auth/refresh`, { method: "POST", credentials: "include", signal: AbortSignal.timeout(12_000) });
+      // web: the HttpOnly cookie travels by itself. Apps: the token from the Keychain/Keystore goes in a header.
+      const nativeToken = isNative() ? await refreshStore.get() : null;
+      if (isNative() && !nativeToken) {
+        set(null);
+        return null;
+      }
+      const res = await fetch(`${API_URL}/api/users/auth/refresh`, {
+        method: "POST",
+        credentials: isNative() ? "omit" : "include",
+        headers: nativeAuthHeaders(nativeToken),
+        signal: AbortSignal.timeout(12_000),
+      });
       if (res.status === 401) {
+        await refreshStore.remove();
         set(null); // session over: log in again
         return null;
       }
       if (!res.ok) return state ?? null; // server hiccup (429/5xx): keep what we have, try again later
-      const body = (await res.json()) as { accessToken: string };
+      const body = (await res.json()) as { accessToken: string; refreshToken?: string };
+      if (body.refreshToken) await refreshStore.set(body.refreshToken); // apps: store the rotated token
       return startSession(body.accessToken);
     } catch {
       return state ?? null; // offline: keep the current token until it really fails
@@ -94,10 +114,17 @@ export function refreshSession(): Promise<Session | null> {
 /** Ends the session on the server (revokes the refresh token) and here. */
 export async function logout() {
   try {
-    await fetch(`${API_URL}/api/users/auth/logout`, { method: "POST", credentials: "include", signal: AbortSignal.timeout(8_000) });
+    const nativeToken = await refreshStore.get();
+    await fetch(`${API_URL}/api/users/auth/logout`, {
+      method: "POST",
+      credentials: isNative() ? "omit" : "include",
+      headers: nativeAuthHeaders(nativeToken),
+      signal: AbortSignal.timeout(8_000),
+    });
   } catch {
     /* still log out locally */
   }
+  await refreshStore.remove();
   booted = true;
   set(null);
 }
@@ -121,7 +148,7 @@ function boot() {
   }
   let signedInBefore = false;
   try {
-    signedInBefore = localStorage.getItem(SIGNED_IN) === "1";
+    signedInBefore = isNative() || localStorage.getItem(SIGNED_IN) === "1"; // apps: the Keychain decides
   } catch {
     signedInBefore = true; // storage blocked: just try
   }

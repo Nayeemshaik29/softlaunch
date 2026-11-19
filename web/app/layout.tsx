@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  viewportFit: "cover", // phone apps: draw under the notch / home bar; padding comes from env(safe-area-inset-*)
   themeColor: [
     { media: "(prefers-color-scheme: dark)", color: "#0e0c10" },
     { media: "(prefers-color-scheme: light)", color: "#fbf7f3" },
@@ -25,6 +26,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${fraunces.variable} ${instrument.variable}`}>
+      {process.env.NEXT_PUBLIC_MOBILE_CSP && (
+        <head>
+          {/* phone apps only: static files can't send a CSP header */}
+          <meta httpEquiv="Content-Security-Policy" content={process.env.NEXT_PUBLIC_MOBILE_CSP} />
+        </head>
+      )}
       <body>
         <a href="#main" className="sr-only-focusable fixed left-4 top-4 z-50 rounded-md bg-surface px-4 py-2">
           Skip to content

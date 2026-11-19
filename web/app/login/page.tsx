@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { Logo } from "@/components/ui/Logo";
 import { api, ApiError } from "@/lib/api";
-import { startSession, useSession } from "@/lib/session";
+import { completeLogin, useSession } from "@/lib/session";
+import { isNative, nativeAuthHeaders } from "@/lib/native";
 import { useEffect } from "react";
 
 export default function LoginPage() {
@@ -26,8 +27,11 @@ export default function LoginPage() {
     setBusy(true);
     setError(null);
     try {
-      const res = await api<{ accessToken: string }>("/api/users/auth/login", { method: "POST", body: { email, password }, auth: false, credentials: "include" });
-      startSession(res.accessToken);
+      const res = await api<{ accessToken: string; refreshToken?: string }>("/api/users/auth/login", {
+        method: "POST", body: { email, password }, auth: false,
+        credentials: isNative() ? "omit" : "include", headers: nativeAuthHeaders(),
+      });
+      await completeLogin(res);
       router.push("/swipe");
     } catch (err) {
       const status = err instanceof ApiError ? err.status : 0;

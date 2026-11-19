@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { canRun3D } from "@/lib/device";
 import type { MatchMomentData } from "@/lib/match-moment";
 import { spring } from "@/lib/motion";
+import { haptic, onBackButton, protectScreen } from "@/lib/native";
 import { useMood } from "@/lib/mood";
 
 const MatchScene = dynamic(() => import("./MatchScene"), { ssr: false });
@@ -70,6 +71,7 @@ export default function MatchMoment({ data, onClose }: { data: MatchMomentData; 
         void animate(shakeX, [0, -6, 5, -3, 2, 0], { duration: 0.35 });
         void animate(shakeY, [0, 3, -2, 1, 0], { duration: 0.35 });
         try { navigator.vibrate?.(25); } catch { /* not supported */ }
+        void haptic("match"); // phone apps: a real haptic tap
         if (soundRef.current) chime();
       }, IMPACT_MS));
     } else if (soundRef.current) {
@@ -78,6 +80,13 @@ export default function MatchMoment({ data, onClose }: { data: MatchMomentData; 
     timers.push(window.setTimeout(() => setCanSkip(true), SKIP_AFTER_MS));
     return () => timers.forEach(window.clearTimeout);
   }, [started, cinematic, shakeX, shakeY]);
+
+  // apps: Android back closes this; no screenshots of the two photos (Android blocks, iOS hides)
+  useEffect(() => {
+    const off = onBackButton(close);
+    void protectScreen(true);
+    return () => { off(); void protectScreen(false); };
+  }, [close]);
 
   // focus, Escape, keep Tab inside the dialog
   useEffect(() => {
@@ -191,7 +200,7 @@ export default function MatchMoment({ data, onClose }: { data: MatchMomentData; 
         </h2>
         <p className="mt-2 text-muted">{t("You both liked each other. No pressure, just say hi.", "The feeling\u2019s mutual. Go on, make the first move.")}</p>
         <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Button ref={primary} size="lg" onClick={() => { close(); router.push(`/matches/${data.matchId}`); }}>
+          <Button ref={primary} size="lg" onClick={() => { close(); router.push(`/chat?m=${data.matchId}`); }}>
             Send a message
           </Button>
           <Button variant="secondary" size="lg" onClick={close}>Keep swiping</Button>

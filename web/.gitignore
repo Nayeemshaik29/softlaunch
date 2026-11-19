@@ -6,3 +6,11 @@ next-env.d.ts
 .env*.local
 lighthouse/
 .demo-login
+# Capacitor: generated web copies inside the native projects
+android/app/src/main/assets/public
+ios/App/App/public
+android/.gradle
+android/build
+android/app/build
+ios/App/build
+ios/DerivedData

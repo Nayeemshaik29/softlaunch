@@ -143,6 +143,10 @@ jobs:
           npx next start -p 3031 > /tmp/next.log 2>&1 &
           for i in $(seq 1 30); do curl -sf http://localhost:3031/ > /dev/null && break; sleep 1; done
           python3 ../ci/lighthouse_check.py http://localhost:3031 / /login /signup
+      # The iOS / Android apps ship a static export of the same app: make sure it still builds.
+      # (After Lighthouse: this build replaces .next, which `next start` above needed.)
+      - name: Mobile build (static export for the Capacitor apps)
+        run: BUILD_TARGET=mobile npx next build && test -f out/swipe/index.html && test -f out/chat/index.html
       - name: Lighthouse reports
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
