@@ -32,6 +32,9 @@ spring:
 softlaunch:
   swipes:
     daily-limit: 50
+    plus-daily-limit: 100     # SoftLaunch Plus
+    super-likes: 1            # per day, on top of the swipe allowance
+    plus-super-likes: 5
     reset-zone: Asia/Kolkata   # the "energy" refills at the users' midnight, not UTC (5:30 AM in India)
 
 resilience4j:

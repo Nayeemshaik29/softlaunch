@@ -32,7 +32,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     private static final List<String> PUBLIC_PATHS = List.of(
             "/api/users/auth/",
             "/ws/",
-            "/api/verification/digilocker/callback"
+            "/api/verification/digilocker/callback",
+            "/api/users/billing/webhook/"   // Razorpay → us; trusted only through its HMAC signature
     );
 
     private final SecretKey key;

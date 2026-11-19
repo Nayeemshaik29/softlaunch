@@ -26,7 +26,11 @@ public record InternalProfileResponse(
         List<String> hangoutPlaces,
         List<PromptAnswer> prompts,
         boolean privateMode,
-        boolean veiledPhotos) {
+        boolean veiledPhotos,
+        // for discovery's "mutual desires" only; never sent to other users as-is
+        Set<String> desiresInto,
+        Set<String> desiresOpenTo,
+        Set<String> desiresNotInto) {
 
     /** Free-text answers ("My ideal Sunday: ..."): the richest signal for the AI's "similar vibe" matching. */
     public record PromptAnswer(String question, String answer) {
@@ -52,6 +56,9 @@ public record InternalProfileResponse(
                 List.copyOf(p.getHangoutPlaces()),
                 p.getPrompts().stream().map(q -> new PromptAnswer(q.getQuestion(), q.getAnswer())).toList(),
                 p.isPrivateMode(),
-                p.isVeiledPhotos());
+                p.isVeiledPhotos(),
+                p.desiresAt(com.softlaunch.user.model.DesireLevel.INTO),
+                p.desiresAt(com.softlaunch.user.model.DesireLevel.OPEN_TO),
+                p.desiresAt(com.softlaunch.user.model.DesireLevel.NOT_INTO));
     }
 }

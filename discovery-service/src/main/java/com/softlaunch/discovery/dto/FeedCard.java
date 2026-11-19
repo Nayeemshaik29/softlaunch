@@ -17,5 +17,6 @@ public record FeedCard(
         List<String> photoUrls,
         List<String> reasons,
         int score,
-        boolean veiled) {   // photos are blurred copies until you match
+        boolean veiled,
+        List<String> mutualDesires) {   // desires you BOTH chose (into / open to); never anyone's "not into"   // photos are blurred copies until you match
 }

@@ -28,7 +28,7 @@ class PrivateModeFilterTest {
     private final java.util.Set<Object> veiledIds = new java.util.HashSet<>();
 
     private static FeedCard card() {
-        return new FeedCard(UUID.randomUUID(), "x", false, 30, 2, null, null, Set.of(), List.of(), List.of("https://s3/real.jpg"), List.of(), 50, false);
+        return new FeedCard(UUID.randomUUID(), "x", false, 30, 2, null, null, Set.of(), List.of(), List.of("https://s3/real.jpg"), List.of(), 50, false, List.of());
     }
 
     @Test

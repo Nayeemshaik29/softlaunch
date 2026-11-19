@@ -120,6 +120,24 @@ export default function SettingsPage() {
         />
       </section>
 
+      <section aria-labelledby="discover" className="mt-6 rounded-lg border border-line bg-surface p-6">
+        <h2 id="discover" className="text-sm font-medium tracking-wide text-accent uppercase">Discover</h2>
+        <ul className="mt-2 divide-y divide-line">
+          {[
+            { href: "/filters", title: "Filters", body: "Age, distance and who you'd like to see" },
+            { href: "/desires", title: "Desires", body: "What you're into. Only shared ones are ever shown" },
+            { href: "/plus", title: "SoftLaunch Plus", body: "From ₹49 a week: see who liked you, more energy, rewind" },
+          ].map((l) => (
+            <li key={l.href}>
+              <a href={l.href} className="flex min-h-14 items-center justify-between gap-4 py-2 hover:text-accent">
+                <span><span className="block font-medium">{l.title}</span><span className="block text-sm text-muted">{l.body}</span></span>
+                <svg aria-hidden width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M6 3l5 5-5 5" /></svg>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+
       <section aria-labelledby="account" className="mt-6 rounded-lg border border-line bg-surface p-6">
         <h2 id="account" className="text-sm font-medium tracking-wide text-accent uppercase">Account</h2>
         <div className="mt-4 flex flex-wrap gap-4">

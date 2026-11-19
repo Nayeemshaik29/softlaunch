@@ -46,7 +46,11 @@ export function EnergyProvider({ children }: { children: ReactNode }) {
       quota,
       spend: () => setQuota((q) => (q ? { ...q, remaining: Math.max(0, q.remaining - 1) } : q)),
       refund: () => setQuota((q) => (q ? { ...q, remaining: Math.min(q.limit, q.remaining + 1) } : q)),
-      exhausted: (resetsAt) => setQuota((q) => ({ limit: q?.limit ?? 50, remaining: 0, resetsAt: resetsAt ?? q?.resetsAt ?? new Date(Date.now() + 864e5).toISOString() })),
+      exhausted: (resetsAt) =>
+        setQuota((q) => ({
+          limit: q?.limit ?? 50, remaining: 0, resetsAt: resetsAt ?? q?.resetsAt ?? new Date(Date.now() + 864e5).toISOString(),
+          superLikeLimit: q?.superLikeLimit ?? 1, superLikesRemaining: q?.superLikesRemaining ?? 0, plus: q?.plus ?? false,
+        })),
       refresh,
     }),
     [quota, refresh],

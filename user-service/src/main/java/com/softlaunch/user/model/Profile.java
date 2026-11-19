@@ -118,6 +118,15 @@ public class Profile {
     @Column(nullable = false)
     private boolean privateMode;
 
+    /** Desires (After dark): one row per desire with its level. NOT_INTO never leaves user-service/discovery. */
+    @ElementCollection
+    @CollectionTable(name = "profile_desires", joinColumns = @JoinColumn(name = "profile_id"))
+    @MapKeyEnumerated(EnumType.STRING)
+    @MapKeyColumn(name = "desire", length = 40)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "level", length = 20)
+    private java.util.Map<Desire, DesireLevel> desires = new java.util.EnumMap<>(Desire.class);
+
     /** Veiled photos: others see a blurred copy until there's a match. */
     @org.hibernate.annotations.ColumnDefault("false")
     @Column(nullable = false)
@@ -330,6 +339,13 @@ public class Profile {
 
     public void setMaxDistanceKm(Integer maxDistanceKm) {
         this.maxDistanceKm = maxDistanceKm;
+    }
+
+    public java.util.Map<Desire, DesireLevel> getDesires() { return desires; }
+
+    public java.util.Set<String> desiresAt(DesireLevel level) {
+        return desires.entrySet().stream().filter(e -> e.getValue() == level).map(e -> e.getKey().name())
+                .collect(java.util.stream.Collectors.toCollection(java.util.TreeSet::new));
     }
 
     public boolean isPrivateMode() { return privateMode; }

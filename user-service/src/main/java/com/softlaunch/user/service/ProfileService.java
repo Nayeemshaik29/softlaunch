@@ -44,6 +44,19 @@ public class ProfileService {
                 .orElseThrow(() -> new ProfileNotFoundException(userId));
     }
 
+    /** Filters screen: age range, distance, who to show. Feeds are rebuilt (profile.updated evicts my cached feed). */
+    @Transactional
+    public MyProfileResponse updatePreferences(UUID userId, com.softlaunch.user.dto.PreferencesRequest request) {
+        Profile profile = profileRepository.findById(userId).orElseThrow(() -> new ProfileNotFoundException(userId));
+        profile.setAgeMin(request.ageMin());
+        profile.setAgeMax(request.ageMax());
+        profile.setMaxDistanceKm(request.maxDistanceKm());
+        replace(profile.getInterestedIn(), request.interestedIn());
+        profile.touch();
+        eventPublisher.publishEvent(com.softlaunch.user.event.ProfileUpdatedEvent.of(userId));
+        return MyProfileResponse.from(profile, photoLinks);
+    }
+
     @Transactional
     public MyProfileResponse upsertMyProfile(UUID userId, ProfileRequest request) {
         Profile profile = profileRepository.findById(userId)

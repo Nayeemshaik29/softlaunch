@@ -47,6 +47,9 @@ api.yourdomain.com {
 ### 4. Secrets
 - Create a fresh `.env` **on the server** with new values (`openssl rand -base64 32`). Never reuse your laptop's values, never commit it, `chmod 600 .env`.
 - DigiLocker: production client id/secret and the production redirect URL.
+- **Payments (Plus):** `BILLING_PROVIDER=razorpay` with your Razorpay keys in `.env` (`RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`; TEST keys first).
+  In the Razorpay dashboard add the webhook `https://api.yourdomain.com/api/users/billing/webhook/razorpay` for `payment.captured` and `order.paid`.
+  ⚠️ Inside the **Play Store / App Store apps**, digital subscriptions must use **Google Play Billing / Apple In-App Purchase**; Razorpay is for the web.
 - **Sessions:** `REFRESH_COOKIE_SECURE=true` (the login cookie only travels over HTTPS), and `WEB_ORIGINS=https://yourdomain.com`.
   Serve the web app and the API from the **same site** (e.g. `yourdomain.com` + `api.yourdomain.com`): the cookie is `SameSite=Strict`,
   so a web app on a different domain would never send it.

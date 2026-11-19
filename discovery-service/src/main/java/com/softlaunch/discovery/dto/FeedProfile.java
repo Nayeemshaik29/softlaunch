@@ -19,5 +19,8 @@ public record FeedProfile(
         Set<String> interests,
         List<String> photoUrls,
         Boolean privateMode,
-        Boolean veiledPhotos) {
+        Boolean veiledPhotos,
+        Set<String> desiresInto,
+        Set<String> desiresOpenTo,
+        Set<String> desiresNotInto) {
 }

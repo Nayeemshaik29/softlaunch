@@ -32,7 +32,9 @@ Purposes: **AF** App functionality · **AM** Account management · **FP** Fraud 
 | App activity → **App interactions** (likes, passes, matches, blocks, screenshot events) | Yes | No | No | Required | AF, P, FP |
 | App activity → **Other user-generated content** (bio, prompts, reports) | Yes | No | No | Optional | AF, FP |
 | Personal info → Phone number, address, race/ethnicity, political or religious beliefs | No | | | | |
-| Financial info, Health and fitness, Audio, Files and docs, Calendar, Contacts, Web browsing, App info and performance, Device or other IDs | No | | | | |
+| Financial info → **Purchase history** (Plus passes) | Yes | No | No | Optional | AF, AM |
+| Financial info → payment card / UPI / bank details | No (Razorpay collects them, not us) | | | | |
+| Health and fitness, Audio, Files and docs, Calendar, Contacts, Web browsing, App info and performance, Device or other IDs | No | | | | |
 
 Notes:
 - **Precise location:** if we start storing location rounded to ~1 km (idea in DATA_INVENTORY.md), this becomes "Approximate location" only. That's a nicer answer for users.

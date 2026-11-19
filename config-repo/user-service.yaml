@@ -56,6 +56,18 @@ softlaunch:
     link-ttl: 30m        # how long the emailed link works
     email-cooldown: 10m  # at most one email per account in this window (stops inbox flooding)
     mail-from: "SoftLaunch <no-reply@softlaunch.local>"
+  billing:
+    # mock = fake checkout for local/CI (no money moves). razorpay = real Razorpay (TEST keys until launch).
+    provider: ${BILLING_PROVIDER:mock}
+    currency: INR
+    plans:   # amounts in paise (₹1 = 100 paise). Kept low on purpose: ₹49 / ₹99 / ₹249
+      - { id: plus-week,    name: "Plus · 1 week",    amount-paise: 4900,  period: 7d }
+      - { id: plus-month,   name: "Plus · 1 month",   amount-paise: 9900,  period: 30d }
+      - { id: plus-quarter, name: "Plus · 3 months",  amount-paise: 24900, period: 90d }
+    razorpay:
+      key-id: ${RAZORPAY_KEY_ID:}
+      key-secret: ${RAZORPAY_KEY_SECRET:}
+      webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:}
   auth:
     refresh-ttl: 30d                                        # stay logged in this long without typing the password
     refresh-cookie-secure: ${REFRESH_COOKIE_SECURE:false}   # true in production (HTTPS only); localhost is plain HTTP

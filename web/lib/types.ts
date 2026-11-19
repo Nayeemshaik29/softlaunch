@@ -18,6 +18,7 @@ export interface FeedCard {
   reasons: string[];
   score: number;
   veiled: boolean; // photos are blurred copies until you match
+  mutualDesires: string[]; // desires you both chose (shown in After dark)
 }
 
 /** match-service SwipeResponse */
@@ -35,6 +36,45 @@ export interface SwipeQuota {
   limit: number;
   remaining: number;
   resetsAt: string;
+  superLikeLimit: number;
+  superLikesRemaining: number;
+  plus: boolean;
+}
+
+export interface Desires {
+  into: string[];
+  openTo: string[];
+  notInto: string[];
+}
+
+export interface Plan {
+  id: string;
+  name: string;
+  amountPaise: number;
+  currency: string;
+  days: number;
+}
+
+export interface PlusStatus {
+  plus: boolean;
+  activeUntil: string | null;
+  planId: string | null;
+  provider: "mock" | "razorpay";
+}
+
+export interface Checkout {
+  orderId: string;
+  provider: "mock" | "razorpay";
+  amountPaise: number;
+  currency: string;
+  planName: string;
+  checkout: { keyId?: string };
+}
+
+export interface Likes {
+  count: number;
+  plus: boolean;
+  likes: { userId: string; superLike: boolean; likedAt: string }[];
 }
 
 /** match-service MatchResponse */
@@ -81,6 +121,9 @@ export interface MyProfile extends PublicProfile {
   photos: PhotoRef[];
   privateMode: boolean;
   veiledPhotos: boolean;
+  ageMin: number | null;
+  ageMax: number | null;
+  maxDistanceKm: number | null;
 }
 
 export interface PrivacySettings {
@@ -104,5 +147,6 @@ export interface Problem {
   status?: number;
   code?: string;
   resetsAt?: string;
+  plus?: boolean;
   errors?: Record<string, string>;
 }

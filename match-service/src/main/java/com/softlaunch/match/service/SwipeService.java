@@ -55,7 +55,14 @@ public class SwipeService {
             throw new AlreadySwipedException(targetId);
         }
         userVerifier.requireExists(targetId);
-        swipeQuotaService.consume(swiperId);
+        boolean superLike = request.direction() == SwipeDirection.SUPER_LIKE;
+        if (superLike) swipeQuotaService.consumeSuperLike(swiperId);
+        try {
+            swipeQuotaService.consume(swiperId);
+        } catch (RuntimeException e) {
+            if (superLike) swipeQuotaService.refundSuperLike(swiperId);   // the swipe didn't happen: give it back
+            throw e;
+        }
 
         Swipe saved = swipeRepository.save(new Swipe(swiperId, targetId, request.direction()));
         eventPublisher.publishEvent(

@@ -63,6 +63,27 @@ public class GlobalExceptionHandler {
         problem.setProperty("resetsAt", ex.getResetsAt().toString());
         return problem;
     }
+    @ExceptionHandler(SuperLikeLimitExceededException.class)
+    public ProblemDetail handleSuperLikeLimit(SuperLikeLimitExceededException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+        problem.setProperty("code", "SUPER_LIKE_QUOTA");
+        problem.setProperty("resetsAt", ex.getResetsAt().toString());
+        problem.setProperty("plus", ex.isPlus());
+        return problem;
+    }
+
+    @ExceptionHandler(PlusRequiredException.class)
+    public ProblemDetail handlePlusRequired(PlusRequiredException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ex.getMessage());
+        problem.setProperty("code", "PLUS_REQUIRED");
+        return problem;
+    }
+
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ProblemDetail handleStatus(org.springframework.web.server.ResponseStatusException ex) {
+        return ProblemDetail.forStatusAndDetail(ex.getStatusCode(), ex.getReason());
+    }
+
     @ExceptionHandler(TargetUserNotFoundException.class)
     public ProblemDetail handleTargetUserNotFound(TargetUserNotFoundException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());

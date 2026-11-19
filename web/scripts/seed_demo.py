@@ -37,10 +37,13 @@ def call(method, url, body=None, tok=None, raw=None, headers=None):
             with urllib.request.urlopen(req, timeout=30) as r:
                 return r.status, r.read()
         except urllib.error.HTTPError as e:
-            if e.code in (429, 503) and url.startswith(GW):
-                time.sleep(13 if e.code == 429 else 5)  # auth limit: ~5/min per IP; 503: Eureka warming up
+            body = e.read()
+            # retry only the gateway's rate limit (429 with no body) and Eureka warm-up (503);
+            # a 429 WITH a body is a real answer (e.g. SWIPE_QUOTA / SUPER_LIKE_QUOTA)
+            if url.startswith(GW) and ((e.code == 429 and not body) or e.code == 503):
+                time.sleep(13 if e.code == 429 else 5)
                 continue
-            return e.code, e.read()
+            return e.code, body
     raise SystemExit(f"gave up on {url}")
 
 

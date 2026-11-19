@@ -140,8 +140,26 @@ public class FeedService {
         int score = distancePoints + interestPoints + intentPoints + completenessPoints + verifiedPoints + vibePoints;
 
         return new FeedCard(them.userId(), them.displayName(), them.verified(), them.age(), distanceKm, them.bio(), them.city(),
-                them.lookingFor(), shared, them.photoUrls(), reasons, score, Boolean.TRUE.equals(them.veiledPhotos()));
+                them.lookingFor(), shared, them.photoUrls(), reasons, score, Boolean.TRUE.equals(them.veiledPhotos()),
+                mutualDesires(me, them));
     }
+    /** Desires both people chose (into or open to), minus anything either of them is NOT into. */
+    static List<String> mutualDesires(FeedProfile me, FeedProfile them) {
+        java.util.Set<String> mine = union(me.desiresInto(), me.desiresOpenTo());
+        java.util.Set<String> theirs = union(them.desiresInto(), them.desiresOpenTo());
+        mine.retainAll(theirs);
+        if (me.desiresNotInto() != null) mine.removeAll(me.desiresNotInto());
+        if (them.desiresNotInto() != null) mine.removeAll(them.desiresNotInto());
+        return List.copyOf(mine);
+    }
+
+    private static java.util.Set<String> union(java.util.Set<String> a, java.util.Set<String> b) {
+        java.util.Set<String> out = new java.util.TreeSet<>();
+        if (a != null) out.addAll(a);
+        if (b != null) out.addAll(b);
+        return out;
+    }
+
     static int vibePoints(Double similarity) {
         if (similarity == null) return 0;   // no embedding yet, or ai-service unavailable
         double scaled = (similarity - VIBE_FLOOR) / (VIBE_TOP - VIBE_FLOOR);

@@ -23,6 +23,12 @@ public class ProfileController {
         return profileService.getMyProfile(userId);
     }
 
+    @PutMapping("/preferences")
+    public MyProfileResponse updatePreferences(@RequestHeader("X-User-Id") UUID userId,
+                                               @Valid @RequestBody com.softlaunch.user.dto.PreferencesRequest request) {
+        return profileService.updatePreferences(userId, request);
+    }
+
     @PutMapping
     public MyProfileResponse upsertMyProfile(@RequestHeader("X-User-Id") UUID userId,
                                              @Valid @RequestBody ProfileRequest request) {

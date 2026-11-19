@@ -19,6 +19,9 @@ Every piece of personal data SoftLaunch stores, where, why, and for how long. Bu
 | Photos | user-service · S3 bucket (private) | shown to members via expiring links. Re-encoded on upload: **camera metadata/GPS removed** | until removed or account deletion. Unconfirmed uploads: 1 day |
 | Blurred photo copies (120 px) | user-service · S3, next to each photo | Veiled photos: what others see before a match | same as the photo |
 | Privacy settings (Private Mode, Veiled photos) | user-db (profile) + Redis sets `privacy:private_mode`, `privacy:veiled` | hide you / blur your photos everywhere at once | until changed or account deletion |
+| **Desires** (into / open to / not into) | user-db `profile_desires` | After dark: show people what you BOTH like. Others only ever see the shared ones; "not into" never leaves the server | until changed or account deletion |
+| Plus purchases: plan, amount, Razorpay order/payment ids, dates | user-db `purchases` | payment records, refunds, tax | **kept after account deletion** (law: [FILL IN: e.g. 8 years under Indian tax rules]); holds ids and amounts only |
+| Plus membership (end date) | user-db `plus_memberships` + Redis `plus:<id>` | unlock Plus features | until it ends / account deletion |
 | Swipes, matches | match-service · match-db | matching, "who liked whom" | until unmatch / account deletion |
 | Chat messages | chat-service · Mongo | messaging | **24 hours** (auto-delete), or earlier on unmatch / deletion |
 | Message text for scam screening | Kafka `message.screening` → ai-service | scam/fraud detection by **our own AI on our servers** | 24 hours in Kafka. The verdict stores **no text** |
@@ -45,7 +48,7 @@ Every piece of personal data SoftLaunch stores, where, why, and for how long. Bu
 - Aadhaar / ID numbers (only a keyed hash from DigiLocker)
 - Contacts, call logs, SMS, browsing history
 - Advertising IDs. No ads, no third-party analytics or tracking SDKs (**keep it that way in the Flutter app**, or update the policy)
-- Payment data (no payments yet)
+- Card numbers, UPI ids or bank details (Razorpay handles them; we get only order/payment ids)
 
 ## Who processes data for us (processors, not "sharing")
 | Who | What | Status |
@@ -53,6 +56,7 @@ Every piece of personal data SoftLaunch stores, where, why, and for how long. Bu
 | Hosting provider | all of the above (servers, databases) | [FILL IN: e.g. AWS, Mumbai ap-south-1] |
 | Object storage | photos | [FILL IN: e.g. Amazon S3, Mumbai] |
 | Email provider | email address + deletion emails | [FILL IN: e.g. Amazon SES / Brevo] |
+| Razorpay | payment details (card / UPI) are entered on **Razorpay's** checkout, never sent to us | integrated (test mode until launch) |
 | DigiLocker (Govt. of India) | identity check, only when **you** start verification | integrated |
 | AI | runs on our own servers (Ollama). Nothing sent to outside AI companies | integrated |
 

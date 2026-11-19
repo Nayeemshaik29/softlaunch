@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useMotionValue, useReducedMotion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { useEnergy } from "@/lib/energy";
@@ -27,6 +28,7 @@ export function SwipeDeck() {
   const [cards, setCards] = useState<FeedCard[] | null>(null);
   const [restoredId, setRestoredId] = useState<string | null>(null);
   const [status, setStatus] = useState("");
+  const [note, setNote] = useState("");
   const [loadError, setLoadError] = useState(false);
   const [needsLocation, setNeedsLocation] = useState(false);
   const progress = useMotionValue(0);
@@ -35,10 +37,14 @@ export function SwipeDeck() {
   const energy = useEnergy();
   const { celebrate } = useMatchMoment();
   const reduce = useReducedMotion();
+  const router = useRouter();
+  const lastPassed = useRef<FeedCard | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const feed = await api<FeedCard[]>("/api/discovery/feed");
+      const me = await myProfile();
+      const radius = Math.min(100, Math.max(1, me?.maxDistanceKm ?? 25));
+      const feed = await api<FeedCard[]>(`/api/discovery/feed?radiusKm=${radius}`);
       setLoadError(false);
       setNeedsLocation(false);
       setCards((prev) => {
@@ -71,6 +77,7 @@ export function SwipeDeck() {
       if (!card) return;
       seen.current.add(card.userId);
       energy.spend();
+      lastPassed.current = action === "PASS" ? card : null;
       setStatus(action === "LIKE" ? `Liked ${card.displayName}` : action === "PASS" ? `Passed on ${card.displayName}` : `Super liked ${card.displayName}`);
 
       // the card leaves the stack as soon as its throw finishes; the cards behind continue smoothly
@@ -99,6 +106,12 @@ export function SwipeDeck() {
             energy.exhausted(err.problem.resetsAt); // calm rest screen, no error toast
             return;
           }
+          if (err instanceof ApiError && err.problem.code === "SUPER_LIKE_QUOTA") {
+            energy.refund();
+            setNote(err.problem.plus ? "That's your 5 super likes for today. Back at midnight." : "That's your super like for today. Plus gives you 5 a day.");
+            void energy.refresh();
+            return;
+          }
           energy.refund();
           setRestoredId(card.userId);
           setStatus(`Couldn't save that swipe. ${card.displayName} is back on top. Try again.`);
@@ -122,6 +135,23 @@ export function SwipeDeck() {
   }, []);
 
   const outOfEnergy = energy.quota?.remaining === 0;
+  const isPlus = energy.quota?.plus ?? false;
+
+  async function rewind() {
+    if (!isPlus) return router.push("/plus");
+    const card = lastPassed.current;
+    try {
+      await api<{ targetUserId: string }>("/api/matches/swipes/rewind", { method: "POST" });
+      if (card) {
+        seen.current.delete(card.userId);
+        setCards((c) => [card, ...(c ?? []).filter((x) => x.userId !== card.userId)]);
+        setNote(`${card.displayName} is back.`);
+      }
+      lastPassed.current = null;
+    } catch (e) {
+      setNote((e as ApiError).status === 409 ? "Nothing to undo." : "Couldn't rewind. Try again.");
+    }
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-[420px] flex-col items-center">
@@ -156,6 +186,9 @@ export function SwipeDeck() {
           animate={{ opacity: 1, y: 0 }}
           transition={spring.gentle}
         >
+          <RoundButton label={isPlus ? "Rewind" : "Rewind (Plus)"} hint="undo your last pass" onClick={() => void rewind()} tone="super" size={48}>
+            <path d="M9 7H5V3M5.5 7A8 8 0 1112 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </RoundButton>
           <RoundButton label="Pass" hint="Left arrow" onClick={() => top.current?.fling("PASS")} tone="pass" size={64}>
             <path d="M7 7l10 10M17 7L7 17" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
           </RoundButton>
@@ -167,7 +200,13 @@ export function SwipeDeck() {
           </RoundButton>
         </motion.div>
       )}
-      <p className="mt-4 hidden text-xs text-muted sm:block">Tip: use ← → and ↑ on your keyboard.</p>
+      {note && <p role="status" className="mt-4 text-center text-sm text-text">{note}</p>}
+      {energy.quota && (
+        <p className="mt-4 text-xs text-muted tabular" aria-label={`${energy.quota.superLikesRemaining} super likes left today`}>
+          ★ {energy.quota.superLikesRemaining}/{energy.quota.superLikeLimit} super likes today
+        </p>
+      )}
+      <p className="mt-2 hidden text-xs text-muted sm:block">Tip: use ← → and ↑ on your keyboard.</p>
     </div>
   );
 }

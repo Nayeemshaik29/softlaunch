@@ -29,6 +29,17 @@ public interface SwipeRepository extends JpaRepository<Swipe, UUID> {
     @Query("select s.targetId from Swipe s where s.swiperId = :swiperId")
     List<UUID> findTargetIdsBySwiperId(@Param("swiperId") UUID swiperId);
 
+    java.util.Optional<Swipe> findFirstBySwiperIdOrderByCreatedAtDesc(UUID swiperId);
+
+    /** People who liked me and whom I haven't answered yet, minus blocks either way. Newest first. */
+    @Query("select s from Swipe s where s.targetId = :me"
+            + " and s.direction in (com.softlaunch.match.model.SwipeDirection.LIKE, com.softlaunch.match.model.SwipeDirection.SUPER_LIKE)"
+            + " and not exists (select 1 from Swipe m where m.swiperId = :me and m.targetId = s.swiperId)"
+            + " and not exists (select 1 from UserBlock b where (b.blockerId = :me and b.blockedId = s.swiperId)"
+            + "                 or (b.blockerId = s.swiperId and b.blockedId = :me))"
+            + " order by s.createdAt desc")
+    List<Swipe> findPendingLikesOf(@Param("me") UUID me);
+
     /** Who liked (or super liked) this user: a person in Private Mode is only shown to these people. */
     @Query("select s.swiperId from Swipe s where s.targetId = :targetId and s.direction in "
             + "(com.softlaunch.match.model.SwipeDirection.LIKE, com.softlaunch.match.model.SwipeDirection.SUPER_LIKE)")

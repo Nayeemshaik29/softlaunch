@@ -15,6 +15,8 @@ import {
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import type { FeedCard, SwipeAction } from "@/lib/types";
 import { spring } from "@/lib/motion";
+import { useMood } from "@/lib/mood";
+import { desireLabel } from "@/lib/desires";
 
 export interface TopCardHandle {
   /** Buttons / keyboard: throw the card as if it was swiped. */
@@ -290,6 +292,8 @@ function VeilBadge() {
 const stripEmoji = (s: string) => s.replace(/[\p{Extended_Pictographic}️]/gu, "").trim();
 
 function CardInfo({ card }: { card: FeedCard }) {
+  const { mood } = useMood();
+  const desires = mood === "after-dark" ? card.mutualDesires ?? [] : []; // desires stay in After dark
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 p-6 text-white">
       <div className="flex items-baseline gap-2">
@@ -307,6 +311,19 @@ function CardInfo({ card }: { card: FeedCard }) {
         {card.city ? ` · ${card.city}` : ""}
       </p>
       {card.bio && <p className="mt-2 line-clamp-2 text-base text-white/90">{card.bio}</p>}
+      {desires.length > 0 && (
+        <div className="mt-4">
+          <p className="text-xs font-medium tracking-wide text-white/80 uppercase">You&rsquo;re both into</p>
+          <ul className="mt-2 flex flex-wrap gap-2" aria-label="Desires you share">
+            {desires.slice(0, 3).map((d) => (
+              <li key={d} className="rounded-full px-3 py-1 text-xs font-semibold text-[var(--on-accent)]"
+                style={{ background: "var(--grad-warm)", boxShadow: "0 0 18px -4px color-mix(in srgb, var(--grad-b) 70%, transparent)" }}>
+                {desireLabel(d)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {(card.sharedInterests.length > 0 || card.reasons.length > 0) && (
         <ul className="mt-4 flex flex-wrap gap-2" aria-label="Why you might click">
           {card.reasons.slice(0, 2).map((r) => (

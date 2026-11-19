@@ -201,6 +201,19 @@ check("chat → Kafka → ai-service flags the scam" + (" (rules only, LLM down)
 notes = eventually(lambda: (lambda r: r[0] == 200 and len(js(r[1])) >= 1)(call("GET", f"{GW}/api/notifications", tok=A)), seconds=60)
 check("match notification via Kafka (notification-service)", notes)
 
+# ---------- 6b. Plus (mock payment provider in CI: no money moves) ----------
+s, q = call("GET", f"{GW}/api/matches/swipes/quota", tok=A)
+check("free energy: 50 swipes, 1 super like", s == 200 and js(q).get("limit") == 50 and js(q).get("superLikeLimit") == 1, js(q))
+s, b = call("POST", f"{GW}/api/users/me/billing/checkout", {"planId": "plus-month"}, tok=A)
+order = js(b).get("orderId")
+check("Plus checkout creates a ₹99 order", s == 201 and js(b).get("amountPaise") == 9900, f"HTTP {s}")
+s, b = call("POST", f"{GW}/api/users/me/billing/confirm", {"orderId": order, "paymentId": "pay_x", "signature": "0" * 64}, tok=A)
+check("forged payment signature → 400", s == 400, f"HTTP {s}")
+s, b = call("POST", f"{GW}/api/users/me/billing/mock-pay", {"orderId": order}, tok=A)
+check("test payment → Plus on", s == 200 and js(b).get("plus") is True, f"HTTP {s}")
+s, q = call("GET", f"{GW}/api/matches/swipes/quota", tok=A)
+check("Plus energy: 100 swipes, 5 super likes", js(q).get("limit") == 100 and js(q).get("superLikeLimit") == 5, js(q))
+
 # ---------- 7. photos ----------
 png = tiny_png()
 s, b = call("POST", f"{GW}/api/users/me/photos/upload-url", {"contentType": "image/png", "sizeBytes": len(png)}, tok=A)

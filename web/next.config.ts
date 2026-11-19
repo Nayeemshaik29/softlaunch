@@ -8,11 +8,12 @@ const dev = process.env.NODE_ENV !== "production";
 // Next's bootstrap needs inline scripts; dev mode also needs eval for fast refresh.
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' https://checkout.razorpay.com${dev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${media}`,
   "font-src 'self'",
-  `connect-src 'self' ${api} ${media}${dev ? " ws:" : ""}`,
+  `connect-src 'self' ${api} ${media} https://api.razorpay.com https://lumberjack.razorpay.com${dev ? " ws:" : ""}`,
+  "frame-src https://api.razorpay.com https://checkout.razorpay.com", // Razorpay Checkout (payments only)
   "media-src 'self' blob:",
   "worker-src 'self' blob:",
   "object-src 'none'",

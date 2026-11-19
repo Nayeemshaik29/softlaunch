@@ -54,7 +54,7 @@ public class PrivateModeFilter {
         if (veiled == null || !veiled.containsValue(Boolean.TRUE)) return feed;
         return feed.stream().map(c -> Boolean.TRUE.equals(veiled.get(c.userId().toString())) && !c.veiled()
                 ? new FeedCard(c.userId(), c.displayName(), c.verified(), c.age(), c.distanceKm(), c.bio(), c.city(),
-                        c.lookingFor(), c.sharedInterests(), List.of(), c.reasons(), c.score(), true)
+                        c.lookingFor(), c.sharedInterests(), List.of(), c.reasons(), c.score(), true, c.mutualDesires())
                 : c).toList();
     }
 

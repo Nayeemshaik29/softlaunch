@@ -23,9 +23,35 @@ class SwipeQuotaServiceTest {
     private final StringRedisTemplate redis = mock(StringRedisTemplate.class);
     private final UUID me = UUID.randomUUID();
 
+    private final PlusChecker plus = mock(PlusChecker.class);
+
     private SwipeQuotaService at(String utcInstant) {
         when(redis.opsForValue()).thenReturn(values);
-        return new SwipeQuotaService(redis, 3, INDIA, Clock.fixed(Instant.parse(utcInstant), ZoneOffset.UTC));
+        return new SwipeQuotaService(redis, plus, new SwipeQuotaService.Limits(3, 6, 1, 5), INDIA,
+                Clock.fixed(Instant.parse(utcInstant), ZoneOffset.UTC));
+    }
+
+    @Test
+    void plusDoublesTheDailyAllowance() {
+        when(plus.isPlus(me)).thenReturn(true);
+        SwipeQuotaService quota = at("2026-11-18T06:00:00Z");
+        when(values.increment(anyString())).thenReturn(5L);
+        quota.consume(me);   // 5 > free limit 3, but Plus allows 6
+        when(values.get(anyString())).thenReturn("5");
+        var status = quota.status(me);
+        assertThat(status.plus()).isTrue();
+        assertThat(status.limit()).isEqualTo(6);
+        assertThat(status.remaining()).isEqualTo(1);
+    }
+
+    @Test
+    void freeUsersGetOneSuperLikeADayPlusGetsFive() {
+        SwipeQuotaService quota = at("2026-11-18T06:00:00Z");
+        when(values.increment("superlikes:" + me + ":2026-11-18")).thenReturn(2L);
+        assertThatThrownBy(() -> quota.consumeSuperLike(me))
+                .isInstanceOf(com.softlaunch.match.exception.SuperLikeLimitExceededException.class);
+        when(plus.isPlus(me)).thenReturn(true);
+        quota.consumeSuperLike(me);   // 2 <= 5
     }
 
     @Test

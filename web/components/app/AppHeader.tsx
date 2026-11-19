@@ -8,6 +8,7 @@ import { EnergyMeter } from "./EnergyMeter";
 
 const NAV = [
   { href: "/swipe", label: "Discover" },
+  { href: "/likes", label: "Likes" },
   { href: "/matches", label: "Matches" },
   { href: "/notifications", label: "Activity" },
 ];
@@ -62,7 +63,7 @@ export function BottomNav({ unread = 0 }: { unread?: number }) {
   const path = usePathname();
   return (
     <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-bg/95 backdrop-blur md:hidden">
-      <ul className="grid grid-cols-3">
+      <ul className="grid grid-cols-4">
         {NAV.map((n) => {
           const active = path.startsWith(n.href);
           return (
