@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.1.1</version>
+		<version>4.2.0</version>
 		<relativePath/>
 	</parent>
 	<groupId>com.softlaunch.ai-service</groupId>
@@ -14,8 +14,8 @@
 	<description>AI assistant: chat openers (later: scam checks, profile embeddings) using a local LLM via Ollama</description>
 	<properties>
 		<java.version>25</java.version>
-		<spring-cloud.version>2025.1.3</spring-cloud.version>
-		<spring-ai.version>2.0.2</spring-ai.version>
+		<spring-cloud.version>2026.0.0</spring-cloud.version>
+		<spring-ai.version>2.1.0</spring-ai.version>
 	</properties>
 	<dependencies>
 		<!-- Spring AI + Ollama: talk to the local LLM (no data leaves our servers) -->
