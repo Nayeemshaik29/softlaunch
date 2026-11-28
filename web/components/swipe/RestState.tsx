@@ -53,7 +53,7 @@ export function RestState({ resetsAt }: { resetsAt: string }) {
         )}
       </div>
       <motion.div initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring.soft, delay: 0.15 }}>
-        <h1 id="rest-title" className="mt-8 font-display text-3xl font-normal">{t("That\u2019s today\u2019s energy.", "That\u2019s enough for tonight.")}</h1>
+        <h1 id="rest-title" className="mt-8 font-display text-3xl">{t("That\u2019s today\u2019s energy.", "That\u2019s enough for tonight.")}</h1>
         <p className="mx-auto mt-4 max-w-md text-lg text-muted">
           {t(
             "You\u2019ve seen your swipes for today. Close the app, enjoy your evening. Your energy refills at midnight.",

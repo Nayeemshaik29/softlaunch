@@ -30,10 +30,14 @@ public class ChatService {
     private final Duration messageTtl;
     private final ChatMetrics chatMetrics;
 
+    private final com.softlaunch.chat.activity.ActivityRecorder activity;
+
     public ChatService(MessageRepository messageRepository, ParticipantGuard participantGuard,
                        SimpMessagingTemplate messagingTemplate, PresenceService presenceService,
                        MessageEventPublisher messageEventPublisher,
-                       @Value("${softlaunch.chat.message-ttl}") Duration messageTtl, ChatMetrics chatMetrics) {
+                       @Value("${softlaunch.chat.message-ttl}") Duration messageTtl, ChatMetrics chatMetrics,
+                       com.softlaunch.chat.activity.ActivityRecorder activity) {
+        this.activity = activity;
         this.chatMetrics = chatMetrics;
         this.messageRepository = messageRepository;
         this.participantGuard = participantGuard;
@@ -50,6 +54,7 @@ public class ChatService {
                 new Message(matchId.toString(), me.toString(), text.strip(), now, now.plus(messageTtl)));
         MessageResponse response = MessageResponse.from(saved);
         chatMetrics.messageSent();
+        activity.count(me, "msgs", 1);   // a count for the admin dashboard; never the text
         messagingTemplate.convertAndSend("/topic/chats/" + matchId, response);
 
         UUID recipient = match.otherThan(me);

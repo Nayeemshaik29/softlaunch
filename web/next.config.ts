@@ -8,14 +8,16 @@ const mobile = process.env.BUILD_TARGET === "mobile";
 
 // Content-Security-Policy: the page may only talk to our API and load photos from our storage.
 // Next's bootstrap needs inline scripts; dev mode also needs eval for fast refresh.
+// Sign in with Google (Google Identity Services): its script, button iframe, styles and token calls.
+const gis = "https://accounts.google.com/gsi/";
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' https://checkout.razorpay.com${dev ? " 'unsafe-eval'" : ""}`,
-  "style-src 'self' 'unsafe-inline'",
+  `script-src 'self' 'unsafe-inline' https://checkout.razorpay.com ${gis}client${dev ? " 'unsafe-eval'" : ""}`,
+  `style-src 'self' 'unsafe-inline' ${gis}style`,
   `img-src 'self' data: blob: ${media}`,
   "font-src 'self'",
-  `connect-src 'self' ${api} ${media} https://api.razorpay.com https://lumberjack.razorpay.com${dev ? " ws:" : ""}`,
-  "frame-src https://api.razorpay.com https://checkout.razorpay.com", // Razorpay Checkout (payments only)
+  `connect-src 'self' ${api} ${media} https://api.razorpay.com https://lumberjack.razorpay.com ${gis}${dev ? " ws:" : ""}`,
+  `frame-src https://api.razorpay.com https://checkout.razorpay.com ${gis}`, // Razorpay Checkout; Google's sign-in button
   "media-src 'self' blob:",
   "worker-src 'self' blob:",
   "object-src 'none'",
@@ -28,7 +30,7 @@ const securityHeaders = [
   { key: "Content-Security-Policy", value: csp },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "X-Content-Type-Options", value: "nosniff" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(self), payment=()" },
+  { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=(self), payment=()" }, // camera/mic: calls only
 ];
 
 const nextConfig: NextConfig = {

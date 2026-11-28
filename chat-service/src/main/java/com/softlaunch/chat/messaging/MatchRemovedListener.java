@@ -15,8 +15,11 @@ public class MatchRemovedListener {
 
     private final MessageRepository messageRepository;
     private final JsonMapper jsonMapper;
+    private final com.softlaunch.chat.call.CallService calls;
 
-    public MatchRemovedListener(MessageRepository messageRepository, JsonMapper jsonMapper) {
+    public MatchRemovedListener(MessageRepository messageRepository, JsonMapper jsonMapper,
+                                com.softlaunch.chat.call.CallService calls) {
+        this.calls = calls;
         this.messageRepository = messageRepository;
         this.jsonMapper = jsonMapper;
     }
@@ -28,6 +31,7 @@ public class MatchRemovedListener {
             log.warn("Ignoring match.removed without matchId: {}", payload);
             return;
         }
+        calls.matchRemoved(event.matchId());   // consent + any running call end with the match
         long deleted = messageRepository.deleteByMatchId(event.matchId().toString());
         log.info("Match {} removed, deleted {} chat message(s)", event.matchId(), deleted);
     }

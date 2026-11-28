@@ -8,18 +8,19 @@ import { spring } from "@/lib/motion";
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 type Size = "md" | "lg";
 
+// Design v2: square-ish, all-caps label, solid offset "sticker" shadow on the main action.
 const base =
-  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium select-none transition-colors " +
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border-2 font-bold uppercase tracking-[0.08em] select-none transition-[color,background-color,box-shadow,translate] " +
   "disabled:opacity-45 disabled:pointer-events-none aria-disabled:opacity-45 aria-disabled:pointer-events-none";
 const variants: Record<Variant, string> = {
-  primary: "bg-grad-warm text-on-accent",
-  secondary: "bg-surface-2 text-text hover:bg-line",
-  ghost: "bg-transparent text-text hover:bg-surface-2",
-  danger: "bg-surface-2 text-danger hover:bg-line",
+  primary: "border-bg bg-accent text-on-accent shadow-sticker active:translate-x-[2px] active:translate-y-[2px] active:shadow-none",
+  secondary: "border-text bg-transparent text-text hover:bg-surface-2",
+  ghost: "border-transparent bg-transparent text-text hover:bg-surface-2",
+  danger: "border-danger bg-transparent text-danger hover:bg-surface-2",
 };
 const sizes: Record<Size, string> = {
-  md: "min-h-12 px-6 text-base",
-  lg: "min-h-14 px-8 text-lg",
+  md: "min-h-12 px-6 text-sm",
+  lg: "min-h-14 px-8 text-base",
 };
 
 export function buttonClass(variant: Variant = "primary", size: Size = "md", extra = "") {

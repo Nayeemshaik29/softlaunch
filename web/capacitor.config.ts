@@ -10,12 +10,12 @@ const config: CapacitorConfig = {
   appId: "com.softlaunch.app", // [FILL IN] e.g. com.yourdomain.softlaunch
   appName: "SoftLaunch",
   webDir: "out",
-  backgroundColor: "#0e0c10",
+  backgroundColor: "#0b0b0c",
   ios: { contentInset: "never", scheme: "capacitor" },          // pages run at capacitor://localhost
   android: { allowMixedContent: dev },                          // pages run at https://localhost
   ...(dev ? { server: { cleartext: true } } : {}),
   plugins: {
-    SplashScreen: { launchAutoHide: false, backgroundColor: "#0e0c10", showSpinner: false }, // hidden by setupNative()
+    SplashScreen: { launchAutoHide: false, backgroundColor: "#0b0b0c", showSpinner: false }, // hidden by setupNative()
     PrivacyScreen: { enable: false },   // switched on per screen (chat, match moment)
   },
 };

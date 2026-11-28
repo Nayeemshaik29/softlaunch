@@ -22,7 +22,12 @@ public class PresenceEventListener {
     private final PresenceService presenceService;
     private final SimpMessagingTemplate messagingTemplate;
 
-    public PresenceEventListener(PresenceService presenceService, SimpMessagingTemplate messagingTemplate) {
+    private final com.softlaunch.chat.call.CallService calls;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public PresenceEventListener(PresenceService presenceService, SimpMessagingTemplate messagingTemplate,
+                                 com.softlaunch.chat.call.CallService calls) {
+        this.calls = calls;
         this.presenceService = presenceService;
         this.messagingTemplate = messagingTemplate;
     }
@@ -56,6 +61,7 @@ public class PresenceEventListener {
         if (!presenceService.disconnected(userId, event.getSessionId())) {
             return;
         }
+        calls.dropped(java.util.UUID.fromString(userId));   // last socket gone: end their call, tell the other side
         Map<String, Object> attributes = StompHeaderAccessor.wrap(event.getMessage()).getSessionAttributes();
         Set<String> chats = attributes == null
                 ? Set.of()

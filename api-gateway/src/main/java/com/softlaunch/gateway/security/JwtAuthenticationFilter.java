@@ -19,7 +19,11 @@ import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
@@ -36,6 +40,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             "/api/users/billing/webhook/"   // Razorpay → us; trusted only through its HMAC signature
     );
 
+    private static final ZoneId IST = ZoneId.of("Asia/Kolkata");
+    private final Map<String, Long> lastTouch = new ConcurrentHashMap<>();
     private final SecretKey key;
     private final ReactiveStringRedisTemplate redis;
 
@@ -71,12 +77,38 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                     .headers(headers -> headers.set(USER_ID_HEADER, userId))
                     .build();
 
-            return isRevoked(userId).flatMap(revoked -> revoked
-                    ? unauthorized(exchange)   // account deleted: its tokens die now, not in 15 minutes
-                    : chain.filter(exchange.mutate().request(request).build()));
+            return isRevoked(userId).flatMap(revoked -> {
+                if (revoked) {
+                    return unauthorized(exchange);   // account deleted or suspended: its tokens die now, not in 15 minutes
+                }
+                touch(userId);
+                return chain.filter(exchange.mutate().request(request).build());
+            });
         } catch (JwtException | IllegalArgumentException e) {
             return unauthorized(exchange);
         }
+    }
+
+    /**
+     * Admin dashboard: "active today" (act:day:{day}) and "last active" (act:recent). At most once a minute per user,
+     * fire-and-forget: never slows or fails the request.
+     */
+    private void touch(String userId) {
+        long now = System.currentTimeMillis();
+        Long prev = lastTouch.get(userId);
+        if (prev != null && now - prev < 60_000) {
+            return;
+        }
+        if (lastTouch.size() > 100_000) {
+            lastTouch.clear();   // bounded memory; worst case a few extra Redis writes
+        }
+        lastTouch.put(userId, now);
+        String dayKey = "act:day:" + LocalDate.now(IST);
+        redis.opsForSet().add(dayKey, userId)
+                .then(redis.expire(dayKey, Duration.ofDays(40)))
+                .then(redis.opsForZSet().add("act:recent", userId, now))
+                .timeout(Duration.ofSeconds(1))
+                .subscribe(ok -> { }, e -> log.debug("activity touch skipped ({})", e.getClass().getSimpleName()));
     }
 
     /**

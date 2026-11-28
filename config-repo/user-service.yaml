@@ -71,6 +71,11 @@ softlaunch:
   auth:
     refresh-ttl: 30d                                        # stay logged in this long without typing the password
     refresh-cookie-secure: ${REFRESH_COOKIE_SECURE:false}   # true in production (HTTPS only); localhost is plain HTTP
+  google:
+    # Sign in with Google. OAuth client ID(s) from console.cloud.google.com (APIs & Services → Credentials).
+    # Comma-separated: web client now, Android/iOS client IDs later. Empty = Google sign-in switched off.
+    # Client IDs are public; this flow has NO client secret.
+    client-ids: ${GOOGLE_CLIENT_IDS:}
   login-lockout:
     max-failures: 5      # wrong passwords for one email...
     lock-duration: 15m   # ...within this window => that email is locked for the rest of it

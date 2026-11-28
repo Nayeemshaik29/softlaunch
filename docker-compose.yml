@@ -340,6 +340,33 @@ services:
       <<: *after-config
       user-db: { condition: service_started }
 
+  # Audio/video call relay (TURN). Only for calls that can't connect directly (often on mobile data).
+  # Not part of "all": start it with  docker compose --profile calls up -d coturn
+  # Credentials are short-lived HMACs made by chat-service with TURN_SECRET; coturn never sees user data.
+  coturn:
+    image: coturn/coturn:4.6.3
+    container_name: softlaunch-coturn
+    profiles: [calls]
+    command:
+      - -n
+      - --listening-port=3478
+      - --use-auth-secret
+      - --static-auth-secret=${TURN_SECRET:-}   # empty = relay refuses everyone (chat-service then offers no TURN)
+      - --realm=softlaunch.local
+      - --min-port=49160
+      - --max-port=49200
+      - --external-ip=${TURN_EXTERNAL_IP:-127.0.0.1}
+      - --fingerprint
+      - --no-cli
+      - --no-tls
+      - --no-dtls
+      - --no-multicast-peers
+      - --denied-peer-ip=169.254.0.0-169.254.255.255   # cloud metadata endpoints: never relay there
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+      - "49160-49200:49160-49200/udp"
+
   match-service:
     <<: *java-service
     build: { context: ./match-service, dockerfile: ../docker/Dockerfile }

@@ -66,7 +66,7 @@ export default function DesiresPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="font-display text-2xl font-normal">{t("Desires", "What you're into")}</h1>
+      <h1 className="font-display text-2xl">{t("Desires", "What you're into")}</h1>
       <p className="mt-2 max-w-xl text-muted">
         Tap to choose: <strong className="text-accent">into</strong> (up to {LIMIT.into}), <strong className="text-accent-2">open to</strong> (up to {LIMIT.openTo}),
         or <span className="line-through">not into</span>. Others only ever see the ones you <em>both</em> chose. Nobody sees your &ldquo;not into&rdquo;.

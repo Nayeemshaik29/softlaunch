@@ -22,7 +22,7 @@ export function CardPreview({ name, age, city, bio, interests, photo }: {
       <div className="absolute inset-0 bg-scrim" aria-hidden />
       <figcaption className="absolute inset-x-0 bottom-0 p-6 text-white">
         <p className="flex items-baseline gap-2">
-          <span className="font-display text-2xl font-medium">{name || "Your name"}</span>
+          <span className="font-display text-2xl">{name || "Your name"}</span>
           {age !== null && age >= 18 && <span className="text-xl text-white/90">{age}</span>}
         </p>
         <p className="mt-1 text-sm text-white/85">Nearby{city ? ` · ${city}` : ""}</p>

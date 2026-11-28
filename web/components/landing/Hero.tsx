@@ -1,36 +1,33 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { motion, useReducedMotion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useState } from "react";
 import { ButtonLink } from "@/components/ui/Button";
-import { canRun3D, whenIdle } from "@/lib/device";
+import { Note, Star } from "@/components/ui/Doodles";
+import { GoogleButton } from "@/components/ui/GoogleButton";
+import { Torn } from "@/components/ui/Torn";
+import { ApiError } from "@/lib/api";
+import { googleSignIn, setPendingGoogle } from "@/lib/google";
 import { spring } from "@/lib/motion";
 
-// three.js (~600 KB) is never in the first load: it's fetched after the page is idle, only on capable devices.
-const HeroScene = dynamic(() => import("./HeroScene"), { ssr: false });
-
+/** Design v2 hero: the "Afterglow" sunburst, huge condensed caps in Jet Black, sticker CTA. Pure CSS: no 3D, no images. */
 export function Hero() {
   const reduce = useReducedMotion();
-  const [load3D, setLoad3D] = useState(false);
-  const [sceneReady, setSceneReady] = useState(false);
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!canRun3D()) return;
-    // The scene starts on the visitor's first interaction (mouse move, touch, scroll, key): people move within
-    // a second, and until then the static image looks the same. Keeps the first load light (Lighthouse 90+).
-    const events = ["pointermove", "pointerdown", "touchstart", "scroll", "keydown"] as const;
-    let cancelIdle = () => {};
-    const go = () => {
-      events.forEach((e) => window.removeEventListener(e, go));
-      cancelIdle = whenIdle(() => setLoad3D(true), 400);
-    };
-    events.forEach((e) => window.addEventListener(e, go, { once: true, passive: true }));
-    return () => {
-      cancelIdle();
-      events.forEach((e) => window.removeEventListener(e, go));
-    };
-  }, []);
+  const onGoogle = useCallback(async (idToken: string) => {
+    setError(null);
+    try {
+      const r = await googleSignIn(idToken);
+      if (r.kind === "in") return router.push("/swipe");
+      setPendingGoogle({ idToken: r.idToken, email: r.email, suggestedName: r.suggestedName });
+      router.push("/signup");
+    } catch (e) {
+      setError((e as ApiError).message);
+    }
+  }, [router]);
 
   const rise = (delay: number) =>
     reduce
@@ -38,50 +35,48 @@ export function Hero() {
       : { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { ...spring.soft, delay } };
 
   return (
-    <section className="relative isolate flex min-h-[100svh] items-end overflow-hidden pb-16 sm:items-center sm:pb-0" aria-labelledby="hero-title">
-      {/* static image: first paint, weak devices, reduced motion, no WebGL */}
-      <div
-        aria-hidden
-        className="absolute inset-0 -z-10 bg-cover bg-center transition-opacity duration-700"
-        style={{ backgroundImage: "url(/hero-fallback.svg)", opacity: sceneReady ? 0 : 1 }}
-      />
-      {load3D && (
-        <div className="absolute inset-0 -z-10 transition-opacity duration-700" style={{ opacity: sceneReady ? 1 : 0 }}>
-          <HeroScene onReady={() => setSceneReady(true)} />
-        </div>
-      )}
-      {/* keeps the headline readable over any frame of the scene */}
-      <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,var(--bg)_0%,color-mix(in_srgb,var(--bg)_70%,transparent)_38%,transparent_70%)]" />
+    <section className="relative isolate overflow-hidden bg-burst pb-24 pt-28 sm:pb-32 sm:pt-36" aria-labelledby="hero-title">
+      <div className="relative mx-auto w-full max-w-[1200px] px-4 sm:px-6">
+        <motion.h1
+          initial={reduce ? false : { y: 16, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={spring.soft}
+          id="hero-title"
+          className="max-w-[1000px] font-display text-[clamp(4rem,11vw,10.5rem)] leading-[0.86] text-on-accent"
+        >
+          Dating that doesn&rsquo;t waste your evening.
+        </motion.h1>
+        <motion.p {...rise(0.08)} className="mt-6 max-w-xl text-lg font-semibold text-on-accent">
+          Fewer, better matches near you. Verified people. Chats that fade after a day.
+        </motion.p>
+        <motion.div {...rise(0.16)} className="mt-10 flex flex-wrap items-center gap-4">
+          <ButtonLink href="/signup" size="lg" className="!border-on-accent !bg-on-accent !text-text">
+            Make your profile
+          </ButtonLink>
+          <div className="w-[280px]"><GoogleButton onCredential={(t) => void onGoogle(t)} onError={setError} /></div>
+        </motion.div>
+        {error && <p role="alert" className="mt-4 inline-block rounded-md bg-bg px-3 py-2 text-sm text-danger">{error}</p>}
 
-      <div className="mx-auto w-full max-w-[1120px] px-4 sm:px-6">
-        <div className="max-w-2xl">
-          <motion.p {...rise(0)} className="mb-4 text-sm font-medium tracking-wide text-muted uppercase">
-            A calmer dating app
-          </motion.p>
-          <motion.h1
-            initial={reduce ? false : { y: 12 }}
-            animate={{ y: 0 }}
-            transition={spring.soft}
-            id="hero-title" className="font-display text-display font-normal text-text">
-            Dating that doesn&rsquo;t waste your evening
-          </motion.h1>
-          <motion.p initial={reduce ? false : { y: 12 }} animate={{ y: 0 }} transition={{ ...spring.soft, delay: 0.06 }} className="mt-6 max-w-xl text-lg text-muted">
-            Fewer, better matches near you. Verified profiles, chats that fade after a day, and a gentle daily limit so
-            you swipe with intent, then close the app and live your life.
-          </motion.p>
-          <motion.div {...rise(0.18)} className="mt-8 flex flex-wrap items-center gap-4">
-            <ButtonLink href="/signup" size="lg">
-              Create your profile
-            </ButtonLink>
-            <ButtonLink href="/login" variant="ghost" size="lg">
-              Log in
-            </ButtonLink>
-          </motion.div>
-          <motion.p {...rise(0.24)} className="mt-6 text-sm text-muted">
-            Like the big swipe apps, but calmer.
-          </motion.p>
+        <div aria-hidden className="pointer-events-none absolute right-6 top-0 hidden rotate-12 md:block"><Star size={84} className="stroke-on-accent" /></div>
+        <div aria-hidden className="pointer-events-none absolute -bottom-12 right-8 hidden -rotate-6 md:block">
+          <Note className="text-4xl !text-on-accent">fewer swipes,<br />better dates</Note>
         </div>
       </div>
+      <Torn className="fill-accent" height={18} />
     </section>
+  );
+}
+
+/** Amber strip under the hero. Decorative repetition is hidden from screen readers; the list is read once. */
+export function Marquee() {
+  const items = ["24-hour chats", "Verified people", "Private Mode", "Veiled photos", "No endless swiping", "Made in India"];
+  const row = items.map((i) => (
+    <span key={i} className="inline-flex items-center gap-6 pr-6">{i}<span aria-hidden>✦</span></span>
+  ));
+  return (
+    <div className="overflow-hidden whitespace-nowrap bg-accent py-3 font-display text-2xl text-on-accent">
+      <p className="sr-only">{items.join(", ")}</p>
+      <div aria-hidden className="inline-block pl-6">{row}{row}</div>
+    </div>
   );
 }

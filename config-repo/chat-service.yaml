@@ -23,5 +23,14 @@ spring:
 softlaunch:
   chat:
     message-ttl: 24h
+  calls:
+    # WebRTC. Media goes browser↔browser (encrypted); we only pass connection details. Nothing is recorded.
+    stun-urls: ${CALL_STUN_URLS:stun:localhost:3478}
+    # coturn relay (docker compose --profile calls). Production: turn:turn.yourdomain.com:3478 + turns:...:5349
+    turn-urls: ${CALL_TURN_URLS:turn:localhost:3478?transport=udp,turn:localhost:3478?transport=tcp}
+    turn-secret: ${TURN_SECRET:}     # shared with coturn (static-auth-secret). From .env, never in git.
+    credential-ttl: 1h
+    ring-timeout: 45s
+    max-call: 4h
   jwt:
     secret: ${JWT_SECRET}   # from the environment (.env locally). Never put the real value in git.

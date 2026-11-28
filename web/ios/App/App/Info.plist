@@ -5,7 +5,9 @@
   <key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Take a photo for your SoftLaunch profile.</string>
+	<string>Take profile photos, and video calls with a match when you both agreed to calls.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>For audio and video calls with your matches, only when you both agreed to calls.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Choose photos for your SoftLaunch profile.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

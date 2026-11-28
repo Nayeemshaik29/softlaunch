@@ -117,7 +117,7 @@ export async function setupNative() {
   ]);
   await StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
   if (platform() === "android") {
-    await StatusBar.setBackgroundColor({ color: getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#0e0c10" }).catch(() => {});
+    await StatusBar.setBackgroundColor({ color: getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#0b0b0c" }).catch(() => {});
   }
   // Android back: close what's open (e.g. the match moment), else go back, else leave the app in the background
   const handle = await App.addListener("backButton", ({ canGoBack }) => {

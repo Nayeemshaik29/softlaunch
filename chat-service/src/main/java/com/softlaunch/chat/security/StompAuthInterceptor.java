@@ -61,6 +61,9 @@ public class StompAuthInterceptor implements ChannelInterceptor {
     private void authorizeSubscription(StompHeaderAccessor accessor) {
         Principal user = accessor.getUser();
         String destination = accessor.getDestination();
+        if (user != null && "/user/queue/calls".equals(destination)) {
+            return;   // own call events only: Spring routes /user/... to this socket's user, nobody else's
+        }
         if (user == null || destination == null || !destination.startsWith(CHAT_TOPIC_PREFIX)) {
             throw new MessagingException("Forbidden");
         }

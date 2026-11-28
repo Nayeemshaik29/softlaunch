@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { SignInMethods } from "@/components/app/SignInMethods";
 import { api } from "@/lib/api";
 import { myProfile } from "@/lib/me";
 import { spring } from "@/lib/motion";
@@ -83,11 +84,16 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="font-display text-2xl font-normal">Settings</h1>
+      <h1 className="font-display text-[4rem] leading-[0.9]">You</h1>
       <p role="status" aria-live="polite" className="mt-2 min-h-6 text-sm text-muted">{status}</p>
 
-      <section aria-labelledby="privacy" className="mt-4 rounded-lg border border-line bg-surface px-6">
-        <h2 id="privacy" className="pt-6 text-sm font-medium tracking-wide text-accent uppercase">{t("Privacy", "Discretion")}</h2>
+      <section aria-labelledby="signin" className="mt-4 rounded-lg border-2 border-text/80 bg-surface px-6">
+        <h2 id="signin" className="pt-6 text-xs font-bold tracking-[0.14em] text-accent uppercase">Sign-in</h2>
+        <SignInMethods onStatus={setStatus} />
+      </section>
+
+      <section aria-labelledby="privacy" className="mt-6 rounded-lg border-2 border-text/80 bg-surface px-6">
+        <h2 id="privacy" className="pt-6 text-xs font-bold tracking-[0.14em] text-accent uppercase">{t("Privacy", "Discretion")}</h2>
         {privacy === null ? (
           <div className="flex flex-col gap-4 py-6"><Skeleton className="h-14" /><Skeleton className="h-14" /></div>
         ) : (
@@ -113,8 +119,8 @@ export default function SettingsPage() {
         )}
       </section>
 
-      <section aria-labelledby="look" className="mt-6 rounded-lg border border-line bg-surface px-6">
-        <h2 id="look" className="pt-6 text-sm font-medium tracking-wide text-accent uppercase">Look</h2>
+      <section aria-labelledby="look" className="mt-6 rounded-lg border-2 border-text/80 bg-surface px-6">
+        <h2 id="look" className="pt-6 text-xs font-bold tracking-[0.14em] text-accent uppercase">Look</h2>
         {discreet !== null && (
           <Switch
             label="Discreet app icon"
@@ -125,14 +131,14 @@ export default function SettingsPage() {
         )}
         <Switch
           label="After dark"
-          description="A moodier night theme: deep wine colours, candle light and flirtier words. Only you see it."
+          description="A moodier night theme: lower, warmer light and flirtier words. Only you see it."
           checked={mood === "after-dark"}
           onChange={(v) => setMood(v ? "after-dark" : "calm")}
         />
       </section>
 
-      <section aria-labelledby="discover" className="mt-6 rounded-lg border border-line bg-surface p-6">
-        <h2 id="discover" className="text-sm font-medium tracking-wide text-accent uppercase">Discover</h2>
+      <section aria-labelledby="discover" className="mt-6 rounded-lg border-2 border-text/80 bg-surface p-6">
+        <h2 id="discover" className="text-xs font-bold tracking-[0.14em] text-accent uppercase">Discover</h2>
         <ul className="mt-2 divide-y divide-line">
           {[
             { href: "/filters", title: "Filters", body: "Age, distance and who you'd like to see" },
@@ -149,8 +155,8 @@ export default function SettingsPage() {
         </ul>
       </section>
 
-      <section aria-labelledby="account" className="mt-6 rounded-lg border border-line bg-surface p-6">
-        <h2 id="account" className="text-sm font-medium tracking-wide text-accent uppercase">Account</h2>
+      <section aria-labelledby="account" className="mt-6 rounded-lg border-2 border-text/80 bg-surface p-6">
+        <h2 id="account" className="text-xs font-bold tracking-[0.14em] text-accent uppercase">Account</h2>
         <div className="mt-4 flex flex-wrap gap-4">
           <Button variant="secondary" onClick={async () => { await logout(); router.push("/"); }}>Log out</Button>
           <a href={`${API_URL_PUBLIC}/privacy`} className="inline-flex min-h-12 items-center rounded-md px-4 text-sm text-muted hover:text-text">Privacy Policy</a>

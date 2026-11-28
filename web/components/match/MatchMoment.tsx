@@ -180,7 +180,7 @@ export default function MatchMoment({ data, onClose }: { data: MatchMomentData; 
           // reduced motion / no WebGL: two photos, a simple fade
           <motion.div className="absolute inset-0 flex items-center justify-center gap-4" aria-hidden initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}>
             {[data.myPhoto, data.theirPhoto].map((src, i) => (
-              <div key={i} className="aspect-[3/4] w-[34vw] max-w-[220px] overflow-hidden rounded-lg bg-surface-2 shadow-card">
+              <div key={i} className={`aspect-[3/4] w-[34vw] max-w-[220px] overflow-hidden border-2 border-bg bg-accent-2 p-2 pb-8 shadow-[6px_6px_0_var(--accent)] ${i === 0 ? "-rotate-6" : "rotate-6"}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 {src && <img src={src} alt="" className="h-full w-full object-cover" />}
               </div>
@@ -195,13 +195,17 @@ export default function MatchMoment({ data, onClose }: { data: MatchMomentData; 
         animate={started ? { opacity: 1, y: 0 } : undefined}
         transition={reduce ? { duration: 0.2, delay: 0.1 } : { ...spring.soft, delay: textDelay }}
       >
-        <h2 id="match-title" className="font-display text-3xl font-normal sm:text-4xl">
-          You matched with <span className="text-grad-warm">{data.name}</span>
+        <p className="text-xs font-bold tracking-[0.14em] text-accent uppercase">New match</p>
+        <h2 id="match-title" className="mt-2 font-display text-[clamp(4rem,18vw,7.5rem)] leading-[0.86]">
+          It&rsquo;s mutual<span className="text-accent">.</span>
+          <span className="sr-only"> You matched with {data.name}.</span>
         </h2>
+        <p className="mt-3 text-lg" aria-hidden>You + <span className="font-bold text-accent">{data.name}</span></p>
         <p className="mt-2 text-muted">{t("You both liked each other. No pressure, just say hi.", "The feeling\u2019s mutual. Go on, make the first move.")}</p>
+        <p className="mx-auto mt-4 inline-block rounded-md bg-accent-2 px-3 py-2 text-sm font-semibold text-on-accent">This chat fades in 24 hours. Make it count.</p>
         <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Button ref={primary} size="lg" onClick={() => { close(); router.push(`/chat?m=${data.matchId}`); }}>
-            Send a message
+            Say something
           </Button>
           <Button variant="secondary" size="lg" onClick={close}>Keep swiping</Button>
         </div>

@@ -110,7 +110,7 @@ export default function NotificationsPage() {
   return (
     <>
       <div className="flex items-center justify-between gap-4">
-        <h1 className="font-display text-2xl font-normal">Activity</h1>
+        <h1 className="font-display text-2xl">Activity</h1>
         {list?.some((n) => !n.read) && <Button variant="ghost" onClick={() => void markAll()}>Mark all read</Button>}
       </div>
       <p role="status" aria-live="polite" className="sr-only">{status}</p>

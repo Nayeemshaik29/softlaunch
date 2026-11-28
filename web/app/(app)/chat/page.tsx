@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
+import { CallButtons, ConsentCard, useConsent } from "@/components/call/CallConsent";
 import { Avatar } from "@/components/matches/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -35,6 +36,8 @@ function Chat() {
   const [gone, setGone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const end = useRef<HTMLDivElement>(null);
+  const [consent, setConsentState] = useConsent(matchId);
+  const peer = person ? { userId: person.userId, name: person.displayName, photo: person.photoUrls[0] ?? null } : null;
 
   useEffect(() => {
     let stop = false;
@@ -98,6 +101,7 @@ function Chat() {
           <>
             <Avatar src={person?.photoUrls[0]} name={person?.displayName ?? "?"} size={44} />
             <h1 className="font-display text-xl">{person?.displayName}</h1>
+            <CallButtons matchId={matchId} consent={consent} peer={peer} />
           </>
         )}
       </header>
@@ -121,6 +125,7 @@ function Chat() {
         <div ref={end} />
       </div>
 
+      {person && <ConsentCard matchId={matchId} name={person.displayName} consent={consent} onChange={setConsentState} />}
       <form onSubmit={send} className="flex gap-2 border-t border-line pt-4">
         <label htmlFor="msg" className="sr-only">Message</label>
         <input id="msg" value={text} onChange={(e) => setText(e.target.value)} maxLength={1000} autoComplete="off"

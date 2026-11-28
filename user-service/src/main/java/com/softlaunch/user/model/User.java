@@ -36,6 +36,27 @@ public class User {
 
     private Instant verifiedAt;
 
+    // ---- Sign in with Google ----
+    /** Google's stable account id ("sub"). Never the email: emails can change hands. */
+    @Column(unique = true)
+    private String googleSub;
+
+    /** false for Google-only accounts: their passwordHash is a random value nobody knows. */
+    @ColumnDefault("true")
+    @Column(nullable = false)
+    private boolean passwordSet = true;
+
+    // ---- Admin / moderation ----
+    /** Can open the admin dashboard. Only set by hand (scripts/make-admin.sh), never through the API. */
+    @ColumnDefault("false")
+    @Column(nullable = false)
+    private boolean admin;
+
+    /** Suspended by an admin: can't log in or refresh; current tokens are revoked. */
+    @ColumnDefault("false")
+    @Column(nullable = false)
+    private boolean suspended;
+
     protected User() {
     }
 
@@ -76,6 +97,47 @@ public class User {
 
     public Instant getVerifiedAt() {
         return verifiedAt;
+    }
+
+    public String getGoogleSub() {
+        return googleSub;
+    }
+
+    public boolean isPasswordSet() {
+        return passwordSet;
+    }
+
+    public void linkGoogle(String sub) {
+        this.googleSub = sub;
+    }
+
+    public void unlinkGoogle() {
+        this.googleSub = null;
+    }
+
+    /** A Google-only account: the hash is of a random secret, so password login can never succeed. */
+    public static User fromGoogle(String email, String randomHash, String displayName, LocalDate dateOfBirth, String googleSub) {
+        User u = new User(email, randomHash, displayName, dateOfBirth);
+        u.googleSub = googleSub;
+        u.passwordSet = false;
+        return u;
+    }
+
+    public boolean isAdmin() {
+        return admin;
+    }
+
+    public boolean isSuspended() {
+        return suspended;
+    }
+
+    public void setSuspended(boolean suspended) {
+        this.suspended = suspended;
+    }
+
+    public void setPassword(String hash) {
+        this.passwordHash = hash;
+        this.passwordSet = true;
     }
 
     /** @return false if already verified (duplicate event), so callers can skip side effects. */

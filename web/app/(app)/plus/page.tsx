@@ -63,7 +63,7 @@ export default function PlusPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <p className="text-sm font-medium tracking-wide text-accent uppercase">SoftLaunch Plus</p>
-      <h1 className="mt-2 font-display text-3xl font-normal">{t("A little more, for a little less.", "A little more of the night.")}</h1>
+      <h1 className="mt-2 font-display text-[clamp(3rem,12vw,5rem)] leading-[0.9]">{t("A little more, for a little less.", "A little more of the night.")}</h1>
       <p className="mt-2 max-w-xl text-muted">
         Safety, privacy, Private Mode and veiled photos are free for everyone, always. Plus just gives you more room.
       </p>
@@ -94,7 +94,7 @@ export default function PlusPage() {
           Plus can&rsquo;t be bought in the app just yet. If you already have Plus, it works here too.
         </p>
       ) : (<>
-      <h2 className="mt-12 font-display text-xl font-normal">Choose a pass</h2>
+      <h2 className="mt-12 font-display text-xl">Choose a pass</h2>
       <p className="mt-1 text-sm text-muted">One-time payment, no auto-renew. Pay with UPI, card or wallet.</p>
       {status?.provider === "mock" && (
         <p className="mt-4 rounded-md border border-dashed border-line px-4 py-2 text-sm text-muted">Test mode: payments here are fake. No money moves.</p>

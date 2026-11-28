@@ -297,7 +297,7 @@ function CardInfo({ card }: { card: FeedCard }) {
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 p-6 text-white">
       <div className="flex items-baseline gap-2">
-        <h2 className="font-display text-2xl font-medium">{card.displayName}</h2>
+        <h2 className="font-display text-2xl">{card.displayName}</h2>
         {card.age && <span className="text-xl text-white/90">{card.age}</span>}
         {card.verified && (
           <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium backdrop-blur-sm" title="ID verified">

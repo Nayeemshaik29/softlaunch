@@ -18,7 +18,7 @@ export function AppHeader({ unread = 0 }: { unread?: number }) {
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-bg/90 pt-[env(safe-area-inset-top)] backdrop-blur">
       <div className="mx-auto flex max-w-[1120px] items-center justify-between gap-4 px-4 sm:px-6">
-        <Logo href="/swipe" />
+        <Logo href="/swipe" variant="full" />
         <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
           {NAV.map((n) => {
             const active = path.startsWith(n.href);

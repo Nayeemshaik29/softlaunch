@@ -33,9 +33,12 @@ public class ReportService {
     private final SafetyProperties props;
     private final SafetyMetrics metrics;
 
+    private final com.softlaunch.safety.activity.ActivityRecorder activity;
+
     public ReportService(ReportRepository reportRepository, UserClient userClient, EvidenceCollector evidenceCollector,
                          EscalationService escalationService, ReportRateLimiter rateLimiter, SafetyProperties props,
-                         SafetyMetrics metrics) {
+                         SafetyMetrics metrics, com.softlaunch.safety.activity.ActivityRecorder activity) {
+        this.activity = activity;
         this.metrics = metrics;
         this.reportRepository = reportRepository;
         this.userClient = userClient;
@@ -69,6 +72,7 @@ public class ReportService {
                 reporterId, req.reportedUserId(), req.reason(), report.getPriority(), report.getEvidenceStatus(),
                 report.getEvidence().size());
         metrics.reportFiled(report.getReason(), report.getPriority());
+        activity.reported(req.reportedUserId());
 
         escalationService.evaluate(report);
         return ReportReceipt.received(report.getId());

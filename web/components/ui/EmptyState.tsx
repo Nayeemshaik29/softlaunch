@@ -12,8 +12,8 @@ function StaticArt({ kind }: { kind: TrinketKind }) {
   if (kind === "rings")
     return (
       <svg viewBox="0 0 160 160" className="h-full w-full" aria-hidden>
-        <circle cx="64" cy="80" r="34" fill="none" stroke="#ff8a6b" strokeWidth="12" />
-        <circle cx="96" cy="80" r="34" fill="none" stroke="#b79bff" strokeWidth="12" />
+        <circle cx="64" cy="80" r="34" fill="none" stroke="#f28c28" strokeWidth="12" />
+        <circle cx="96" cy="80" r="34" fill="none" stroke="#f3d9c6" strokeWidth="12" />
       </svg>
     );
   if (kind === "moon")
@@ -25,8 +25,8 @@ function StaticArt({ kind }: { kind: TrinketKind }) {
     );
   return (
     <svg viewBox="0 0 160 160" className="h-full w-full" aria-hidden>
-      <rect x="34" y="34" width="60" height="84" rx="10" fill="#b79bff" transform="rotate(-10 64 76)" />
-      <rect x="66" y="40" width="60" height="84" rx="10" fill="#ff8a6b" transform="rotate(8 96 82)" />
+      <rect x="34" y="34" width="60" height="84" rx="10" fill="#f3d9c6" transform="rotate(-10 64 76)" />
+      <rect x="66" y="40" width="60" height="84" rx="10" fill="#f28c28" transform="rotate(8 96 82)" />
     </svg>
   );
 }
@@ -48,7 +48,7 @@ export function EmptyState({ kind, title, body, action }: { kind: TrinketKind; t
   return (
     <div className="flex flex-col items-center px-6 py-12 text-center">
       <Illustration kind={kind} />
-      <h2 className="mt-6 font-display text-xl font-normal">{title}</h2>
+      <h2 className="mt-6 font-display text-xl">{title}</h2>
       {body && <p className="mt-2 max-w-sm text-muted">{body}</p>}
       {action && <div className="mt-6">{action}</div>}
     </div>

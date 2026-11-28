@@ -71,7 +71,7 @@ export default function FiltersPage() {
 
   return (
     <div className="mx-auto max-w-xl">
-      <h1 className="font-display text-2xl font-normal">Filters</h1>
+      <h1 className="font-display text-2xl">Filters</h1>
       <p className="mt-2 text-muted">Who shows up in your deck. They only see you if you also fit what they&rsquo;re looking for.</p>
       {!loaded ? (
         <div className="mt-8 flex flex-col gap-4"><Skeleton className="h-20" /><Skeleton className="h-20" /><Skeleton className="h-28" /></div>

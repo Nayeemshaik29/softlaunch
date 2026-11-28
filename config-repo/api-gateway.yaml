@@ -83,6 +83,13 @@ spring:
                     redis-rate-limiter.replenishRate: 20
                     redis-rate-limiter.burstCapacity: 40
                     redis-rate-limiter.requestedTokens: 1
+            # Admin dashboard API (user-service checks the admin flag + audits every call)
+            - id: admin
+              uri: lb://user-service
+              predicates:
+                - Path=/api/admin/**
+              filters:
+                - *user-limit
             - id: match-service
               uri: lb://match-service
               predicates:

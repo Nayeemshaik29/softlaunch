@@ -78,6 +78,20 @@ public class GlobalExceptionHandler {
                 .body(ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage()));
     }
 
+    /** Never echo the token. The reason ("wrong issuer", "not for us"...) only goes to the log. */
+    @ExceptionHandler(com.softlaunch.user.google.InvalidGoogleTokenException.class)
+    public ProblemDetail handleInvalidGoogleToken(com.softlaunch.user.google.InvalidGoogleTokenException ex) {
+        log.info("Google sign-in refused: {}", ex.getMessage());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Google sign-in didn't work. Try again.");
+    }
+
+    /** Couldn't fetch Google's signing keys (Google or our network is down). */
+    @ExceptionHandler(org.springframework.web.client.RestClientException.class)
+    public ProblemDetail handleUpstream(org.springframework.web.client.RestClientException ex) {
+        log.warn("Upstream call failed: {}", ex.getClass().getSimpleName());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, "Google sign-in is down right now. Try email, or again in a minute.");
+    }
+
     @ExceptionHandler(InvalidCredentialsException.class)
     public ProblemDetail handleInvalidCredentials(InvalidCredentialsException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());

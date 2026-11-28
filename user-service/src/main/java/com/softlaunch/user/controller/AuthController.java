@@ -4,6 +4,8 @@ import com.softlaunch.user.dto.AuthResponse;
 import com.softlaunch.user.dto.LoginRequest;
 import com.softlaunch.user.dto.SignupRequest;
 import com.softlaunch.user.dto.UserResponse;
+import com.softlaunch.user.google.GoogleAuthService;
+import com.softlaunch.user.google.GoogleSignInRequest;
 import com.softlaunch.user.service.UserService;
 import jakarta.validation.Valid;
 import com.softlaunch.user.session.InvalidRefreshTokenException;
@@ -22,8 +24,10 @@ public class AuthController {
     private final UserService userService;
     private final SessionCookie cookie;
     private final NativeClients nativeClients;
+    private final GoogleAuthService google;
 
-    public AuthController(UserService userService, SessionCookie cookie, NativeClients nativeClients) {
+    public AuthController(UserService userService, SessionCookie cookie, NativeClients nativeClients, GoogleAuthService google) {
+        this.google = google;
         this.userService = userService;
         this.cookie = cookie;
         this.nativeClients = nativeClients;
@@ -37,6 +41,15 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest http) {
         return respond(userService.login(request), http);
+    }
+
+    /** Sign in / sign up with Google. Answers a session, or NEEDS_BIRTHDAY for someone new (then call again with it). */
+    @PostMapping("/google")
+    public ResponseEntity<?> google(@Valid @RequestBody GoogleSignInRequest request, HttpServletRequest http) {
+        return switch (google.signIn(request)) {
+            case GoogleAuthService.LoggedIn in -> respond(in.result(), http);
+            case GoogleAuthService.NeedsBirthday nb -> ResponseEntity.ok(nb.body());
+        };
     }
 
     /** New access token from the refresh token (cookie on the web, X-Refresh-Token header in the apps). Rotates it. */

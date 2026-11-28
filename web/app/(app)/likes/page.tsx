@@ -60,7 +60,7 @@ export default function LikesPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="font-display text-2xl font-normal">{t("Liked you", "They noticed you")}</h1>
+      <h1 className="font-display text-2xl">{t("Liked you", "They noticed you")}</h1>
       <p role="status" aria-live="polite" className="mt-2 min-h-6 text-sm text-muted">{status}</p>
 
       {data === null ? (

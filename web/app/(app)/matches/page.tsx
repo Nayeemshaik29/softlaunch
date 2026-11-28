@@ -44,7 +44,7 @@ function MatchesInner() {
 
   return (
     <>
-      <h1 className="font-display text-2xl font-normal">Matches</h1>
+      <h1 className="font-display text-[4rem] leading-[0.9]">Matches</h1>
 
       {fresh.length > 0 && (
         <section aria-labelledby="new-matches" className="mt-6">

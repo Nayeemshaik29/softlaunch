@@ -33,62 +33,53 @@ px size or duration in a component** — use the tokens below. If a token is mis
 - Page side gutter: 16px on phones, 24px ≥ 640px, max content width 1120px. No horizontal page scroll, ever.
 - Tap targets ≥ 48×48px (onboarding choices and the swipe buttons: 56–64px).
 
-## 2. Type scale
+## 2. Type scale (design v2, Pure-inspired)
 
-Two families, loaded with `next/font` (self-hosted, `display: swap`):
-- **Display:** Fraunces (variable serif, `SOFT` 100, `opsz` auto) — headlines, names on cards, big numbers. Warm, a bit literary. Never for body text or buttons.
-- **UI:** Instrument Sans — everything else.
+Three families, loaded with `next/font` (self-hosted, `display: swap`):
+- **Display:** Bricolage Grotesque, **800, condensed (wdth 75), ALL CAPS**, line-height ~0.88. Headlines, names, big numbers.
+  The `.font-display` class sets weight/width/caps itself: never add `font-normal`/`font-medium` to it.
+- **UI:** Instrument Sans — everything you read. Buttons and labels: bold, uppercase, `tracking-[0.08em]`.
+- **Hand:** Caveat 600 (`<Note>` in `components/ui/Doodles`) — short handwritten asides only ("no endless swiping, promise"). Max one per screen, never for information someone needs.
 
 | Token | size / line-height | Family | Use |
 |---|---|---|---|
-| `text-xs` | 12 / 16 | UI | meta, timestamps, stamp captions |
-| `text-sm` | 14 / 20 | UI | secondary text, labels |
+| `text-xs` | 12 / 16 | UI | meta, eyebrows (`font-bold tracking-[0.14em] uppercase`) |
+| `text-sm` | 14 / 20 | UI | secondary text, button labels |
 | `text-base` | 16 / 24 | UI | body (minimum for anything you must read) |
-| `text-lg` | 20 / 28 | UI | lead paragraphs, card subtitles |
-| `text-xl` | 24 / 32 | Display | card names, section intros |
-| `text-2xl` | 32 / 40 | Display | screen titles |
-| `text-3xl` | 40 / 48 | Display | section headlines |
-| `text-4xl` | 56 / 64 | Display | onboarding questions (desktop) |
-| `text-display` | clamp(44px, 7vw, 96px) / 1.0 | Display | hero headline only |
+| `text-lg` | 20 / 28 | UI | lead paragraphs |
+| `text-3xl`… | 40+ | Display | screen titles: go BIG (`text-[4rem]` titles, `clamp(4rem,11vw,10.5rem)` hero) |
 
-- Weights: UI 400/500/600. Display 400 (500 for names). No bold display text.
-- Headlines: `letter-spacing: -0.02em`, `text-wrap: balance`. Body: `text-wrap: pretty`, max 65ch.
 - Numbers that tick (countdowns, %): `font-variant-numeric: tabular-nums`.
 
-## 3. Color tokens (dark first)
+## 3. Color tokens (palette v2: dark only)
 
-Dark is the default (`:root`). Light applies with `prefers-color-scheme: light` or `data-theme="light"`.
+Jet Black, Warm Peach Beige, Rich Amber Orange. There is no light theme: the brand is the night.
 
-| Token | Dark | Light | Use |
-|---|---|---|---|
-| `--bg` | #0E0C10 | #FBF7F3 | page |
-| `--surface` | #17141A | #FFFFFF | cards, sheets |
-| `--surface-2` | #211D25 | #F3ECE6 | inputs, secondary buttons, skeletons |
-| `--line` | #2F2934 | #E6DDD5 | borders, dividers |
-| `--text` | #F4EEE8 | #1C1720 | primary text |
-| `--muted` | #A69DA8 | #675E6C | secondary text (AA on bg and surface) |
-| `--accent` | #FF8A6B | #B03E29 | single-color accent: links, focus, active tab (AA as text) |
-| `--accent-2` | #B79BFF | #5E42C4 | violet end of the gradient; info highlights |
-| `--on-accent` | #160F14 | #160F14 | text on the gradient / accent fills |
-| `--like` | #4FD69C | #17744B | LIKE stamp, success |
-| `--pass` | #9A93A0 | #6E6774 | PASS stamp |
-| `--super` | #6CB8FF | #1A60AA | SUPER_LIKE stamp |
-| `--danger` | #FF6B7A | #C22F45 | errors, destructive |
-| `--focus` | #B79BFF | #5E42C4 | focus-visible ring |
+| Token | Value | Use |
+|---|---|---|
+| `--bg` | #0B0B0C (Jet Black) | page |
+| `--surface` / `--surface-2` | #171513 / #231F1C | cards, inputs |
+| `--line` | #342E29 | dividers |
+| `--text` | #F3D9C6 (Warm Peach Beige) | primary text (15:1 on bg) |
+| `--muted` | #B9A595 | secondary text (8:1) |
+| `--accent` | #F28C28 (Rich Amber Orange) | main action, active tab, highlights (8:1 on bg) |
+| `--accent-2` | #F3D9C6 | sticker shadows, peach stickers |
+| `--on-accent` | #0B0B0C | text on amber/peach (8:1 / 15:1) |
+| `--danger` | #FF8A7A | errors, destructive |
+| `--focus` | #F6B26B | focus ring |
 
-**Gradient** `--grad-warm: linear-gradient(120deg, #FF8A6B 0%, #F66F9A 45%, #B79BFF 100%)` (coral → violet).
-Use it **sparingly — at most one gradient element per screen**: the primary CTA, the energy ring, the completion ring,
-the match moment. Never as a page background, never on text paragraphs, never behind body copy.
+- Text on amber or peach is always Jet Black. All pairs are WCAG AA+.
+- Status is never color-only: stamps have words, errors have text + icon.
 
-- All text meets **WCAG AA**: 4.5:1 for body, 3:1 for ≥ 24px text and UI borders/icons. Check new pairs before using them.
-- Text on the gradient is always `--on-accent` (dark), never white (white on coral fails AA).
-- Status is never color-only: LIKE/PASS/SUPER stamps have words, errors have text + icon.
+## 4. Shape, depth, patterns
 
-## 4. Shape, depth, surfaces
-
-- Radii: `--radius-sm` 8 (chips, inputs inner), `--radius-md` 16 (buttons, inputs), `--radius-lg` 24 (cards, sheets), `--radius-pill` 999.
-- Depth comes from **surface steps and one soft shadow** (`--shadow-card: 0 24px 48px -24px rgb(0 0 0 / .55)`), not from borders + shadows + glows together.
-- Glow is reserved for 3D scenes and unread rings. Never a glow on buttons.
+- Radii: `--radius-sm` 4, `--radius-md` 6 (buttons, inputs), `--radius-lg` 8 (cards). Pills (`rounded-full`) only for chips, avatars, switches.
+- Depth = **solid offset "sticker" shadows**, not blur: `shadow-sticker` (4px peach), `shadow-sticker-accent` (4px amber), cards `--shadow-card` (6px amber).
+- Borders are bold: `border-2`, peach (`border-text`) on dark.
+- **Patterns** (CSS only, no images): `bg-burst` ("Afterglow" amber/peach sunburst: hero, log-in header, match, Plus) and
+  `bg-ripple` (amber rings: closing CTA, card theme). At most one pattern block per screen; text on it is Jet Black.
+- `<Torn>` (`components/ui/Torn`): torn-paper edge at the bottom of a pattern block, filled with the colour below.
+- Doodles (`Star`, `Arrow`): decorative, `aria-hidden`, slightly rotated.
 
 ## 5. Component patterns
 
@@ -96,8 +87,9 @@ the match moment. Never as a page background, never on text paragraphs, never be
 bottom scrim (`linear-gradient(to top, rgb(0 0 0 / .72), transparent 55%)`) so white text is always AA, name in Display `text-xl`.
 
 **Button** (`components/ui/Button`), min-height 48px, `rounded-md`, `text-base font-medium`, 16px/24px padding:
-- `primary`: `--grad-warm` background, `--on-accent` text. One per screen.
-- `secondary`: `--surface-2` background, `--text`.
+- `primary`: amber fill, Jet Black label, peach `shadow-sticker`; pressing slides it into its shadow. One per screen.
+- `secondary`: transparent with a 2px peach border.
+- **Google**: always Google's own rendered button (`components/ui/GoogleButton`), never a homemade one.
 - `ghost`: transparent, `--text`, underline-on-hover only for inline links.
 - `danger`: `--danger` text on `--surface-2` (fill only in confirm dialogs).
 - Pressed: scale 0.97 with the `snappy` spring. Disabled: 45% opacity, no pointer, `aria-disabled`.
@@ -156,19 +148,11 @@ Do:
 
 ## 9. "After dark" mood (inside the app only)
 
-A sensual night theme, in the spirit of apps like Pure: moody, warm, flirty. **Suggestive, never explicit.**
+A night variant, in the spirit of apps like Pure: moody, warm, flirty. **Suggestive, never explicit.**
 Set with `data-mood="after-dark"` on `<html>` by `MoodProvider` (`web/lib/mood.tsx`). It turns on by default when the user's
 intents include HOOKUP, FRIENDS_WITH_BENEFITS, ONE_NIGHT_STAND or CASUAL_DATING; the header toggle switches it, and the choice is remembered.
 
-| Token | After dark |
-|---|---|
-| `--bg` / `--surface` / `--surface-2` | #0B0608 / #160B10 / #22121A (wine-black) |
-| `--text` / `--muted` | #F7E9EC / #C0A0AB |
-| `--accent` / `--accent-2` | #FF8296 (rose) / #E59BE8 (orchid) |
-| gradient `--grad-a → b → c` | #FFB07A (candle) → #FF6F91 (rose) → #D77BE0 (orchid) |
-| `--like` / `--pass` / `--super` / `--danger` | #5FDDA5 / #A8949D / #7CC0FF / #FF7A86 |
-
-All pairs are AA (checked). The page gets a faint candle-light vignette; cards a soft rose halo.
+Same palette, lit lower and warmer: slightly browner surfaces, a stronger amber glow on cards and a faint amber vignette.
 
 Rules:
 - **Never on the landing page, the web pages for privacy/deletion, or Play Store screenshots**: Google Play rejects sexually suggestive store listings. The public brand stays calm.

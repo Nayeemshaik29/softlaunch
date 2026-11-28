@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppHeader, BottomNav } from "@/components/app/AppHeader";
+import { CallOverlay } from "@/components/call/CallOverlay";
+import { CallProvider } from "@/lib/calls";
 import { NotificationWatcher } from "@/components/app/NotificationWatcher";
 import { EnergyProvider } from "@/lib/energy";
 import { MatchMomentProvider } from "@/lib/match-moment";
@@ -33,12 +35,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <MoodProvider>
     <EnergyProvider>
       <MatchMomentProvider>
+      <CallProvider>
         <NotificationWatcher onUnread={setUnread} />
         <AppHeader unread={unread} />
         <main id="main" className="mx-auto max-w-[1120px] px-4 pb-24 pt-6 sm:px-6 md:pb-12">
           {children}
         </main>
         <BottomNav unread={unread} />
+        <CallOverlay />
+      </CallProvider>
       </MatchMomentProvider>
     </EnergyProvider>
     </MoodProvider>

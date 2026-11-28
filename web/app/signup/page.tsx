@@ -9,7 +9,10 @@ import { Choice, Chip, CompletionRing, ProgressArc } from "@/components/onboardi
 import { PhotoGrid } from "@/components/onboarding/PhotoGrid";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
+import { Arrow, Note, Star } from "@/components/ui/Doodles";
+import { GoogleButton } from "@/components/ui/GoogleButton";
 import { Logo } from "@/components/ui/Logo";
+import { GOOGLE_CLIENT_ID, googleSignIn, peekPendingGoogle, takePendingGoogle, type PendingGoogle } from "@/lib/google";
 import { api, ApiError } from "@/lib/api";
 import { spring } from "@/lib/motion";
 import { completeLogin } from "@/lib/session";
@@ -52,13 +55,18 @@ function completion(p: { bio: string; gender: string; interestedIn: string[]; lo
 export default function Signup() {
   const router = useRouter();
   const reduce = useReducedMotion();
-  const [step, setStep] = useState(1);
+  // step 0 = "Get in": Google or email. Without Google configured we start at the first question.
+  // Arrived from /login (or the landing page) with a Google account we don't know yet: straight to the birthday.
+  const [arrived] = useState(peekPendingGoogle);
+  const [step, setStep] = useState(arrived ? (arrived.suggestedName ? 2 : 1) : GOOGLE_CLIENT_ID ? 0 : 1);
+  // signed in with Google but new here: we only still need the birthday (Google doesn't share age)
+  const [google, setGoogle] = useState<PendingGoogle | null>(arrived);
   const [dir, setDir] = useState(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
 
-  const [name, setName] = useState("");
+  const [name, setName] = useState(arrived?.suggestedName ?? "");
   const [dob, setDob] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -75,6 +83,30 @@ export default function Signup() {
 
   const age = ageOn(dob);
   const percent = completion({ bio, gender, interestedIn, lookingFor, interests, photos, city });
+
+  useEffect(() => {
+    takePendingGoogle(); // used once: the token now lives only in this page's state
+  }, []);
+
+  function startGoogle(p: PendingGoogle) {
+    setGoogle(p);
+    setName(p.suggestedName);
+    setDir(1);
+    setError(null);
+    setStep(p.suggestedName ? 2 : 1);
+  }
+
+  async function onGoogle(idToken: string) {
+    setError(null);
+    try {
+      const r = await googleSignIn(idToken);
+      if (r.kind === "in") return router.push("/swipe"); // already has an account: just logged in
+      startGoogle(r);
+    } catch (e) {
+      const err = e as ApiError;
+      setError(err.status === 429 ? "Too many tries from this network. Wait a minute and try again." : err.message);
+    }
+  }
 
   // move focus to each new question (screen readers + keyboard users)
   useEffect(() => {
@@ -131,6 +163,14 @@ export default function Signup() {
     setBusy(true);
     setError(null);
     try {
+      if (step === 2 && google) {
+        // Google: create the account with the birthday now, skip the email/password step
+        const r = await googleSignIn(google.idToken, { dateOfBirth: dob, displayName: name.trim() || google.suggestedName });
+        if (r.kind !== "in") throw new Error("Something went wrong. Try Google again.");
+        setGoogle(null);
+        go(4);
+        return;
+      }
       if (step === 3) {
         // create the account, then log in: from here on, steps save to the profile
         await api("/api/users/auth/signup", { method: "POST", auth: false, body: { email: email.trim(), password, displayName: name.trim(), dateOfBirth: dob } });
@@ -153,7 +193,7 @@ export default function Signup() {
     } catch (e) {
       const err = e as ApiError;
       setError(
-        err.status === 409 ? "That email already has an account." :
+        err.status === 409 && !google && step === 3 ? "That email already has an account." :
         err.status === 429 ? "Too many tries from this network. Wait a minute and try again." :
         err.problem?.errors ? Object.values(err.problem.errors)[0] : err.message,
       );
@@ -186,6 +226,34 @@ export default function Signup() {
     "Show them who you are",
   ];
 
+  if (step === 0) {
+    return (
+      <div className="mx-auto flex min-h-dvh max-w-md flex-col px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))]">
+        <div className="flex items-center justify-between">
+          <Logo />
+          <Link href="/login" className="inline-flex min-h-12 items-center text-xs font-bold tracking-[0.14em] text-accent uppercase">Log in</Link>
+        </div>
+        <main id="main" className="flex flex-1 flex-col">
+          <div className="relative mt-6">
+            <h1 className="font-display text-[clamp(6rem,32vw,8rem)] leading-[0.86]">Get<br /><span className="text-accent">in.</span></h1>
+            <span className="absolute right-4 top-6 rotate-12"><Star size={56} /></span>
+            <Note className="absolute right-2 top-36 -rotate-6 text-right">no endless<br />swiping, promise</Note>
+          </div>
+          <p className="mt-6 text-lg text-muted">Fewer, better matches. Chats that fade in 24 hours. Verified people.</p>
+          <div className="mt-auto flex flex-col gap-4 pt-10">
+            <GoogleButton text="signup_with" onCredential={(t) => void onGoogle(t)} onError={setError} />
+            <Button type="button" variant="secondary" size="lg" onClick={() => go(1)}>Use email instead</Button>
+            {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+            <p className="text-center text-xs text-muted">
+              18+ only. By continuing you agree to our{" "}
+              <a className="text-accent underline underline-offset-4" href={`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080"}/privacy`} target="_blank" rel="noreferrer">Privacy Policy</a>.
+            </p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <LayoutGroup>
       <div className="mx-auto grid min-h-dvh max-w-[1120px] gap-12 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_380px]">
@@ -209,7 +277,16 @@ export default function Signup() {
                 noValidate
                 className="flex flex-1 flex-col"
               >
-                <h1 ref={heading} tabIndex={-1} className="font-display text-3xl font-normal outline-none sm:text-4xl">{titles[step - 1]}</h1>
+                {google && step <= 2 && (
+                  <div className="mb-6 flex flex-col items-start gap-4">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-white py-1.5 pl-2 pr-3 text-sm font-medium text-[#1f1f1f]">
+                      <svg aria-hidden width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                      {google.email}
+                    </span>
+                    {step === 2 && <p className="text-xs font-bold tracking-[0.14em] text-accent uppercase">One thing Google doesn&rsquo;t tell us</p>}
+                  </div>
+                )}
+                <h1 ref={heading} tabIndex={-1} className="font-display text-4xl outline-none sm:text-[4.5rem] sm:leading-[0.9]">{titles[step - 1]}</h1>
 
                 <div className="mt-8 flex flex-col gap-6">
                   {step === 1 && (
@@ -217,6 +294,12 @@ export default function Signup() {
                       onChange={(e) => setName(e.target.value)} error={shown} hint="This is how you'll appear. You can change it later." />
                   )}
 
+                  {step === 2 && google && (
+                    <div className="-mb-2 flex items-start gap-2" aria-hidden>
+                      <Arrow />
+                      <Note className="mt-2">we only show your age, never the date</Note>
+                    </div>
+                  )}
                   {step === 2 && (
                     <Field big label="Date of birth" type="date" value={dob} max={new Date().toISOString().slice(0, 10)}
                       onChange={(e) => setDob(e.target.value)} error={shown}
@@ -302,7 +385,12 @@ export default function Signup() {
 
                 <motion.div layoutId="onboarding-cta" className="mt-auto flex items-center justify-between gap-4 pt-12">
                   {step > 1 && step !== 4 ? (
-                    <Button type="button" variant="ghost" onClick={() => go(step - 1)}>Back</Button>
+                    <Button type="button" variant="ghost" onClick={() => {
+                      if (google) { setGoogle(null); return go(0); }
+                      go(step - 1);
+                    }}>Back</Button>
+                  ) : step === 1 && GOOGLE_CLIENT_ID ? (
+                    <Button type="button" variant="ghost" onClick={() => go(0)}>Back</Button>
                   ) : <span />}
                   <Button type="submit" size="lg" disabled={busy || (step === 2 && !!problem && !!dob)}>
                     {busy ? "One moment…" : step === 3 ? "Create account" : step === 5 ? (photos.length ? "Start discovering" : "Skip photos for now") : "Continue"}

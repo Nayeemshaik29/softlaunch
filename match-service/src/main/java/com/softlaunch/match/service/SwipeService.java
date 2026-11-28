@@ -31,11 +31,14 @@ public class SwipeService {
     private final SwipeQuotaService swipeQuotaService;
     private final UserVerifier userVerifier;
     private final UserBlockRepository userBlockRepository;
+    private final com.softlaunch.match.activity.ActivityRecorder activity;
 
     public SwipeService(ApplicationEventPublisher eventPublisher, SwipeRepository swipeRepository,
                         MatchRepository matchRepository,
                         SwipeQuotaService swipeQuotaService, UserVerifier userVerifier,
-                        UserBlockRepository userBlockRepository) {
+                        UserBlockRepository userBlockRepository,
+                        com.softlaunch.match.activity.ActivityRecorder activity) {
+        this.activity = activity;
         this.userBlockRepository = userBlockRepository;
         this.eventPublisher = eventPublisher;
         this.swipeRepository = swipeRepository;
@@ -68,6 +71,9 @@ public class SwipeService {
         eventPublisher.publishEvent(
                 SwipeRecordedEvent.of(saved.getId(), swiperId, targetId, request.direction().name())); // 🆕
 
+        activity.count(swiperId, "swipes", 1);
+        if (POSITIVE.contains(request.direction())) activity.count(swiperId, "likes", 1);
+
         UUID matchId = null;
         // Blocked pairs never match. We don't say why: the swipe just looks like "no match yet".
         if (POSITIVE.contains(request.direction()) && likedBack(targetId, swiperId)
@@ -88,6 +94,9 @@ public class SwipeService {
             return null;
         }
         Match saved = matchRepository.save(match);
+        activity.count(first, "matches", 1);
+        activity.count(second, "matches", 1);
+        activity.feed(first, "match");
 
         eventPublisher.publishEvent(
                 MatchCreatedEvent.of(saved.getId(), saved.getUserAId(), saved.getUserBId()));

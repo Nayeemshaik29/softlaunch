@@ -5,9 +5,9 @@ import * as THREE from "three";
 // Generated "portrait" textures for the landing hero: abstract warm shapes, no real people's faces.
 // (Using photos of real-looking people we don't have rights to is something the design skill forbids.)
 const PALETTES = [
-  ["#ff8a6b", "#7a2f4f", "#f6c6a8"],
-  ["#b79bff", "#2b2147", "#ffd2c2"],
-  ["#f66f9a", "#3a1830", "#ffe0b8"],
+  ["#f28c28", "#7a2f4f", "#f6c6a8"],
+  ["#f3d9c6", "#2b2147", "#ffd2c2"],
+  ["#f6b26b", "#3a1830", "#ffe0b8"],
   ["#6cb8ff", "#16263f", "#ffd9e4"],
   ["#ffb36b", "#3b2414", "#c9b8ff"],
   ["#4fd69c", "#12302a", "#ffe6c9"],

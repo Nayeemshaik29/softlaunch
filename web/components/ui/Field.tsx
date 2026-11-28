@@ -15,16 +15,16 @@ export function Field({ label, error, hint, big, className = "", ...input }: Pro
   const describedBy = [error ? `${id}-err` : null, hint ? `${id}-hint` : null].filter(Boolean).join(" ") || undefined;
   return (
     <div className={className}>
-      <label htmlFor={id} className="mb-2 block text-sm font-medium text-text">
+      <label htmlFor={id} className="mb-2 block text-xs font-bold tracking-[0.08em] text-text uppercase">
         {label}
       </label>
       <input
         id={id}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
-        className={`w-full rounded-md border bg-surface-2 px-4 text-text placeholder:text-muted outline-none transition-colors
+        className={`w-full rounded-md border-2 bg-bg px-4 text-text placeholder:text-muted outline-none transition-colors
           focus-visible:border-focus ${big ? "min-h-16 text-xl" : "min-h-14 text-base"}
-          ${error ? "border-danger" : "border-line"}`}
+          ${error ? "border-danger" : "border-text/70"}`}
         {...input}
       />
       {hint && !error && (

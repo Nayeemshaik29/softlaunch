@@ -227,7 +227,7 @@ function RoundButton({
       whileTap={reduce ? undefined : { scale: 0.9 }}
       whileHover={reduce ? undefined : { y: -2 }}
       transition={spring.snappy}
-      className={`grid place-items-center rounded-full border border-line bg-surface shadow-card ${color}`}
+      className={`grid place-items-center rounded-full border-2 border-current bg-surface ${color}`}
       style={{ width: size, height: size }}
     >
       <svg aria-hidden width="24" height="24" viewBox="0 0 24 24">{children}</svg>

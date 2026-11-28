@@ -1,13 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Instrument_Sans } from "next/font/google";
+import { Archivo_Black, Bricolage_Grotesque, Caveat, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  axes: ["SOFT", "opsz"],
-  variable: "--font-fraunces",
-  display: "swap",
-});
+// Display: condensed, extra-bold caps. Hand: little handwritten notes. Sans: everything you read.
+const bricolage = Bricolage_Grotesque({ subsets: ["latin"], axes: ["wdth", "opsz"], variable: "--font-bricolage", display: "swap" });
+// Wordmark only ("SoftLaunch" next to the peach)
+const archivo = Archivo_Black({ subsets: ["latin"], weight: "400", variable: "--font-wordmark", display: "swap" });
+const caveat = Caveat({ subsets: ["latin"], weight: "600", variable: "--font-caveat", display: "swap" });
 const instrument = Instrument_Sans({ subsets: ["latin"], variable: "--font-instrument", display: "swap" });
 
 export const metadata: Metadata = {
@@ -17,15 +16,12 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   viewportFit: "cover", // phone apps: draw under the notch / home bar; padding comes from env(safe-area-inset-*)
-  themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0e0c10" },
-    { media: "(prefers-color-scheme: light)", color: "#fbf7f3" },
-  ],
+  themeColor: "#0b0b0c",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${instrument.variable}`}>
+    <html lang="en" className={`${bricolage.variable} ${caveat.variable} ${archivo.variable} ${instrument.variable}`}>
       {process.env.NEXT_PUBLIC_MOBILE_CSP && (
         <head>
           {/* phone apps only: static files can't send a CSP header */}
