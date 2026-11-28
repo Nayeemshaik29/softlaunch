@@ -12,7 +12,7 @@ export default function Landing() {
           <ButtonLink href="/login" variant="secondary">Log in</ButtonLink>
         </div>
       </header>
-      <main id="main">
+      <main id="main" data-landing>
         <Hero />
         <Marquee />
         <HowItWorks />

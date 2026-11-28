@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { api, ApiError } from "@/lib/api";
 import { DESIRES, LIMIT, type DesireInfo, type Level } from "@/lib/desires";
 import { spring } from "@/lib/motion";
-import { haptic } from "@/lib/native";
+import { haptic, useBackToClose } from "@/lib/native";
 import type { Desires } from "@/lib/types";
 
 const LEVEL_TEXT: Record<Level, string> = { none: "Not set", into: "Into", openTo: "Open to", notInto: "Not into" };
@@ -27,6 +27,7 @@ function DesireSheet({ d, level, counts, onPick, onClose }: {
   d: DesireInfo; level: Level; counts: { into: number; openTo: number };
   onPick: (l: Level) => void; onClose: () => void;
 }) {
+  useBackToClose(onClose);
   const reduce = useReducedMotion();
   const first = useRef<HTMLButtonElement>(null);
   useEffect(() => {

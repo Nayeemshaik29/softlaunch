@@ -1,5 +1,6 @@
 "use client";
 
+import { useBackToClose } from "@/lib/native";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -92,6 +93,7 @@ export function CallPlanBar({ matchId, name, s, onChange }: { matchId: string; n
 
 /** ₹50 per day, each: 10 ❤ from the wallet (top up on the Hearts page). Both people need access to call. */
 export function PassSheet({ matchId, name, s, onClose, onPaid }: { matchId: string; name: string; s: CallStatus; onClose: () => void; onPaid: () => void }) {
+  useBackToClose(onClose);
   const reduce = useReducedMotion();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<"hearts" | string | null>(null);

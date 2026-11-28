@@ -1,5 +1,6 @@
 "use client";
 
+import { useBackToClose } from "@/lib/native";
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { DesireIcon } from "@/components/desires/DesireIcon";
@@ -44,6 +45,7 @@ const height = (cm: number) => { const inch = Math.round(cm / 2.54); return `${M
 export function ProfileSheet({ card, onClose, onAction, onNote }: {
   card: FeedCard; onClose: () => void; onAction: (a: SwipeAction) => void; onNote: () => void;
 }) {
+  useBackToClose(onClose);
   const reduce = useReducedMotion();
   const [p, setP] = useState<FullProfile | null>(null);
   const [photo, setPhoto] = useState(0);

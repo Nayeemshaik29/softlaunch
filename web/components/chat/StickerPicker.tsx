@@ -1,5 +1,6 @@
 "use client";
 
+import { useBackToClose } from "@/lib/native";
 import { motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
 import { Heart } from "@/components/hearts/Heart";
@@ -11,6 +12,7 @@ type Tab = "stickers" | "gifts" | "emoji";
 export function StickerPicker({ onSticker, onGift, onEmoji, onClose }: {
   onSticker: (id: string) => void; onGift: (id: string) => void; onEmoji: (e: string) => void; onClose: () => void;
 }) {
+  useBackToClose(onClose);
   const reduce = useReducedMotion();
   const [tab, setTab] = useState<Tab>("stickers");
   const tabBtn = (t: Tab, label: string) => (

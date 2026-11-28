@@ -1,5 +1,6 @@
 "use client";
 
+import { useBackToClose } from "@/lib/native";
 import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -18,6 +19,7 @@ function Countdown({ until }: { until: string }) {
 
 /** King of the Hill: 30 minutes at the top of everyone's deck nearby (15 ❤, or the weekly free crown). */
 export function CrownSheet({ wallet, onClose, onChange }: { wallet: Wallet; onClose: () => void; onChange: () => void }) {
+  useBackToClose(onClose);
   const reduce = useReducedMotion();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");

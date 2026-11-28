@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 import { Capacitor } from "@capacitor/core";
 
 /**
@@ -93,6 +95,13 @@ export async function discreetIconOn(): Promise<boolean | null> {
 
 /** Android back button: the newest open overlay (e.g. the match moment) closes first. */
 const backHandlers: (() => void)[] = [];
+
+/** Android Back closes this sheet/dialog (instead of leaving the screen or the app) while it's open. */
+export function useBackToClose(onClose: () => void) {
+  const ref = useRef(onClose);
+  useEffect(() => { ref.current = onClose; });
+  useEffect(() => onBackButton(() => ref.current()), []);
+}
 export function onBackButton(handler: () => void) {
   backHandlers.push(handler);
   return () => {
@@ -128,3 +137,9 @@ export async function setupNative() {
   await SplashScreen.hide({ fadeOutDuration: 250 }).catch(() => {});
   return () => void handle.remove();
 }
+
+/**
+ * Store rules: real app builds can't sell digital items through Razorpay (Apple IAP / Google Play Billing come next).
+ * Test builds made with NEXT_PUBLIC_DEV_BUY=1 (never shipped) show the normal checkout so payments can be tried.
+ */
+export const buyingBlockedInApp = () => isNative() && process.env.NEXT_PUBLIC_DEV_BUY !== "1";

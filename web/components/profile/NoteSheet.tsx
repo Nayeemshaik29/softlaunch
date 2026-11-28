@@ -1,5 +1,6 @@
 "use client";
 
+import { useBackToClose } from "@/lib/native";
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { Heart } from "@/components/hearts/Heart";
@@ -7,6 +8,7 @@ import { spring } from "@/lib/motion";
 
 /** "Note with a like" (5 ❤): they read it, and can only reply by liking you back. */
 export function NoteSheet({ name, onClose, onSend }: { name: string; onClose: () => void; onSend: (note: string) => void }) {
+  useBackToClose(onClose);
   const reduce = useReducedMotion();
   const [text, setText] = useState("");
   const box = useRef<HTMLTextAreaElement>(null);

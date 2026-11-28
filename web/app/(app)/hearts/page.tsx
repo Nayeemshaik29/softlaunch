@@ -8,7 +8,7 @@ import { CheckoutSheet } from "@/components/pay/Checkout";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { api } from "@/lib/api";
 import { useWallet } from "@/lib/hearts";
-import { isNative } from "@/lib/native";
+import { buyingBlockedInApp } from "@/lib/native";
 import { rupees } from "@/lib/plus";
 import type { Plan } from "@/lib/types";
 
@@ -47,7 +47,7 @@ export default function HeartsPage() {
       <h1 className="mt-2 font-display text-6xl">Get Hearts</h1>
       {wallet?.freeTier && <p className="mt-1 text-sm text-muted">You get 20 ❤ free every month with your verified Plus.</p>}
 
-      {isNative() ? (
+      {buyingBlockedInApp() ? (
         <p className="mt-6 rounded-lg border-2 border-line bg-surface p-5 text-muted">Hearts can&rsquo;t be bought in the app just yet. Buy them on the website and they show up here.</p>
       ) : packs === null ? (
         <div className="mt-6 grid grid-cols-2 gap-3">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-28" />)}</div>

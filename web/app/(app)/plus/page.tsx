@@ -10,7 +10,7 @@ import { api, ApiError } from "@/lib/api";
 import { useEnergy } from "@/lib/energy";
 import { myProfile } from "@/lib/me";
 import { reveal } from "@/lib/motion";
-import { isNative } from "@/lib/native";
+import { buyingBlockedInApp } from "@/lib/native";
 import { rupees } from "@/lib/plus";
 import type { MyProfile, Plan, PlusStatus } from "@/lib/types";
 
@@ -112,7 +112,7 @@ export default function PlusPage() {
             ))}
           </motion.ul>
 
-          {isNative() ? (
+          {buyingBlockedInApp() ? (
             // Store rules: digital purchases inside the apps must use Apple IAP / Google Play Billing (coming next).
             <p className="mt-8 rounded-lg border-2 border-line bg-surface p-5 text-muted">Plus can&rsquo;t be bought in the app just yet. Buy it on the website and it works here too.</p>
           ) : plans === null ? (

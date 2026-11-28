@@ -1,5 +1,6 @@
 "use client";
 
+import { useBackToClose } from "@/lib/native";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { ApiError } from "@/lib/api";
@@ -40,6 +41,7 @@ export function CheckoutSheet({ plan, perks, onClose, onPaid }: {
 }) {
   const reduce = useReducedMotion();
   const [stage, setStage] = useState<Stage>("summary");
+  useBackToClose(() => { if (stage !== "paying") onClose(); });
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState("");
   const first = useRef<HTMLButtonElement>(null);
