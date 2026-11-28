@@ -44,8 +44,20 @@ export default function MatchMoment({ data, onClose }: { data: MatchMomentData; 
   const router = useRouter();
   const reduce = useReducedMotion();
   const { t, palette } = useMood();
-  const [cinematic] = useState(() => !reduce && canRun3D());
-  const [started, setStarted] = useState(!cinematic);
+  const [wants3D] = useState(() => !reduce && canRun3D());
+  // The 3D scene can fail or be very slow (weak phones, emulators): after 2.5s we fall back to the photo version,
+  // so the match screen is never left black.
+  const [fallback, setFallback] = useState(false);
+  const cinematic = wants3D && !fallback;
+  const [started, setStarted] = useState(!wants3D);
+  useEffect(() => {
+    if (!wants3D || started) return;
+    const id = window.setTimeout(() => {
+      setFallback(true);
+      setStarted(true);
+    }, 2500);
+    return () => window.clearTimeout(id);
+  }, [wants3D, started]);
   const [canSkip, setCanSkip] = useState(false);
   const [skipped, setSkipped] = useState(false);
   const [sound, setSound] = useState(() => {

@@ -13,7 +13,29 @@ import { reveal } from "@/lib/motion";
 import { useMood } from "@/lib/mood";
 import type { Likes, PublicProfile, SwipeAction, SwipeResponse } from "@/lib/types";
 
-interface Fan { userId: string; superLike: boolean; person: PublicProfile | null }
+interface Fan { userId: string; superLike: boolean; note: string | null; person: PublicProfile | null }
+
+/** A like that came with a note: shown to everyone (the sender paid for exactly that). */
+function NoteCard({ f, onAnswer }: { f: Fan; onAnswer: (d: SwipeAction) => void }) {
+  const p = f.person!;
+  return (
+    <li className="rounded-lg border-2 border-accent bg-surface p-4 shadow-sticker-accent">
+      <div className="flex items-center gap-3">
+        <span className="size-14 shrink-0 overflow-hidden rounded-md border-2 border-text bg-surface-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {p.photoUrls[0] && <img src={p.photoUrls[0]} alt="" className={`size-full object-cover ${p.veiled ? "scale-110 blur-md" : ""}`} />}
+        </span>
+        <div><p className="font-bold">{p.displayName}{p.age ? `, ${p.age}` : ""} {p.verified && <span className="text-accent">✓</span>}</p><p className="text-xs text-muted">liked you with a note 💌</p></div>
+      </div>
+      <p className="mt-3 rounded-md bg-surface-2 p-3 text-lg leading-snug">&ldquo;{f.note}&rdquo;</p>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <button type="button" onClick={() => onAnswer("PASS")} className="min-h-12 rounded-md border-2 border-text font-bold tracking-[0.06em] uppercase">Not for me</button>
+        <button type="button" onClick={() => onAnswer("LIKE")} className="min-h-12 rounded-md border-2 border-bg bg-accent font-bold tracking-[0.06em] text-on-accent uppercase shadow-sticker">Like back</button>
+      </div>
+      <p className="mt-2 text-xs text-muted">Liking back makes it a match and opens the chat.</p>
+    </li>
+  );
+}
 
 export default function LikesPage() {
   const reduce = useReducedMotion();
@@ -60,7 +82,7 @@ export default function LikesPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="font-display text-2xl">{t("Liked you", "They noticed you")}</h1>
+      <h1 className="font-display text-[4rem] leading-[0.9]">{t("Likes", "They noticed you")}</h1>
       <p role="status" aria-live="polite" className="mt-2 min-h-6 text-sm text-muted">{status}</p>
 
       {data === null ? (
@@ -70,6 +92,9 @@ export default function LikesPage() {
           body="When someone likes you, they'll appear here." action={<ButtonLink href="/swipe" variant="secondary">Keep discovering</ButtonLink>} />
       ) : !data.plus ? (
         <>
+          {data.fans.some((f) => f.note) && (
+            <ul className="mb-6 grid gap-4">{data.fans.filter((f) => f.note).map((f) => <NoteCard key={f.userId} f={f} onAnswer={(d) => void answer(f, d)} />)}</ul>
+          )}
           <p className="text-lg">
             <span className="font-display text-2xl tabular">{data.count}</span> {data.count === 1 ? "person likes" : "people like"} you.
           </p>
@@ -86,8 +111,12 @@ export default function LikesPage() {
           </div>
         </>
       ) : (
+        <>
+        {data.fans.some((f) => f.note) && (
+          <ul className="mt-4 grid gap-4">{data.fans.filter((f) => f.note).map((f) => <NoteCard key={f.userId} f={f} onAnswer={(d) => void answer(f, d)} />)}</ul>
+        )}
         <motion.ul variants={reveal.container} initial="hidden" animate="show" className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {data.fans.map((f) => (
+          {data.fans.filter((f) => !f.note).map((f) => (
             <motion.li key={f.userId} variants={item} className="relative aspect-[3/4] overflow-hidden rounded-lg bg-surface-2 shadow-card">
               {f.person!.photoUrls[0] && (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -105,6 +134,7 @@ export default function LikesPage() {
             </motion.li>
           ))}
         </motion.ul>
+        </>
       )}
     </div>
   );

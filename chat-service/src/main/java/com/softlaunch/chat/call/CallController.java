@@ -35,6 +35,12 @@ public class CallController {
         return calls.setConsent(me, matchId, req.mode());
     }
 
+    @GetMapping("/api/chats/{matchId}/calls/status")
+    @ResponseBody
+    public CallRules.Status status(@RequestHeader("X-User-Id") UUID me, @PathVariable UUID matchId) {
+        return calls.status(me, matchId);
+    }
+
     @GetMapping("/api/chats/calls/ice-servers")
     @ResponseBody
     public IceServers iceServers(@RequestHeader("X-User-Id") UUID me) {

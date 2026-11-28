@@ -29,11 +29,14 @@ public class UserService {
     private final LoginAttemptService loginAttempts;
     private final com.softlaunch.user.session.RefreshTokenService refreshTokens;
     private final com.softlaunch.user.activity.ActivityRecorder activity;
+    private final com.softlaunch.user.hearts.FreeTier freeTier;
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService,
                        AuthMetrics authMetrics, LoginAttemptService loginAttempts,
                        com.softlaunch.user.session.RefreshTokenService refreshTokens,
-                       com.softlaunch.user.activity.ActivityRecorder activity) {
+                       com.softlaunch.user.activity.ActivityRecorder activity,
+                       com.softlaunch.user.hearts.FreeTier freeTier) {
+        this.freeTier = freeTier;
         this.activity = activity;
         this.refreshTokens = refreshTokens;
         this.authMetrics = authMetrics;
@@ -98,6 +101,7 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This account is suspended. Contact support if you think that's a mistake.");
         }
         activity.login(user.getId());
+        freeTier.sync(user.getId());   // verified women / non-binary: Plus is free
         String token = jwtService.generateToken(user);
         authMetrics.loginSucceeded();
         return new LoginResult(new AuthResponse(token, "Bearer", jwtService.getExpiration().toSeconds()),

@@ -19,6 +19,7 @@ export interface FeedCard {
   score: number;
   veiled: boolean; // photos are blurred copies until you match
   mutualDesires: string[]; // desires you both chose (shown in After dark)
+  crownedUntil?: string | null; // King of the Hill: shown first, with a crown, until then
 }
 
 /** match-service SwipeResponse */
@@ -53,6 +54,8 @@ export interface Plan {
   amountPaise: number;
   currency: string;
   days: number;
+  kind: "plus" | "hearts";
+  hearts: number; // pack size, or the Plus bonus
 }
 
 export interface PlusStatus {
@@ -60,6 +63,7 @@ export interface PlusStatus {
   activeUntil: string | null;
   planId: string | null;
   provider: "mock" | "razorpay";
+  freeTier: boolean; // verified woman / non-binary: Plus is on us
 }
 
 export interface Checkout {
@@ -74,7 +78,33 @@ export interface Checkout {
 export interface Likes {
   count: number;
   plus: boolean;
-  likes: { userId: string; superLike: boolean; likedAt: string }[];
+  likes: { userId: string; superLike: boolean; likedAt: string; note: string | null }[];
+}
+
+export type HeartItem = "CROWN" | "NOTE" | "GIFT" | "KEEP_CHAT" | "CALL_PASS";
+
+export interface Wallet {
+  balance: number;
+  freeTier: boolean;
+  freeCrownAvailable: boolean;
+  crownedUntil: string | null;
+  recent: { delta: number; reason: string; at: string }[];
+  prices: Record<HeartItem, number>;
+}
+
+export type CallAccess = "FREE_TIER" | "FREE_WINDOW" | "PASS" | "NONE";
+
+export interface CallStatus {
+  consent: { mine: string; theirs: string; allowed: string };
+  freeUntil: string | null;
+  firstCallDone: boolean;
+  callDays: number;
+  daysForVideo: number;
+  videoUnlocked: boolean;
+  freeVideoToday: boolean;
+  me: CallAccess;
+  them: CallAccess;
+  passEndsAt: string;
 }
 
 /** match-service MatchResponse */

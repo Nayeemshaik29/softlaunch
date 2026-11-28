@@ -41,4 +41,9 @@ public class Message {
     public Instant getSentAt() { return sentAt; }
     public Instant getExpiresAt() { return expiresAt; }
     public MessageType getType() { return type == null ? MessageType.TEXT : type; }
+
+    /** Keep chat: this message fades later. */
+    public void extendBy(java.time.Duration d) {
+        if (expiresAt != null) expiresAt = expiresAt.plus(d);
+    }
 }

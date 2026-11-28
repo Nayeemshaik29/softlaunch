@@ -60,10 +60,16 @@ softlaunch:
     # mock = fake checkout for local/CI (no money moves). razorpay = real Razorpay (TEST keys until launch).
     provider: ${BILLING_PROVIDER:mock}
     currency: INR
-    plans:   # amounts in paise (₹1 = 100 paise). Kept low on purpose: ₹49 / ₹99 / ₹249
+    plans:   # amounts in paise (₹1 = 100 paise). Plus is free for VERIFIED women and non-binary members.
       - { id: plus-week,    name: "Plus · 1 week",    amount-paise: 4900,  period: 7d }
       - { id: plus-month,   name: "Plus · 1 month",   amount-paise: 9900,  period: 30d }
       - { id: plus-quarter, name: "Plus · 3 months",  amount-paise: 24900, period: 90d }
+      - { id: plus-year,    name: "Plus · 1 year",    amount-paise: 69900, period: 365d }
+      # Hearts packs (one wallet for crowns, notes, gifts, keep-chat and call passes)
+      - { id: hearts-10,  name: "10 Hearts",  amount-paise: 4900,  hearts: 10 }
+      - { id: hearts-30,  name: "30 Hearts",  amount-paise: 12900, hearts: 30 }
+      - { id: hearts-80,  name: "80 Hearts",  amount-paise: 29900, hearts: 80 }
+      - { id: hearts-200, name: "200 Hearts", amount-paise: 64900, hearts: 200 }
     razorpay:
       key-id: ${RAZORPAY_KEY_ID:}
       key-secret: ${RAZORPAY_KEY_SECRET:}

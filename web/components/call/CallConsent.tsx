@@ -22,12 +22,15 @@ export function useConsent(matchId: string) {
 const lock = <svg aria-hidden width="12" height="12" viewBox="0 0 12 12" className="absolute -bottom-0.5 -right-0.5"><rect x="2" y="5" width="8" height="6" rx="1" fill="currentColor" /><path d="M4 5V3.5a2 2 0 014 0V5" fill="none" stroke="currentColor" strokeWidth="1.5" /></svg>;
 
 /** Phone + camera buttons in the chat header. Locked (with the reason) until both people said yes. */
-export function CallButtons({ matchId, consent, peer }: { matchId: string; consent: Consent | null; peer: { userId: string; name: string; photo: string | null } | null }) {
+export function CallButtons({ matchId, consent, peer, videoUnlocked = true }: {
+  matchId: string; consent: Consent | null; peer: { userId: string; name: string; photo: string | null } | null; videoUnlocked?: boolean;
+}) {
   const calls = useCalls();
   const audioOk = !!consent && consent.allowed !== "OFF";
-  const videoOk = consent?.allowed === "VIDEO";
+  const videoOk = consent?.allowed === "VIDEO" && videoUnlocked;
   const busy = calls.state.phase !== "idle" && calls.state.phase !== "ended";
-  const why = !consent || consent.allowed === "OFF" ? "Calls unlock when you both say yes" : "Video needs both of you to allow it";
+  const why = !consent || consent.allowed === "OFF" ? "Calls unlock when you both say yes"
+    : consent.allowed === "VIDEO" && !videoUnlocked ? "Video unlocks after calls on 3 different days" : "Video needs both of you to allow it";
   const cls = (ok: boolean) =>
     `relative grid size-11 place-items-center rounded-full border-2 ${ok ? "border-text text-text hover:bg-surface-2" : "border-line text-muted/60"}`;
   return (

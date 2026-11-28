@@ -12,7 +12,16 @@ import java.util.List;
 @ConfigurationProperties("softlaunch.billing")
 public record BillingProperties(String provider, String currency, List<Plan> plans, Razorpay razorpay) {
 
-    public record Plan(String id, String name, long amountPaise, Duration period) {
+    /** A Plus pass (period set) or a Hearts pack (hearts > 0, no period). */
+    public record Plan(String id, String name, long amountPaise, Duration period, int hearts) {
+        public boolean isHearts() {
+            return hearts > 0;
+        }
+
+        /** Plus comes with 20 ❤ per 30 days of pass (week: 5, year: 240). */
+        public int bonusHearts() {
+            return period == null ? 0 : (int) Math.max(5, Math.round(period.toDays() * 20 / 30.0));
+        }
     }
 
     public record Razorpay(String keyId, String keySecret, String webhookSecret, String apiUrl) {

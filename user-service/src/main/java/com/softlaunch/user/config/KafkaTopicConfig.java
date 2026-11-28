@@ -17,4 +17,10 @@ public class KafkaTopicConfig {
                 .replicas(1)
                 .build();
     }
+
+    /** "Keep chat" paid with ❤: chat-service extends that chat's messages. */
+    @Bean
+    public NewTopic chatKeptTopic() {
+        return TopicBuilder.name("chat.kept").partitions(3).replicas(1).build();
+    }
 }

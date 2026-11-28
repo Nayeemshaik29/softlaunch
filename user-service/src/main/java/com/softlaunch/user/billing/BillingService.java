@@ -27,9 +27,14 @@ public class BillingService {
     private final PlusEntitlement entitlement;
     private final MeterRegistry metrics;
     private final JsonMapper json;
+    private final com.softlaunch.user.hearts.HeartService hearts;
+    private final com.softlaunch.user.hearts.FreeTier freeTier;
 
     public BillingService(BillingProperties props, PaymentProvider provider, PurchaseRepository purchases,
-                          PlusMembershipRepository memberships, PlusEntitlement entitlement, MeterRegistry metrics, JsonMapper json) {
+                          PlusMembershipRepository memberships, PlusEntitlement entitlement, MeterRegistry metrics, JsonMapper json,
+                          com.softlaunch.user.hearts.HeartService hearts, com.softlaunch.user.hearts.FreeTier freeTier) {
+        this.hearts = hearts;
+        this.freeTier = freeTier;
         this.props = props;
         this.provider = provider;
         this.purchases = purchases;
@@ -39,10 +44,11 @@ public class BillingService {
         this.json = json;
     }
 
-    public record PlanView(String id, String name, long amountPaise, String currency, long days) {
+    public record PlanView(String id, String name, long amountPaise, String currency, long days, String kind, int hearts) {
     }
 
-    public record Status(boolean plus, Instant activeUntil, String planId, String provider) {
+    /** freeTier = verified woman / non-binary: Plus is on us (activeUntil then = the paid pass, if any). */
+    public record Status(boolean plus, Instant activeUntil, String planId, String provider, boolean freeTier) {
     }
 
     public record Checkout(String orderId, String provider, long amountPaise, String currency, String planName, Map<String, Object> checkout) {
@@ -50,15 +56,18 @@ public class BillingService {
 
     public List<PlanView> plans() {
         return props.plans().stream()
-                .map(p -> new PlanView(p.id(), p.name(), p.amountPaise(), props.currency(), p.period().toDays())).toList();
+                .map(p -> new PlanView(p.id(), p.name(), p.amountPaise(), props.currency(),
+                        p.period() == null ? 0 : p.period().toDays(), p.isHearts() ? "hearts" : "plus",
+                        p.isHearts() ? p.hearts() : p.bonusHearts())).toList();
     }
 
     @Transactional(readOnly = true)
     public Status status(UUID userId) {
+        boolean free = freeTier.eligible(userId);
         return memberships.findById(userId)
                 .filter(m -> m.getActiveUntil().isAfter(Instant.now()))
-                .map(m -> new Status(true, m.getActiveUntil(), m.getLastPlanId(), provider.name()))
-                .orElse(new Status(false, null, null, provider.name()));
+                .map(m -> new Status(true, m.getActiveUntil(), m.getLastPlanId(), provider.name(), free))
+                .orElse(new Status(free, null, null, provider.name(), free));
     }
 
     @Transactional
@@ -125,6 +134,14 @@ public class BillingService {
 
     private void activate(Purchase p, String paymentId) {
         if (!p.markPaid(paymentId)) return;   // already done (browser + webhook both arrived): no double extension
+        BillingProperties.Plan plan = props.plan(p.getPlanId());
+        if (plan.isHearts()) {
+            hearts.credit(p.getUserId(), plan.hearts(), "buy:" + plan.id(), p.getId().toString());
+            metrics.counter("softlaunch.billing.payments", "result", "paid", "plan", p.getPlanId()).increment();
+            log.info("{} ❤ added for {} (purchase {})", plan.hearts(), p.getUserId(), p.getId());   // ids only
+            return;
+        }
+        hearts.credit(p.getUserId(), plan.bonusHearts(), "plus_bonus", p.getId().toString());
         PlusMembership m = memberships.findForUpdate(p.getUserId()).orElseGet(() -> new PlusMembership(p.getUserId()));
         m.extend(props.plan(p.getPlanId()), Instant.now());
         memberships.save(m);

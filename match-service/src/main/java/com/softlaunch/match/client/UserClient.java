@@ -11,4 +11,8 @@ public interface UserClient {
 
     @GetMapping("/internal/users/{userId}")
     UserSummary getUser(@PathVariable("userId") UUID userId);
+
+    /** Spend ❤ (user-service wallet). 402 when the balance is too low. */
+    @org.springframework.web.bind.annotation.PostMapping("/internal/users/{userId}/hearts/spend")
+    void spendHearts(@PathVariable("userId") UUID userId, @org.springframework.web.bind.annotation.RequestBody java.util.Map<String, String> body);
 }

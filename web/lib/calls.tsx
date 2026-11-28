@@ -96,6 +96,10 @@ const ENDED_TEXT: Record<string, string> = {
   slow_down: "One moment before calling again.",
   you_are_busy: "You're already in a call.",
   media: "We couldn't use your microphone or camera. Check the permission and try again.",
+  pass_needed: "Your free calling day is over. Get today's pass to call.",
+  their_pass_needed: "They need today's pass too. Calls start when you both have one.",
+  video_locked: "Video unlocks after you've called on 3 different days.",
+  failed: "The call dropped. Try again.",
 };
 export const endedText = (r: string | null) => (r && ENDED_TEXT[r]) || "Call ended.";
 

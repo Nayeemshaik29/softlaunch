@@ -31,13 +31,15 @@ public class SwipeService {
     private final SwipeQuotaService swipeQuotaService;
     private final UserVerifier userVerifier;
     private final UserBlockRepository userBlockRepository;
+    private final HeartSpender hearts;
     private final com.softlaunch.match.activity.ActivityRecorder activity;
 
     public SwipeService(ApplicationEventPublisher eventPublisher, SwipeRepository swipeRepository,
                         MatchRepository matchRepository,
                         SwipeQuotaService swipeQuotaService, UserVerifier userVerifier,
                         UserBlockRepository userBlockRepository,
-                        com.softlaunch.match.activity.ActivityRecorder activity) {
+                        com.softlaunch.match.activity.ActivityRecorder activity, HeartSpender hearts) {
+        this.hearts = hearts;
         this.activity = activity;
         this.userBlockRepository = userBlockRepository;
         this.eventPublisher = eventPublisher;
@@ -58,6 +60,16 @@ public class SwipeService {
             throw new AlreadySwipedException(targetId);
         }
         userVerifier.requireExists(targetId);
+        String note = request.note() == null ? null : request.note().strip();
+        if (note != null && !note.isEmpty()) {
+            if (!POSITIVE.contains(request.direction())) {
+                throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Notes go with a like.");
+            }
+            if (swipeQuotaService.status(swiperId).remaining() <= 0) swipeQuotaService.consume(swiperId); // throws the usual "out of swipes" before any ❤ are spent
+            hearts.spendNote(swiperId, targetId);
+        } else {
+            note = null;
+        }
         boolean superLike = request.direction() == SwipeDirection.SUPER_LIKE;
         if (superLike) swipeQuotaService.consumeSuperLike(swiperId);
         try {
@@ -67,7 +79,9 @@ public class SwipeService {
             throw e;
         }
 
-        Swipe saved = swipeRepository.save(new Swipe(swiperId, targetId, request.direction()));
+        Swipe toSave = new Swipe(swiperId, targetId, request.direction());
+        toSave.setNote(note);
+        Swipe saved = swipeRepository.save(toSave);
         eventPublisher.publishEvent(
                 SwipeRecordedEvent.of(saved.getId(), swiperId, targetId, request.direction().name())); // 🆕
 

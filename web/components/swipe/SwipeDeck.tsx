@@ -1,6 +1,10 @@
 "use client";
 
-import { motion, useMotionValue, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useMotionValue, useReducedMotion } from "framer-motion";
+import Link from "next/link";
+import { Crown } from "@/components/hearts/Heart";
+import { NoteSheet } from "@/components/profile/NoteSheet";
+import { ProfileSheet } from "@/components/profile/ProfileSheet";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, ApiError } from "@/lib/api";
@@ -40,6 +44,10 @@ export function SwipeDeck() {
   const reduce = useReducedMotion();
   const router = useRouter();
   const lastPassed = useRef<FeedCard | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(false);
+  const pendingNote = useRef<string | null>(null);   // goes out with the next like
+  const [needHearts, setNeedHearts] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -90,7 +98,9 @@ export function SwipeDeck() {
       });
 
       // optimistic: the request runs while the card flies
-      api<SwipeResponse>("/api/matches/swipes", { method: "POST", body: { targetUserId: card.userId, direction: action } })
+      const note = action === "PASS" ? null : pendingNote.current;
+      pendingNote.current = null;
+      api<SwipeResponse>("/api/matches/swipes", { method: "POST", body: { targetUserId: card.userId, direction: action, ...(note ? { note } : {}) } })
         .then(async (res) => {
           if (res.matched && res.matchId) {
             // matched now: a veiled profile's REAL photo is allowed, ask for it (the veil lifts in the match moment)
@@ -112,6 +122,13 @@ export function SwipeDeck() {
             energy.refund();
             setNote(err.problem.plus ? "That's your 5 super likes for today. Back at midnight." : "That's your super like for today. Plus gives you 5 a day.");
             void energy.refresh();
+            return;
+          }
+          if (err instanceof ApiError && err.status === 402) {
+            energy.refund();
+            setRestoredId(card.userId);
+            setNeedHearts(true);
+            setNote(`A note costs 5 ❤. ${card.displayName} is back on top.`);
             return;
           }
           energy.refund();
@@ -169,6 +186,13 @@ export function SwipeDeck() {
             {cards.slice(1, 3).map((c, i) => (
               <BackCard key={c.userId} card={c} depth={i + 1} progress={progress} />
             ))}
+            {cards[0].crownedUntil && (
+              <span className="pointer-events-none absolute left-3 top-6 z-20 inline-flex items-center gap-1.5 rounded-full border-2 border-bg bg-accent px-3 py-1 text-xs font-extrabold tracking-[0.06em] text-on-accent shadow-[0_0_24px_-4px_var(--accent)]">
+                <Crown size={16} fill="var(--bg)" /> KING OF THE HILL
+              </span>
+            )}
+            <button type="button" onClick={() => setProfileOpen(true)} aria-label={`Open ${cards[0].displayName}'s full profile`}
+              className="absolute right-3 top-6 z-20 grid size-11 place-items-center rounded-full border-2 border-text bg-bg/70 text-lg font-bold backdrop-blur">i</button>
             <TopCard
               key={cards[0].userId + (restoredId === cards[0].userId ? "-back" : "")}
               ref={top}
@@ -197,12 +221,32 @@ export function SwipeDeck() {
           <RoundButton label="Super like" hint="Up arrow" onClick={() => top.current?.fling("SUPER_LIKE")} tone="super" size={52}>
             <path d="M12 3.5l2.5 5.4 5.9.6-4.4 4 1.3 5.8L12 16.4l-5.3 2.9L8 13.5l-4.4-4 5.9-.6z" fill="currentColor" />
           </RoundButton>
+          <RoundButton label="Like with a note (5 Hearts)" hint="note" onClick={() => setNoteOpen(true)} tone="super" size={48}>
+            <path d="M3 6h18v12H3zM3 7l9 7 9-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+          </RoundButton>
           <RoundButton label="Like" hint="Right arrow" onClick={() => top.current?.fling("LIKE")} tone="like" size={64}>
             <path d="M12 19.5s-7-4.3-7-9.6A3.9 3.9 0 0112 7.6a3.9 3.9 0 017 2.3c0 5.3-7 9.6-7 9.6z" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" />
           </RoundButton>
         </motion.div>
       )}
-      {note && <p role="status" className="mt-4 text-center text-sm text-text">{note}</p>}
+      {note && <p role="status" className="mt-4 text-center text-sm text-text">{note}{needHearts && <> <Link href="/hearts" className="font-bold text-accent underline">Get Hearts</Link></>}</p>}
+      <AnimatePresence>
+        {profileOpen && cards?.[0] && (
+          <ProfileSheet card={cards[0]} onClose={() => setProfileOpen(false)}
+            onAction={(a) => { setProfileOpen(false); window.setTimeout(() => top.current?.fling(a), 250); }}
+            onNote={() => setNoteOpen(true)} />
+        )}
+        {noteOpen && cards?.[0] && (
+          <NoteSheet name={cards[0].displayName} onClose={() => setNoteOpen(false)}
+            onSend={(text) => {
+              pendingNote.current = text;
+              setNoteOpen(false);
+              setProfileOpen(false);
+              setNeedHearts(false);
+              window.setTimeout(() => top.current?.fling("LIKE"), 250);
+            }} />
+        )}
+      </AnimatePresence>
       {energy.quota && (
         <p className="mt-4 text-xs text-muted tabular" aria-label={`${energy.quota.superLikesRemaining} super likes left today`}>
           ★ {energy.quota.superLikesRemaining}/{energy.quota.superLikeLimit} super likes today

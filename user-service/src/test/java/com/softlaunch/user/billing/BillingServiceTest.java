@@ -24,7 +24,9 @@ import static org.mockito.Mockito.*;
 class BillingServiceTest {
 
     private final BillingProperties props = new BillingProperties("mock", "INR",
-            List.of(new BillingProperties.Plan("plus-month", "Plus · 1 month", 9900, Duration.ofDays(30))), null);
+            List.of(new BillingProperties.Plan("plus-month", "Plus · 1 month", 9900, Duration.ofDays(30), 0),
+                    new BillingProperties.Plan("hearts-30", "30 Hearts", 12900, null, 30)), null);
+    private final com.softlaunch.user.hearts.HeartService hearts = mock(com.softlaunch.user.hearts.HeartService.class);
     private final MockPaymentProvider provider = new MockPaymentProvider();
     private final PurchaseRepository purchases = mock(PurchaseRepository.class);
     private final PlusMembershipRepository memberships = mock(PlusMembershipRepository.class);
@@ -37,7 +39,7 @@ class BillingServiceTest {
     @BeforeEach
     void setUp() {
         billing = new BillingService(props, provider, purchases, memberships, entitlement, new SimpleMeterRegistry(),
-                JsonMapper.builder().build());
+                JsonMapper.builder().build(), hearts, mock(com.softlaunch.user.hearts.FreeTier.class));
         when(purchases.save(any())).thenAnswer(i -> { Purchase p = i.getArgument(0); orders.put(p.getProviderOrderId(), p); return p; });
         when(purchases.findByProviderOrderId(any())).thenAnswer(i -> Optional.ofNullable(orders.get(i.<String>getArgument(0))));
         when(memberships.findForUpdate(any())).thenAnswer(i -> Optional.ofNullable(members.get(i.<UUID>getArgument(0))));
@@ -91,5 +93,23 @@ class BillingServiceTest {
     @Test
     void unknownPlanIsRefused() {
         assertThatThrownBy(() -> billing.checkout(me, "plus-forever")).isInstanceOf(ResponseStatusException.class);
+    }
+
+    @Test
+    void aHeartsPackCreditsHeartsOnceAndNoPlus() {
+        var checkout = billing.checkout(me, "hearts-30");
+        billing.mockPay(me, checkout.orderId());
+        verify(hearts).credit(eq(me), eq(30), eq("buy:hearts-30"), any());
+        verify(memberships, never()).save(any());
+        // the webhook for the same payment must not credit again
+        Purchase p = orders.get(checkout.orderId());
+        org.assertj.core.api.Assertions.assertThat(p.markPaid("again")).isFalse();
+    }
+
+    @Test
+    void plusComesWithBonusHearts() {
+        var checkout = billing.checkout(me, "plus-month");
+        billing.mockPay(me, checkout.orderId());
+        verify(hearts).credit(eq(me), eq(20), eq("plus_bonus"), any());
     }
 }

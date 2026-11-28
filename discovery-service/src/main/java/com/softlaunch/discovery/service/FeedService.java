@@ -36,9 +36,11 @@ public class FeedService {
     private final SafetyFilter safetyFilter;
     private final VibeScores vibeScores;
     private final PrivateModeFilter privateMode;
+    private final CrownBoost crowns;
 
     public FeedService(LocationService locationService, UserProfileClient userProfileClient, FeedCache feedCache,
-                       SafetyFilter safetyFilter, VibeScores vibeScores, PrivateModeFilter privateMode) {
+                       SafetyFilter safetyFilter, VibeScores vibeScores, PrivateModeFilter privateMode, CrownBoost crowns) {
+        this.crowns = crowns;
         this.privateMode = privateMode;
         this.vibeScores = vibeScores;
         this.locationService = locationService;
@@ -57,7 +59,7 @@ public class FeedService {
         Set<String> hidden = safetyFilter.hiddenFrom(me);
         List<FeedCard> visible = hidden.isEmpty() ? feed
                 : feed.stream().filter(card -> !hidden.contains(card.userId().toString())).toList();
-        return privateMode.apply(me, visible);
+        return crowns.apply(privateMode.apply(me, visible));
     }
 
     private List<FeedCard> buildFeed(UUID me, int radiusKm) {

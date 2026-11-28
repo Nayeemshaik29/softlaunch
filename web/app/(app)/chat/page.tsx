@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import { CallButtons, ConsentCard, useConsent } from "@/components/call/CallConsent";
+import { CallPlanBar, FreeVideoMoment, useCallStatus } from "@/components/call/CallPlan";
+import { StickerPicker } from "@/components/chat/StickerPicker";
+import { StickerView } from "@/components/chat/Stickers";
+import { Heart } from "@/components/hearts/Heart";
+import { needsHearts, spendHearts } from "@/lib/hearts";
+import { useCalls } from "@/lib/calls";
 import { Avatar } from "@/components/matches/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -14,7 +21,7 @@ import { getSession } from "@/lib/session";
 import { protectScreen } from "@/lib/native";
 import type { MatchSummary, PublicProfile } from "@/lib/types";
 
-interface Msg { id: string; senderId: string; text: string; sentAt: string; type: "TEXT" | "SYSTEM" | null }
+interface Msg { id: string; senderId: string; text: string; sentAt: string; expiresAt?: string; type: "TEXT" | "SYSTEM" | "STICKER" | "GIFT" | null }
 
 /** Minimal web chat (REST, refreshed every 5s). Messages fade after 24 hours (chat-service). */
 export default function ChatPage() {
@@ -41,6 +48,30 @@ function Chat() {
   // a match whose profile isn't finished yet still gets a name and can still call
   const peerName = person?.displayName ?? "Your match";
   const peer = otherId ? { userId: otherId, name: peerName, photo: person?.photoUrls[0] ?? null } : null;
+  const { status: callStatus, refresh: refreshCalls } = useCallStatus(matchId);
+  const calls = useCalls();
+  const [picker, setPicker] = useState(false);
+  const [toast, setToast] = useState<React.ReactNode>(null);
+
+  async function sendSticker(id: string, gift: boolean) {
+    setPicker(false);
+    try {
+      const saved = await api<Msg>(`/api/chats/${matchId}/stickers`, { method: "POST", body: { sticker: id } });
+      setMsgs((m) => [...(m ?? []), saved]);
+    } catch (e) {
+      setToast(needsHearts(e) ? <>A gift costs 3 ❤. <Link href="/hearts" className="font-bold text-accent underline">Get Hearts</Link></> : (e as ApiError).message);
+    }
+    void gift;
+  }
+
+  async function keepChat() {
+    try {
+      const r = await spendHearts("KEEP_CHAT", matchId);
+      setToast(`Kept ✓ This chat lives 24 hours longer. ${r.balance} ❤ left.`);
+    } catch (e) {
+      setToast(needsHearts(e) ? <>Keeping a chat costs 5 ❤. <Link href="/hearts" className="font-bold text-accent underline">Get Hearts</Link></> : (e as ApiError).message);
+    }
+  }
 
   useEffect(() => {
     let stop = false;
@@ -105,7 +136,7 @@ function Chat() {
           <>
             <Avatar src={person?.photoUrls[0]} name={peerName} size={44} />
             <h1 className="font-display text-xl">{peerName}</h1>
-            <CallButtons matchId={matchId} consent={consent} peer={peer} />
+            <CallButtons matchId={matchId} consent={consent} peer={peer} videoUnlocked={callStatus?.videoUnlocked ?? false} />
           </>
         )}
       </header>
@@ -119,6 +150,11 @@ function Chat() {
           <ul className="flex flex-col gap-2">
             {msgs.map((m) => m.type === "SYSTEM" ? (
               <li key={m.id} className="py-2 text-center text-xs text-muted">{m.text}</li>
+            ) : m.type === "STICKER" || m.type === "GIFT" ? (
+              <li key={m.id} className={`${m.senderId === me ? "ml-auto" : ""} flex flex-col items-center`}>
+                <StickerView id={m.text} gift={m.type === "GIFT"} />
+                {m.type === "GIFT" && <span className="text-[11px] text-muted">🎁 gift</span>}
+              </li>
             ) : (
               <li key={m.id} className={`max-w-[80%] rounded-lg px-4 py-2 ${m.senderId === me ? "ml-auto bg-accent text-on-accent" : "bg-surface-2"}`}>
                 {m.text}
@@ -129,9 +165,18 @@ function Chat() {
         <div ref={end} />
       </div>
 
-      {person !== undefined && <ConsentCard matchId={matchId} name={peerName} consent={consent} onChange={setConsentState} />}
+      {person !== undefined && <ConsentCard matchId={matchId} name={peerName} consent={consent} onChange={(c) => { setConsentState(c); void refreshCalls(); }} />}
+      {callStatus && <CallPlanBar matchId={matchId} name={peerName} s={callStatus} onChange={() => void refreshCalls()} />}
+      {callStatus && peer && <FreeVideoMoment matchId={matchId} name={peerName} s={callStatus} onVideo={() => void calls.start(matchId, peer, true)} />}
+      {toast && <p role="status" className="mb-2 rounded-md bg-surface-2 px-3 py-2 text-sm">{toast} <button type="button" onClick={() => setToast(null)} className="ml-1 text-muted" aria-label="Dismiss">✕</button></p>}
+      <div className="flex justify-end pb-1">
+        <button type="button" onClick={() => void keepChat()} className="inline-flex min-h-9 items-center gap-1 text-xs font-bold text-muted hover:text-text">⏳ Keep this chat 24h longer · 5 <Heart size={12} /></button>
+      </div>
+      <AnimatePresence>{picker && <StickerPicker onClose={() => setPicker(false)} onSticker={(id) => void sendSticker(id, false)} onGift={(id) => void sendSticker(id, true)} onEmoji={(e) => setText((t) => t + e)} />}</AnimatePresence>
       <form onSubmit={send} className="flex gap-2 border-t border-line pt-4">
         <label htmlFor="msg" className="sr-only">Message</label>
+        <button type="button" onClick={() => setPicker((v) => !v)} aria-expanded={picker} aria-label="Stickers, gifts and emoji"
+          className={`grid size-12 shrink-0 place-items-center rounded-md border-2 text-2xl ${picker ? "border-accent bg-accent" : "border-line"}`}>😏</button>
         <input id="msg" value={text} onChange={(e) => setText(e.target.value)} maxLength={1000} autoComplete="off"
           placeholder="Write a message" className="min-h-12 flex-1 rounded-md border border-line bg-surface-2 px-4 outline-none placeholder:text-muted focus-visible:border-focus" />
         <Button type="submit" disabled={!text.trim()}>Send</Button>

@@ -34,7 +34,19 @@ public class Swipe {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
+    /** Optional note sent with a like. Shown to the person liked; they can only reply by liking back. */
+    @Column(length = 200)
+    private String note;
+
     protected Swipe() {
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 
     public Swipe(UUID swiperId, UUID targetId, SwipeDirection direction) {

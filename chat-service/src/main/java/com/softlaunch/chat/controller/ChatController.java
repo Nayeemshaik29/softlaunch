@@ -42,6 +42,16 @@ public class ChatController {
         return chatService.send(me, matchId, request.text());
     }
 
+    public record StickerRequest(@jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Size(max = 30) String sticker) {
+    }
+
+    @PostMapping("/{matchId}/stickers")
+    @ResponseStatus(HttpStatus.CREATED)
+    public MessageResponse sticker(@RequestHeader("X-User-Id") UUID me, @PathVariable UUID matchId,
+                                   @Valid @RequestBody StickerRequest request) {
+        return chatService.sendSticker(me, matchId, request.sticker());
+    }
+
     @GetMapping("/{matchId}/messages")
     public List<MessageResponse> history(@RequestHeader("X-User-Id") UUID me,
                                          @PathVariable UUID matchId) {

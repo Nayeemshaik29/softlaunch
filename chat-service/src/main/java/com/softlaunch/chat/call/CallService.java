@@ -38,9 +38,11 @@ public class CallService {
     private final SimpMessagingTemplate stomp;
     private final CallProperties props;
     private final ActivityRecorder activity;
+    private final CallRules rules;
 
     public CallService(StringRedisTemplate redis, ParticipantGuard guard, SimpMessagingTemplate stomp,
-                       CallProperties props, ActivityRecorder activity) {
+                       CallProperties props, ActivityRecorder activity, CallRules rules) {
+        this.rules = rules;
         this.redis = redis;
         this.guard = guard;
         this.stomp = stomp;
@@ -83,6 +85,12 @@ public class CallService {
         return new Consent(mine, theirs, CallMode.lowerOf(mine, theirs));
     }
 
+    /** Timer, day tracker and paywall in the chat. */
+    public CallRules.Status status(UUID me, UUID matchId) {
+        MatchSummary match = guard.requireParticipant(me, matchId);
+        return rules.status(me, match.otherThan(me), matchId, consentOf(matchId, me, match.otherThan(me)));
+    }
+
     // ------------------------------------------------------------------ ICE servers
 
     public IceServers iceServers(UUID me) {
@@ -118,6 +126,11 @@ public class CallService {
             send(me, error(matchId, "not_allowed"));
             return;
         }
+        String blocked = rules.problem(me, other, matchId, video);
+        if (blocked != null) {
+            send(me, error(matchId, blocked));
+            return;
+        }
         if (Boolean.FALSE.equals(redis.opsForValue().setIfAbsent("call:ringlimit:" + me, "1", Duration.ofSeconds(5)))) {
             send(me, error(matchId, "slow_down"));
             return;
@@ -149,6 +162,7 @@ public class CallService {
             return;
         }
         redis.opsForHash().put(activeKey(matchId), "state", "active");
+        rules.callAnswered(matchId, Boolean.parseBoolean((String) call.get("video")));
         redis.opsForHash().put(activeKey(matchId), "startedAt", Instant.now().toString());
         redis.expire(activeKey(matchId), props.maxCall());
         redis.expire(busyKey(me), props.maxCall());
@@ -183,7 +197,15 @@ public class CallService {
                 send(me, error(matchId, "video_not_allowed"));
                 return;
             }
-            if (req.kind().equals("video-accept")) redis.opsForHash().put(activeKey(matchId), "video", "true");
+            String blocked = rules.problem(me, other, matchId, true);
+            if (blocked != null) {
+                send(me, error(matchId, blocked));
+                return;
+            }
+            if (req.kind().equals("video-accept")) {
+                redis.opsForHash().put(activeKey(matchId), "video", "true");
+                rules.callAnswered(matchId, true);
+            }
         }
         send(other, new CallEvent("signal", matchId, callId, me.toString(), null, req.kind(), req.payload(), null, null));
     }
@@ -202,6 +224,7 @@ public class CallService {
         Map<Object, Object> call = redis.opsForHash().entries(activeKey(matchId));
         if (!call.isEmpty()) finish(matchId, call, null, "match_removed");
         redis.delete(consentKey(matchId));
+        rules.forget(matchId);
     }
 
     private void finish(UUID matchId, Map<Object, Object> call, UUID by, String reason) {

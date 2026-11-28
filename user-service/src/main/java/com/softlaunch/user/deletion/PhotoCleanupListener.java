@@ -23,10 +23,13 @@ public class PhotoCleanupListener {
     private final com.softlaunch.user.privacy.PrivacyService privacy;
     private final com.softlaunch.user.billing.BillingService billing;
     private final com.softlaunch.user.activity.ActivityRecorder activity;
+    private final com.softlaunch.user.hearts.HeartService hearts;
 
     public PhotoCleanupListener(PhotoService photos, JsonMapper json, com.softlaunch.user.privacy.PrivacyService privacy,
                                 com.softlaunch.user.billing.BillingService billing,
-                                com.softlaunch.user.activity.ActivityRecorder activity) {
+                                com.softlaunch.user.activity.ActivityRecorder activity,
+                                com.softlaunch.user.hearts.HeartService hearts) {
+        this.hearts = hearts;
         this.activity = activity;
         this.billing = billing;
         this.privacy = privacy;
@@ -43,6 +46,7 @@ public class PhotoCleanupListener {
         int removed = photos.deleteAllOf(event.userId());   // originals AND blurred copies (same folder)
         privacy.forget(event.userId());
         activity.forget(event.userId());  // admin dashboard counters
+        hearts.forget(event.userId());    // wallet + receipts
         billing.forget(event.userId());   // Plus ends; purchase records stay for tax/refunds (ids + amounts only)
         log.info("Deleted user {}: {} photo file(s) removed from storage", event.userId(), removed);
     }

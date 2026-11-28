@@ -28,7 +28,7 @@ public class LikesService {
         this.plus = plus;
     }
 
-    public record Like(UUID userId, boolean superLike, Instant likedAt) {
+    public record Like(UUID userId, boolean superLike, Instant likedAt, String note) {
     }
 
     /** Everyone sees HOW MANY people liked them; only Plus sees WHO. */
@@ -39,9 +39,11 @@ public class LikesService {
     public Likes likesOf(UUID me) {
         List<Swipe> pending = swipes.findPendingLikesOf(me);
         boolean isPlus = plus.isPlus(me);
-        List<Like> who = isPlus
-                ? pending.stream().map(s -> new Like(s.getSwiperId(), s.getDirection() == SwipeDirection.SUPER_LIKE, s.getCreatedAt())).toList()
-                : List.of();
+        // Plus sees everyone; without Plus you still see who sent a NOTE (they paid for exactly that)
+        List<Like> who = pending.stream()
+                .filter(s -> isPlus || s.getNote() != null)
+                .map(s -> new Like(s.getSwiperId(), s.getDirection() == SwipeDirection.SUPER_LIKE, s.getCreatedAt(), s.getNote()))
+                .toList();
         return new Likes(pending.size(), isPlus, who);
     }
 

@@ -26,7 +26,7 @@ class CallRulesTest {
     @Test
     void noRelayWithoutASecret() {
         CallService calls = new CallService(null, null, null,
-                new CallProperties(List.of("stun:x:3478"), List.of("turn:x:3478"), "", null, null, null), null);
+                new CallProperties(List.of("stun:x:3478"), List.of("turn:x:3478"), "", null, null, null), null, null);
         var ice = calls.iceServers(java.util.UUID.randomUUID());
         assertThat(ice.iceServers()).hasSize(1);
         assertThat(ice.iceServers().get(0).username()).isNull();
