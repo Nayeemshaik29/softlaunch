@@ -14,6 +14,7 @@ import { GoogleButton } from "@/components/ui/GoogleButton";
 import { Logo } from "@/components/ui/Logo";
 import { GOOGLE_CLIENT_ID, googleSignIn, peekPendingGoogle, takePendingGoogle, type PendingGoogle } from "@/lib/google";
 import { api, ApiError } from "@/lib/api";
+import { currentPosition } from "@/lib/location";
 import { spring } from "@/lib/motion";
 import { completeLogin } from "@/lib/session";
 import { isNative, nativeAuthHeaders } from "@/lib/native";
@@ -203,14 +204,13 @@ export default function Signup() {
   }
 
   const locate = () => {
-    if (!navigator.geolocation) return setError("Your browser can't share location. Type your city instead.");
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (p) => { setCoords({ lat: p.coords.latitude, lon: p.coords.longitude }); setLocating(false); },
-      () => { setLocating(false); setError("No problem. Type your city; you can share location later for nearby matches."); },
-      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 600_000 },
-    );
+    currentPosition()
+      .then((p) => setCoords({ lat: p.coords.latitude, lon: p.coords.longitude }))
+      .catch(() => setError("No problem. Type your city; you can share location later for nearby matches."))
+      .finally(() => setLocating(false));
   };
+
 
   const variants = {
     enter: (d: number) => (reduce ? { opacity: 0 } : { opacity: 0, x: 48 * d }),

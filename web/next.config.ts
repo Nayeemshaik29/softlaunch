@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const api = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const apiWs = api.replace(/^http/, "ws"); // calls: the signalling WebSocket (ws:// locally, wss:// in production)
 const media = process.env.NEXT_PUBLIC_MEDIA_ORIGIN ?? "http://localhost:9000";
 const dev = process.env.NODE_ENV !== "production";
 // BUILD_TARGET=mobile → static files for the Capacitor apps (iOS/Android). Default → the normal web server.
@@ -16,7 +17,7 @@ const csp = [
   `style-src 'self' 'unsafe-inline' ${gis}style`,
   `img-src 'self' data: blob: ${media}`,
   "font-src 'self'",
-  `connect-src 'self' ${api} ${media} https://api.razorpay.com https://lumberjack.razorpay.com ${gis}${dev ? " ws:" : ""}`,
+  `connect-src 'self' ${api} ${apiWs} ${media} https://api.razorpay.com https://lumberjack.razorpay.com ${gis}${dev ? " ws:" : ""}`,
   `frame-src https://api.razorpay.com https://checkout.razorpay.com ${gis}`, // Razorpay Checkout; Google's sign-in button
   "media-src 'self' blob:",
   "worker-src 'self' blob:",

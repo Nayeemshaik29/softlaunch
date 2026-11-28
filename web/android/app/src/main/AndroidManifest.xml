@@ -46,4 +46,7 @@
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <!-- "People near you": approximate location is enough (others only see a rounded distance) -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- The app's web view asks for both (Capacitor); Android 12+ still lets people choose "Approximate".
+         We only ever use a rounded location. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 </manifest>

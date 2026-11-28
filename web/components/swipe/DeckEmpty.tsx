@@ -5,27 +5,26 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { useMood } from "@/lib/mood";
 import { useState } from "react";
 import { api } from "@/lib/api";
+import { currentPosition } from "@/lib/location";
+import { isNative } from "@/lib/native";
 
 export function DeckEmpty({ error, needsLocation, onRetry }: { error: boolean; needsLocation: boolean; onRetry: () => void }) {
   const { t } = useMood();
   const [locating, setLocating] = useState(false);
   const [denied, setDenied] = useState(false);
 
-  const share = () => {
-    if (!navigator.geolocation) return setDenied(true);
+  const share = async () => {
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (p) => {
-        try {
-          await api("/api/discovery/me/location", { method: "PUT", body: { latitude: p.coords.latitude, longitude: p.coords.longitude } });
-          onRetry();
-        } finally {
-          setLocating(false);
-        }
-      },
-      () => { setLocating(false); setDenied(true); },
-      { timeout: 10_000, maximumAge: 600_000 },
-    );
+    try {
+      const p = await currentPosition();
+      await api("/api/discovery/me/location", { method: "PUT", body: { latitude: p.coords.latitude, longitude: p.coords.longitude } });
+      setDenied(false);
+      onRetry();
+    } catch {
+      setDenied(true);
+    } finally {
+      setLocating(false);
+    }
   };
 
   if (needsLocation) {
@@ -34,8 +33,12 @@ export function DeckEmpty({ error, needsLocation, onRetry }: { error: boolean; n
         <EmptyState
           kind="rings"
           title="Where should we look?"
-          body={denied ? "Location is off for this site. Turn it on in your browser settings, then try again." : "Share your location to see people nearby. Others only ever see a rounded distance."}
-          action={<Button onClick={share} disabled={locating}>{locating ? "Finding you…" : "Use my location"}</Button>}
+          body={denied
+            ? isNative()
+              ? "We couldn't get your location. Turn on Location for SoftLaunch in your phone's Settings (Approximate is enough), then try again."
+              : "Location is off for this site. Turn it on in your browser settings, then try again."
+            : "Share your location to see people nearby. Others only ever see a rounded distance."}
+          action={<Button onClick={() => void share()} disabled={locating}>{locating ? "Finding you…" : "Use my location"}</Button>}
         />
       </div>
     );
