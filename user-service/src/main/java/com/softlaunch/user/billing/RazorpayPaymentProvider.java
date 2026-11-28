@@ -19,6 +19,8 @@ import java.util.Map;
 @ConditionalOnProperty(name = "softlaunch.billing.provider", havingValue = "razorpay")
 class RazorpayPaymentProvider implements PaymentProvider {
 
+    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(RazorpayPaymentProvider.class);
+
     private final BillingProperties.Razorpay cfg;
     private final RestClient http;
 
@@ -26,6 +28,13 @@ class RazorpayPaymentProvider implements PaymentProvider {
         this.cfg = props.razorpay();
         if (cfg == null || blank(cfg.keyId()) || blank(cfg.keySecret()) || blank(cfg.webhookSecret())) {
             throw new IllegalStateException("softlaunch.billing.provider=razorpay needs RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET and RAZORPAY_WEBHOOK_SECRET");
+        }
+        if (cfg.keyId().startsWith("rzp_live_")) {
+            LOG.warn("Razorpay LIVE mode: payments take real money");
+        } else if (cfg.keyId().startsWith("rzp_test_")) {
+            LOG.info("Razorpay TEST mode: no real money moves");
+        } else {
+            throw new IllegalStateException("RAZORPAY_KEY_ID must start with rzp_test_ or rzp_live_");
         }
         SimpleClientHttpRequestFactory f = new SimpleClientHttpRequestFactory();
         f.setConnectTimeout(Duration.ofSeconds(3));

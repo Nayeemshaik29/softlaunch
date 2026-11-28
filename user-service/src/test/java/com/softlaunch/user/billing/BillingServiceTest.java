@@ -112,4 +112,60 @@ class BillingServiceTest {
         billing.mockPay(me, checkout.orderId());
         verify(hearts).credit(eq(me), eq(20), eq("plus_bonus"), any());
     }
+
+    // ---- Razorpay webhook (the safety net when the browser closes before confirming) ----
+
+    private BillingService withTrustedWebhooks() {
+        MockPaymentProvider signed = spy(provider);
+        doReturn(true).when(signed).verifyWebhook(any(), any());
+        return new BillingService(props, signed, purchases, memberships, entitlement, new SimpleMeterRegistry(),
+                JsonMapper.builder().build(), hearts, mock(com.softlaunch.user.hearts.FreeTier.class));
+    }
+
+    private static String captured(String orderId, long amount, String currency) {
+        return """
+                {"event":"payment.captured","payload":{"payment":{"entity":
+                {"id":"pay_W1","order_id":"%s","amount":%d,"currency":"%s","status":"captured"}}}}""".formatted(orderId, amount, currency);
+    }
+
+    @Test
+    void aSignedWebhookActivatesAPaymentTheBrowserNeverConfirmed() {
+        var checkout = billing.checkout(me, "hearts-30");
+        withTrustedWebhooks().webhook(captured(checkout.orderId(), 12900, "INR"), "sig");
+        verify(hearts).credit(eq(me), eq(30), eq("buy:hearts-30"), any());
+        assertThat(orders.get(checkout.orderId()).getStatus()).isEqualTo(Purchase.Status.PAID);
+    }
+
+    @Test
+    void aWebhookForTheWrongAmountOrCurrencyCreditsNothing() {
+        var checkout = billing.checkout(me, "hearts-30");
+        var hooks = withTrustedWebhooks();
+        hooks.webhook(captured(checkout.orderId(), 100, "INR"), "sig");
+        hooks.webhook(captured(checkout.orderId(), 12900, "USD"), "sig");
+        verifyNoInteractions(hearts);
+        assertThat(orders.get(checkout.orderId()).getStatus()).isEqualTo(Purchase.Status.CREATED);
+    }
+
+    @Test
+    void anUnsignedWebhookIsRefused() {
+        var checkout = billing.checkout(me, "hearts-30");
+        assertThatThrownBy(() -> billing.webhook(captured(checkout.orderId(), 12900, "INR"), "forged"))
+                .isInstanceOf(ResponseStatusException.class);
+        verifyNoInteractions(hearts);
+    }
+
+    @Test
+    void aRepeatedWebhookCreditsOnce() {
+        var checkout = billing.checkout(me, "hearts-30");
+        var hooks = withTrustedWebhooks();
+        hooks.webhook(captured(checkout.orderId(), 12900, "INR"), "sig");
+        hooks.webhook(captured(checkout.orderId(), 12900, "INR"), "sig");   // Razorpay retries
+        verify(hearts, times(1)).credit(eq(me), eq(30), eq("buy:hearts-30"), any());
+    }
+
+    @Test
+    void webhooksForOtherSitesOrdersAreIgnored() {
+        withTrustedWebhooks().webhook(captured("order_someone_else", 12900, "INR"), "sig");
+        verifyNoInteractions(hearts, entitlement);
+    }
 }

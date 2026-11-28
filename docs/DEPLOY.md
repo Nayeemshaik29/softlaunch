@@ -47,8 +47,23 @@ api.yourdomain.com {
 ### 4. Secrets
 - Create a fresh `.env` **on the server** with new values (`openssl rand -base64 32`). Never reuse your laptop's values, never commit it, `chmod 600 .env`.
 - DigiLocker: production client id/secret and the production redirect URL.
-- **Payments (Plus):** `BILLING_PROVIDER=razorpay` with your Razorpay keys in `.env` (`RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`; TEST keys first).
-  In the Razorpay dashboard add the webhook `https://api.yourdomain.com/api/users/billing/webhook/razorpay` for `payment.captured` and `order.paid`.
+- **Payments (Plus + Hearts) with Razorpay:**
+  1. **Keys.** Razorpay Dashboard → Account & Settings → API Keys. Use the Test/Live switch at the top to pick the mode, then Generate Key.
+     Run `scripts/razorpay-keys.sh` (writes `.env`). On the server, type LIVE when it asks you to confirm live keys.
+     It asks for the Key ID and the Key Secret (typed hidden), refuses files git could commit, double-checks before saving
+     LIVE keys, and creates the webhook secret (copied to your clipboard).
+     Laptop = `rzp_test_…` keys. Server = `rzp_live_…` keys. user-service logs `Razorpay LIVE mode` or `TEST mode` at startup.
+  2. **Webhook** (once the API has a public https address), in the SAME mode as the keys:
+     Account & Settings → Webhooks → Add new webhook
+     - URL `https://api.yourdomain.com/api/users/billing/webhook/razorpay`
+     - Secret = the webhook secret from step 1
+     - Events `payment.captured` and `order.paid`
+     It credits payments whose browser closed before confirming. It is trusted only through its HMAC signature, and it
+     credits nothing when the amount or currency differs from our order. Retries are safe (each order activates once).
+     Orders from your other sites on the same Razorpay account are ignored.
+  3. **Live mode checklist:** KYC done and the account activated; the SoftLaunch website added and approved under
+     "Website/app details" (payments are only accepted from approved sites); confirm with Razorpay support that a dating
+     service is allowed on your account; do one small real payment and refund it from the dashboard.
   ⚠️ Inside the **Play Store / App Store apps**, digital subscriptions must use **Google Play Billing / Apple In-App Purchase**; Razorpay is for the web.
 - **Sessions:** `REFRESH_COOKIE_SECURE=true` (the login cookie only travels over HTTPS), and `WEB_ORIGINS=https://yourdomain.com`.
   Serve the web app and the API from the **same site** (e.g. `yourdomain.com` + `api.yourdomain.com`): the cookie is `SameSite=Strict`,

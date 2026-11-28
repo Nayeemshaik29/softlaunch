@@ -118,7 +118,18 @@ public class BillingService {
         if (!type.equals("payment.captured") && !type.equals("order.paid")) return;   // others are ignored
         JsonNode payment = event.path("payload").path("payment").path("entity");
         String orderId = payment.path("order_id").asString("");
-        purchases.findByProviderOrderId(orderId).ifPresent(p -> activate(p, payment.path("id").asString("")));
+        // Unknown orders (e.g. other sites on the same Razorpay account) are acknowledged and ignored.
+        purchases.findByProviderOrderId(orderId).ifPresent(p -> {
+            long amount = payment.path("amount").asLong(-1);
+            String currency = payment.path("currency").asString("");
+            if (amount != p.getAmountPaise() || !currency.equalsIgnoreCase(props.currency())) {
+                // never credit a payment that doesn't match what we asked for
+                metrics.counter("softlaunch.billing.webhooks", "result", "amount_mismatch").increment();
+                log.warn("Webhook amount mismatch for purchase {}: not activated", p.getId());   // ids only
+                return;
+            }
+            activate(p, payment.path("id").asString(""));
+        });
         metrics.counter("softlaunch.billing.webhooks", "result", type).increment();
     }
 
