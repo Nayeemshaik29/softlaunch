@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- SoftLaunch palette: the app is dark-only -->
+    <color name="sl_bg">#0B0B0C</color>
+    <color name="sl_accent">#F28C28</color>
+</resources>

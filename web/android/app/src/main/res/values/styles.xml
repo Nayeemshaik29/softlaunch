@@ -9,14 +9,25 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
+    <!-- Dark app: Android 15+ draws edge-to-edge, so the window behind the status/navigation bars must be Jet Black
+         and the bar icons light. -->
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <item name="android:windowBackground">@color/sl_bg</item>
+        <item name="android:statusBarColor">@color/sl_bg</item>
+        <item name="android:navigationBarColor">@color/sl_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
     </style>
 
 
+    <!-- Android 12+ launch screen: the (clean) app icon on Jet Black instead of the system's light grey -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
+        <item name="windowSplashScreenBackground">@color/sl_bg</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/sl_accent</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>
