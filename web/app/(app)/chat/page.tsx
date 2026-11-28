@@ -31,19 +31,23 @@ function Chat() {
   const { t } = useMood();
   const me = getSession()?.userId;
   const [person, setPerson] = useState<PublicProfile | null | undefined>(undefined);
+  const [otherId, setOtherId] = useState<string | null>(null);
   const [msgs, setMsgs] = useState<Msg[] | null>(null);
   const [text, setText] = useState("");
   const [gone, setGone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const end = useRef<HTMLDivElement>(null);
   const [consent, setConsentState] = useConsent(matchId);
-  const peer = person ? { userId: person.userId, name: person.displayName, photo: person.photoUrls[0] ?? null } : null;
+  // a match whose profile isn't finished yet still gets a name and can still call
+  const peerName = person?.displayName ?? "Your match";
+  const peer = otherId ? { userId: otherId, name: peerName, photo: person?.photoUrls[0] ?? null } : null;
 
   useEffect(() => {
     let stop = false;
     api<MatchSummary[]>("/api/matches").then(async (list) => {
       const m = list.find((x) => x.matchId === matchId);
       if (!m) { if (!stop) setGone(true); return; }
+      if (!stop) setOtherId(m.otherUserId);
       const p = await profileOf(m.otherUserId);
       if (!stop) setPerson(p);
     }).catch(() => !stop && setGone(true));
@@ -99,8 +103,8 @@ function Chat() {
         </Link>
         {person === undefined ? <Skeleton className="h-12 w-40" /> : (
           <>
-            <Avatar src={person?.photoUrls[0]} name={person?.displayName ?? "?"} size={44} />
-            <h1 className="font-display text-xl">{person?.displayName}</h1>
+            <Avatar src={person?.photoUrls[0]} name={peerName} size={44} />
+            <h1 className="font-display text-xl">{peerName}</h1>
             <CallButtons matchId={matchId} consent={consent} peer={peer} />
           </>
         )}
@@ -125,7 +129,7 @@ function Chat() {
         <div ref={end} />
       </div>
 
-      {person && <ConsentCard matchId={matchId} name={person.displayName} consent={consent} onChange={setConsentState} />}
+      {person !== undefined && <ConsentCard matchId={matchId} name={peerName} consent={consent} onChange={setConsentState} />}
       <form onSubmit={send} className="flex gap-2 border-t border-line pt-4">
         <label htmlFor="msg" className="sr-only">Message</label>
         <input id="msg" value={text} onChange={(e) => setText(e.target.value)} maxLength={1000} autoComplete="off"
